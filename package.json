@@ -1,0 +1,19 @@
+{
+  "name": "wc2026-predictor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "FIFA-style score prediction game for the 2026 World Cup (AI-DLC build).",
+  "workspaces": [
+    "packages/*",
+    "api",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

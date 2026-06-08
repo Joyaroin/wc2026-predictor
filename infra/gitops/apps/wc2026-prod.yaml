@@ -1,0 +1,24 @@
+# prod: tracks the `release` ref and syncs MANUALLY (promotion). Updates apply only when you
+# move the `release` branch/tag (or bump the pinned image tag in values-prod.yaml) and click Sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wc2026-prod
+  namespace: argocd
+spec:
+  project: wc2026
+  source:
+    repoURL: https://github.com/Joyaroin/wc2026-predictor.git
+    targetRevision: release
+    path: infra/helm/wc2026
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: wc2026-prod
+  syncPolicy:
+    # No `automated:` block → manual sync (promotion gate).
+    syncOptions:
+      - CreateNamespace=true

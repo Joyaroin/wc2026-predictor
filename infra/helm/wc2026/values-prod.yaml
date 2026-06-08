@@ -1,0 +1,26 @@
+environment: prod
+
+image:
+  registry: "" # set to your ECR registry
+  api: { repository: wc2026/api, tag: "" } # pinned release SHA at promotion time
+  web: { repository: wc2026/web, tag: "" }
+
+api:
+  replicas: 2
+  env:
+    TABLE_NAME: wc2026-prod
+    ALLOWED_ORIGIN: https://wc2026.example.com
+
+serviceAccount:
+  roleArn: "" # arn:aws:iam::<acct>:role/wc2026-prod-api
+
+secret:
+  existingSecret: wc2026-secrets
+
+ingress:
+  host: wc2026.example.com
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6

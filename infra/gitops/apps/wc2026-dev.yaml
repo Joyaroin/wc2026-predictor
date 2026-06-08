@@ -1,0 +1,25 @@
+# dev: tracks HEAD of main, auto-syncs every change (test environment).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wc2026-dev
+  namespace: argocd
+spec:
+  project: wc2026
+  source:
+    repoURL: https://github.com/Joyaroin/wc2026-predictor.git
+    targetRevision: main
+    path: infra/helm/wc2026
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: wc2026-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

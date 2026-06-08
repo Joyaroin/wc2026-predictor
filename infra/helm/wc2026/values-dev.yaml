@@ -1,0 +1,24 @@
+environment: dev
+
+image:
+  registry: "" # set to your ECR registry, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  api: { repository: wc2026/api, tag: dev }
+  web: { repository: wc2026/web, tag: dev }
+
+api:
+  replicas: 1
+  env:
+    TABLE_NAME: wc2026-dev
+    ALLOWED_ORIGIN: https://dev.wc2026.example.com
+
+serviceAccount:
+  roleArn: "" # arn:aws:iam::<acct>:role/wc2026-dev-api  (Terraform output)
+
+secret:
+  existingSecret: wc2026-secrets # synced by external-secrets from AWS Secrets Manager
+
+ingress:
+  host: dev.wc2026.example.com
+
+hpa:
+  enabled: false

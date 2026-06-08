@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main, release]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace @wc2026/shared
+      - run: npm test
+      - run: npm audit --omit=dev
+
+  images:
+    # Build + push images only on pushes to main (dev) or release (prod promotion).
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # for OIDC auth to AWS (configure-aws-credentials)
+      contents: read
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build & push images (tag = git SHA)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build -f api/Dockerfile -t "$REGISTRY/wc2026/api:$TAG" .
+          docker build -f web/Dockerfile --build-arg VITE_API_URL="" -t "$REGISTRY/wc2026/web:$TAG" .
+          docker push "$REGISTRY/wc2026/api:$TAG"
+          docker push "$REGISTRY/wc2026/web:$TAG"
+      # Promotion: a follow-up step/PR updates image tags in infra/helm/wc2026/values-<env>.yaml,
+      # which ArgoCD then syncs (dev automatically, prod on manual approval).

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: wc2026
+  namespace: argocd
+spec:
+  description: WC2026 Predictor
+  sourceRepos:
+    - https://github.com/Joyaroin/wc2026-predictor.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: wc2026-dev
+    - server: https://kubernetes.default.svc
+      namespace: wc2026-prod
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

@@ -1,0 +1,30 @@
+{{- if .Values.networkPolicy.enabled }}
+# Baseline policy: allow ingress to the app ports and egress to DNS + HTTPS (DynamoDB / football API).
+# Tighten the ingress source to the ingress-nginx namespace in real clusters.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wc2026-baseline
+  labels:
+    {{- include "wc2026.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+        - protocol: TCP
+          port: {{ .Values.web.port }}
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - ports:
+        - protocol: TCP
+          port: 443
+{{- end }}

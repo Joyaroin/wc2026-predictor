@@ -1,0 +1,23 @@
+# App-of-apps: apply this once; ArgoCD then manages the dev + prod Applications from git.
+#   kubectl apply -n argocd -f infra/gitops/projects/wc2026.yaml
+#   kubectl apply -n argocd -f infra/gitops/bootstrap/root-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wc2026-root
+  namespace: argocd
+spec:
+  project: wc2026
+  source:
+    repoURL: https://github.com/Joyaroin/wc2026-predictor.git
+    targetRevision: main
+    path: infra/gitops/apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

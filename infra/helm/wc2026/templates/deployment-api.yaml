@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wc2026-api
+  labels:
+    {{- include "wc2026.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: wc2026-api
+  template:
+    metadata:
+      labels:
+        app: wc2026-api
+        {{- include "wc2026.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: {{ include "wc2026.apiImage" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          envFrom:
+            - configMapRef:
+                name: wc2026-api-config
+          env:
+            - name: SESSION_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: SESSION_SIGNING_SECRET
+            - name: FOOTBALL_DATA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: FOOTBALL_DATA_TOKEN
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

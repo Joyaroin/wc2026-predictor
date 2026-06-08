@@ -1,0 +1,8 @@
+# DynamoDB Local for development (decision: backend NFR Q1=B).
+# Usage: docker compose up -d  then  npm run create-table
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.5.4
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"

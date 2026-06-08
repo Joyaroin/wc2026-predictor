@@ -1,0 +1,75 @@
+# Default values — overridden by values-dev.yaml / values-prod.yaml.
+environment: dev
+nameOverride: ""
+
+image:
+  registry: "" # e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com  (empty for local images)
+  pullPolicy: IfNotPresent
+  api:
+    repository: wc2026/api
+    tag: latest
+  web:
+    repository: wc2026/web
+    tag: latest
+
+api:
+  replicas: 1
+  port: 4000
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  # Non-secret environment (secret values come from the Secret below).
+  env:
+    AWS_REGION: us-east-1
+    TABLE_NAME: wc2026-dev
+    ALLOWED_ORIGIN: https://dev.example.com
+    FOOTBALL_COMPETITION: WC
+    PERSISTENCE: dynamo
+    SESSION_TTL_DAYS: "30"
+
+web:
+  replicas: 1
+  port: 8080
+  resources:
+    requests: { cpu: 25m, memory: 32Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+sync:
+  enabled: true
+  schedule: "*/10 * * * *"
+  resources:
+    requests: { cpu: 25m, memory: 128Mi }
+    limits: { cpu: 250m, memory: 256Mi }
+
+serviceAccount:
+  create: true
+  name: wc2026-api
+  # IAM role ARN for IRSA (from Terraform output). Empty = no AWS auth (won't reach real DynamoDB).
+  roleArn: ""
+
+# Secret with SESSION_SIGNING_SECRET + FOOTBALL_DATA_TOKEN.
+# Prefer external-secrets (set existingSecret to the synced Secret name).
+secret:
+  create: false
+  existingSecret: "" # name of an existing Secret to use instead of creating one
+  sessionSigningSecret: ""
+  footballDataToken: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  host: dev.example.com
+  tls:
+    enabled: true
+    secretName: wc2026-tls
+  certManager:
+    clusterIssuer: letsencrypt-prod
+
+networkPolicy:
+  enabled: true
+
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

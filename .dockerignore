@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/cdk.out
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/coverage
+**/*.log
+.DS_Store
+aidlc-docs
+aidlc-rules
+infra

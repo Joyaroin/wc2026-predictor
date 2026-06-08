@@ -1,0 +1,54 @@
+{{- if .Values.sync.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wc2026-sync
+  labels:
+    {{- include "wc2026.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.sync.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: wc2026-sync
+            {{- include "wc2026.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: sync
+              image: {{ include "wc2026.apiImage" . | quote }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["node", "dist/sync.cjs"]
+              envFrom:
+                - configMapRef:
+                    name: wc2026-api-config
+              env:
+                - name: SESSION_SIGNING_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "wc2026.secretName" . }}
+                      key: SESSION_SIGNING_SECRET
+                - name: FOOTBALL_DATA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "wc2026.secretName" . }}
+                      key: FOOTBALL_DATA_TOKEN
+              resources:
+                {{- toYaml .Values.sync.resources | nindent 16 }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+{{- end }}
