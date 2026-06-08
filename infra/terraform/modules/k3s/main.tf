@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "node" {
     effect = "Allow"
     actions = [
       "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem",
-      "dynamodb:Query", "dynamodb:BatchGetItem", "dynamodb:BatchWriteItem",
+      "dynamodb:Query", "dynamodb:Scan", "dynamodb:BatchGetItem", "dynamodb:BatchWriteItem",
       "dynamodb:TransactWriteItems", "dynamodb:TransactGetItems",
     ]
     resources = concat(var.table_arns, [for arn in var.table_arns : "${arn}/index/*"])
