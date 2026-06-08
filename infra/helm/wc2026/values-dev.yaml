@@ -1,24 +1,30 @@
 environment: dev
 
+# Public GHCR images (no registry auth needed on the cluster).
 image:
-  registry: "" # set to your ECR registry, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
-  api: { repository: wc2026/api, tag: dev }
-  web: { repository: wc2026/web, tag: dev }
+  registry: ghcr.io/joyaroin
+  api: { repository: wc2026-api, tag: dev }
+  web: { repository: wc2026-web, tag: dev }
 
 api:
   replicas: 1
   env:
     TABLE_NAME: wc2026-dev
-    ALLOWED_ORIGIN: https://dev.wc2026.example.com
+    # Replace REPLACE-EIP with your dashed EC2 EIP (see `terraform output app_url_dev`).
+    ALLOWED_ORIGIN: http://dev.REPLACE-EIP.nip.io
 
 serviceAccount:
-  roleArn: "" # arn:aws:iam::<acct>:role/wc2026-dev-api  (Terraform output)
+  roleArn: "" # k3s on EC2 uses the node instance role for DynamoDB — no IRSA
 
 secret:
-  existingSecret: wc2026-secrets # synced by external-secrets from AWS Secrets Manager
+  existingSecret: wc2026-secrets # created by the k3s bootstrap
 
 ingress:
-  host: dev.wc2026.example.com
+  host: dev.REPLACE-EIP.nip.io
+  tls:
+    enabled: false # add a domain + cert-manager later for HTTPS
+  certManager:
+    clusterIssuer: ""
 
 hpa:
   enabled: false

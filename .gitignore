@@ -14,4 +14,5 @@ cdk.out/
 **/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
+*.auto.tfvars
 crash.log

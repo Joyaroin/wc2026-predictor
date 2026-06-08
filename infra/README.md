@@ -1,73 +1,55 @@
-# infra — Kubernetes / EKS / GitOps
+# infra — cheap public Kubernetes (k3s on EC2) + GitOps
 
-Deploys the WC2026 Predictor to **AWS EKS** with **dev + prod** environments, using **Terraform** (substrate), **Helm** (app), and **ArgoCD** (GitOps).
+Runs the WC2026 Predictor on a **single small EC2 instance** with **k3s** (lightweight Kubernetes), **ArgoCD** (GitOps), and **ingress-nginx** — **~$12/mo** (t4g.small) on your own AWS account. DynamoDB is reached via the **EC2 instance role** (no static keys).
 
 ```
 infra/
-├── terraform/   # EKS cluster, DynamoDB (per env), ECR, IRSA
-├── helm/wc2026/ # api + web + sync CronJob + ingress chart
-└── gitops/      # ArgoCD app-of-apps (dev auto-sync, prod promotion)
+├── terraform/   # EC2 + k3s bootstrap, DynamoDB (dev/prod), SSM secret, IAM instance role
+├── helm/wc2026/ # api + web + sync CronJob + ingress chart (cluster-agnostic)
+└── gitops/      # ArgoCD app-of-apps (dev auto-sync, prod manual promotion)
 ```
 
-## Prerequisites
-- AWS account + credentials, `terraform`, `kubectl`, `helm`, `docker`, and an S3/DynamoDB remote-state backend (recommended).
-- An ACM/Let's Encrypt setup for the ingress hostnames (cert-manager).
+## Cost
+| | |
+|---|---|
+| EC2 t4g.small (2 GB) | ~$12/mo (or t4g.medium ~$24 for comfy dev+prod+ArgoCD) |
+| Elastic IP (attached) | free |
+| DynamoDB on-demand + SSM | pennies |
+| **Total** | **~$12–24/mo** — destroy with `terraform destroy` when not needed |
 
-## 1. Provision the substrate (Terraform)
+## Deploy
+### 0. Build & publish images (GHCR, public)
+Push to `main` triggers `.github/workflows/ci.yml`, which builds `ghcr.io/joyaroin/wc2026-api:dev` + `:wc2026-web:dev`. **One-time:** in GitHub → Packages, set both packages to **Public** (so k3s can pull without credentials).
+
+### 1. Provision (Terraform)
 ```bash
-cd infra/terraform/environments/cluster
-terraform init && terraform apply         # VPC + EKS + ECR (~15-20 min)
-terraform output                          # note oidc_provider_arn, oidc_provider, ecr_repository_urls
-
-# Per-env data + IRSA (paste the cluster OIDC outputs into each terraform.tfvars):
-cd ../dev  && terraform init && terraform apply
-cd ../prod && terraform init && terraform apply
-```
-Connect kubectl: `aws eks update-kubeconfig --name wc2026 --region us-east-1`.
-
-## 2. Cluster add-ons
-Install **ingress-nginx**, **cert-manager**, **ArgoCD**, and (recommended) **external-secrets** via Helm:
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo add jetstack https://charts.jetstack.io
-helm repo add argo https://argoproj.github.io/argo-helm
-# (install each; see their docs)
+cd infra/terraform/environments/aws
+export TF_VAR_football_data_token=<your-football-data-token>   # goes into SSM, not git
+terraform init
+terraform apply        # EC2 + DynamoDB ×2 + SSM + IAM (~2-3 min; node self-bootstraps k3s+ArgoCD over ~5-10 min)
+terraform output       # note public_ip, app_url_dev, app_url_prod
 ```
 
-## 3. Secrets
-Create the app secret in each namespace (or sync from AWS Secrets Manager via external-secrets):
-```bash
-kubectl create ns wc2026-dev
-kubectl -n wc2026-dev create secret generic wc2026-secrets \
-  --from-literal=SESSION_SIGNING_SECRET=$(openssl rand -hex 32) \
-  --from-literal=FOOTBALL_DATA_TOKEN=<your-football-data-token>
-```
-(`values-*.yaml` references `secret.existingSecret: wc2026-secrets`.)
+### 2. Point the chart at your IP
+Edit `infra/helm/wc2026/values-dev.yaml` (and `values-prod.yaml`): replace `REPLACE-EIP` in `ingress.host` and `ALLOWED_ORIGIN` with the dashed EIP from `terraform output` (e.g. `dev.52-1-2-3.nip.io`). Commit + push — ArgoCD auto-syncs **dev**.
 
-## 4. Build & push images
-```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <registry>
-docker build -f api/Dockerfile -t <registry>/wc2026/api:dev .
-docker build -f web/Dockerfile --build-arg VITE_API_URL="" -t <registry>/wc2026/web:dev .
-docker push <registry>/wc2026/api:dev && docker push <registry>/wc2026/web:dev
-```
-Set `image.registry` + tags + `serviceAccount.roleArn` (IRSA) + `ingress.host` in `values-dev.yaml` / `values-prod.yaml`.
+### 3. Use it
+- App: `http://dev.<eip>.nip.io`
+- ArgoCD UI: `kubectl port-forward svc/argocd-server -n argocd 8080:443` then https://localhost:8080 (user `admin`, password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`).
+- Shell into the node: `aws ssm start-session --target <instance-id>` (no SSH key needed).
 
-## 5. GitOps (ArgoCD)
-```bash
-kubectl apply -n argocd -f infra/gitops/projects/wc2026.yaml
-kubectl apply -n argocd -f infra/gitops/bootstrap/root-app.yaml
-```
-- **dev** (`wc2026-dev`) auto-syncs `main` — every merge deploys for testing.
-- **prod** (`wc2026-prod`) tracks the `release` ref and syncs **manually** — promote by moving `release` (or bumping the pinned tag in `values-prod.yaml`) and clicking **Sync** in the ArgoCD UI.
+## Promotion (dev → prod)
+Pin a built image SHA in `values-prod.yaml` (`image.api.tag` / `web.tag`), set `ingress.host`, push to a `release` branch, then **Sync** the `wc2026-prod` Application in ArgoCD.
+
+## HTTPS later
+Add a real domain (Route53 or any DNS) → point it at the EIP → install cert-manager and set `ingress.tls.enabled=true` + `certManager.clusterIssuer` in values.
 
 ## Local verification (no AWS)
 ```bash
 helm lint infra/helm/wc2026 -f infra/helm/wc2026/values-dev.yaml
 helm template wc2026 infra/helm/wc2026 -f infra/helm/wc2026/values-dev.yaml
-terraform -chdir=infra/terraform/environments/dev init -backend=false && terraform validate
-docker build -f api/Dockerfile -t wc2026/api:local .
+terraform -chdir=infra/terraform/environments/aws init -backend=false && terraform validate
 ```
 
 ## Teardown
-`terraform destroy` in `prod`, `dev`, then `cluster` (reverse order).
+`terraform destroy` (removes the EC2 node + tables + SSM). ~$0 after.

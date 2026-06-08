@@ -1,3 +1,7 @@
+> 💡 **Compute substrate updated 2026-06-08 → k3s-on-EC2 (cost).** To get public Kubernetes for **~$12/mo** instead of EKS's ~$150, the cluster is now a single **k3s** node on one EC2 instance, with pods reaching DynamoDB via the **EC2 instance role** (not IRSA) and images pulled from **public GHCR** (not ECR). **The workloads, Helm chart, and ArgoCD GitOps below are unchanged** — only the Terraform substrate + the api ServiceAccount auth differ. See `infra/README.md` and `aidlc-docs/construction/infra/code/infra-summary.md`. The EKS mapping below is retained as the higher-end / HA option.
+
+---
+
 # Infrastructure Design — Unit `infra` (Kubernetes / EKS / GitOps)
 
 **Active design** (replaces the archived serverless option).

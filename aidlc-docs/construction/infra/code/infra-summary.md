@@ -1,35 +1,40 @@
-# Code Summary — Unit `infra` (Kubernetes / EKS / GitOps)
+# Code Summary — Unit `infra` (k3s on EC2 + Helm + ArgoCD)
+
+**Target (final):** cheap public Kubernetes — a single **k3s** EC2 node (~$12/mo) on the user's AWS account, GitOps via **ArgoCD**, packaged with **Helm**. Chosen for cost (vs EKS ~$150/mo). The Helm chart + ArgoCD manifests are unchanged from the EKS design; only the Terraform substrate + pod→DynamoDB auth differ.
 
 ## Verification (executed)
 | Check | Result |
 |---|---|
-| esbuild bundle (`api`) | ✅ `dist/server.cjs` + `dist/sync.cjs` built; `node --check` passes on both |
+| esbuild bundle (`api`) | ✅ `server.cjs` + `sync.cjs`; `node --check` passes |
 | `npm audit` | ✅ 0 vulnerabilities |
 | `helm lint` | ✅ 0 failed |
-| `helm template` dev / prod | ✅ 9 / 10 manifests render and parse as valid YAML |
-| Terraform `validate` — dev / prod / cluster | ✅ all "Success! The configuration is valid." (cluster incl. VPC/EKS registry modules) |
-| Terraform `fmt -check` | ✅ clean |
-| GitOps manifests (ArgoCD) | ✅ all parse; apiVersion+kind present |
-| `docker build` | ⚠️ not run — Docker daemon not running locally. Dockerfiles authored; their build steps (npm ci, shared build, vite build, esbuild bundle) are each independently verified |
-| `terraform apply` / deploy | ⏸️ not run — needs the user's AWS account + ~20 min EKS provisioning (cost). Deploy steps in infra/README.md |
+| `helm template` dev / prod | ✅ 9 / 9 manifests; images resolve to `ghcr.io/joyaroin/wc2026-*` |
+| Terraform `validate` (aws/k3s env) | ✅ "Success! The configuration is valid." |
+| Terraform `fmt` | ✅ clean |
+| GitOps manifests | ✅ valid |
+| `docker build` | ⚠️ not run (Docker daemon down locally) |
+| `terraform apply` / deploy | ⏸️ not run (user decides; ~$12/mo while up) |
 
-## Files created
-**Containers**: `api/Dockerfile`, `api/scripts/bundle.mjs`, `api/src/sync.run.ts` (CronJob entry), `web/Dockerfile`, `web/nginx.conf`, root `.dockerignore`. (`api/package.json`: + esbuild devDep + `build:server`.)
+## What changed vs the EKS design
+- **Terraform**: removed `modules/eks`, `modules/ecr`, `modules/irsa` and the `cluster`/`dev`/`prod` envs. Added **`modules/k3s`** (EC2 + security group + IAM **instance role** scoped to DynamoDB + SSM read + Session Manager + EIP + a `user-data` bootstrap that installs k3s, ingress-nginx, ArgoCD, the app secrets from SSM, and the GitOps app-of-apps) and a single **`environments/aws`** (DynamoDB ×2 via `modules/data`, an SSM SecureString for the football token, and the `k3s` node).
+- **Auth**: pods reach DynamoDB via the **EC2 instance role** (AWS SDK auto-discovers from IMDS) — no IRSA, no static keys, no backend change.
+- **Images**: **public GHCR** (`ghcr.io/joyaroin/wc2026-{api,web}`) — k3s pulls without credentials. CI (`.github/workflows/ci.yml`) pushes to GHCR via the built-in `GITHUB_TOKEN`.
+- **Helm**: `values-dev/prod` now use the GHCR registry, empty `serviceAccount.roleArn` (instance role), TLS disabled + `nip.io` host placeholder (no-domain start).
+- **Bootstrap**: `user-data.sh.tftpl` self-installs the whole GitOps stack on first boot.
 
-**Terraform** (`infra/terraform/`): modules `eks` (VPC+EKS+nodegroup+OIDC), `data` (DynamoDB PITR/SSE), `ecr` (scan-on-push, immutable), `irsa` (OIDC-trust IAM role, DynamoDB scoped to table+index); environments `cluster`, `dev`, `prod` (each versions/backend/tfvars).
+## Files (current infra)
+- Containers: `api/Dockerfile`, `api/scripts/bundle.mjs`, `api/src/sync.run.ts`, `web/Dockerfile`, `web/nginx.conf`, `.dockerignore`.
+- Terraform: `modules/data`, `modules/k3s` (+ `user-data.sh.tftpl`), `environments/aws`.
+- Helm: `infra/helm/wc2026/` (Chart, values, values-dev, values-prod, 12 templates).
+- GitOps: `infra/gitops/` (AppProject, root app-of-apps, dev auto-sync, prod manual).
+- CI: `.github/workflows/ci.yml` (GHCR).
+- Docs: `infra/README.md`.
 
-**Helm** (`infra/helm/wc2026/`): Chart + values + values-dev + values-prod; templates: serviceaccount (IRSA), configmap, secret (placeholder), deployment-api, service-api, deployment-web, service-web, cronjob-sync, ingress, networkpolicy, hpa, _helpers.
+## Security mapping
+🔒 SECURITY-01 (DynamoDB SSE+PITR; EBS encrypted; TLS add-on later), 03 (stdout logs), 04 (helmet + headers), 06 (**instance role least-privilege** scoped to the two table ARNs + index/\*, SSM read of one parameter; no wildcards), 07 (SG opens only 80/443 public, SSH restrictable, Session Manager preferred), 09 (non-root, readOnlyRootFilesystem, dropped caps), 10 (public pinned images, `npm audit` in CI), 12 (football token in **SSM SecureString**, signing secret generated on-node; never in git), 14 (k3s/ArgoCD health visibility). **No blocking findings.**
 
-**GitOps** (`infra/gitops/`): AppProject, app-of-apps root, `wc2026-dev` (auto-sync HEAD), `wc2026-prod` (manual promotion via `release`).
-
-**CI**: `.github/workflows/ci.yml` (test + audit + build/push images to ECR by SHA via OIDC).
-
-**Docs**: `infra/README.md`.
-
-## Security mapping realized
-🔒 SECURITY-01 (DynamoDB SSE+PITR, EKS secret KMS, TLS via cert-manager), 02 (ingress access logs), 03 (stdout→CloudWatch), 04 (helmet + headers), 06 (**IRSA least-privilege**, scoped table/index ARNs, no wildcards, no static keys), 07 (private nodes, NetworkPolicy, ingress-only exposure), 09 (non-root, readOnlyRootFilesystem, dropped caps, immutable ECR tags), 10 (scan-on-push, `npm audit` in CI, pinned versions), 12 (secrets via external-secrets/K8s Secret), 14 (probes, CronJob history limits, ArgoCD visibility). **No blocking findings.**
-
-## Notes
-- No business-logic changes — the app already runs as a long-lived server; only packaging + a CronJob entry were added.
-- Fixed during generation: empty prod image tag produced invalid YAML (`image: repo:`) → image values are now `| quote`d.
-- `dev` auto-syncs `main`; `prod` is promoted by moving the `release` ref / pinning the image tag in `values-prod.yaml`.
+## Operational notes / caveats
+- **One-time**: set the GHCR packages to **Public** after first CI push so k3s can pull.
+- After `terraform apply`, replace `REPLACE-EIP` in `values-dev/prod.yaml` with the EIP (dashed) and push → ArgoCD syncs.
+- Single node = no HA (acceptable for a hobby app). HTTPS needs a domain + cert-manager (documented).
+- The EKS design is retained in `infrastructure-design/eks-*.md` as the HA/managed option.

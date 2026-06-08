@@ -325,6 +325,14 @@
 
 ---
 
+## Infra Cost Revision — EKS → k3s-on-EC2 (cheap public Kubernetes)
+**Timestamp**: 2026-06-08T18:40:00Z
+**User Input**: (cost discussion) "how do i make it as cheap as possible" → "will people be able to access it and use this app if i use kind" → chose "Public + real K8s/ArgoCD, cheap" → platform "k3s on EC2 (AWS, ~$12/mo)"
+**AI Response**: "Explained kind is local-only (not publicly accessible); presented cost options. User chose cheap public real-K8s → k3s-on-EC2 on their existing AWS account. Reworked the infra substrate: removed Terraform modules eks/ecr/irsa + cluster/dev/prod envs; added modules/k3s (EC2 + SG + IAM instance role scoped to DynamoDB+SSM + EIP + user-data bootstrap installing k3s/ingress-nginx/ArgoCD/app-of-apps + secrets from SSM) and environments/aws (DynamoDB ×2 + SSM SecureString token + k3s node). Switched pod→DynamoDB auth from IRSA to the EC2 instance role (no code change). Switched images EKS/ECR → public GHCR; updated CI to push to GHCR; updated Helm values-dev/prod (GHCR registry, empty roleArn, TLS off + nip.io host). Rewrote infra/README + infra-summary for k3s; noted substrate change on the EKS design doc (retained as HA option); updated aidlc-state. Verification: terraform fmt clean; terraform validate (aws env) Success; helm lint 0; helm template dev/prod render 9/9 with ghcr.io images; npm audit 0. Did NOT apply (user decides; ~$12/mo). No blocking findings."
+**Context**: CONSTRUCTION - Unit `infra` substrate revised to k3s-on-EC2 (~$12/mo public). Verified. Pending: user deploy decision; next workflow stage = Build and Test."
+
+---
+
 **Decoded answers**:
 - Q1 Scoring = Exact 5 / Goal-difference 3 / Result 2 / Wrong 0
 - Q2 Knockouts = predict 90-minute scoreline only (draws allowed)

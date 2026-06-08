@@ -21,33 +21,31 @@ jobs:
       - run: npm audit --omit=dev
 
   images:
-    # Build + push images only on pushes to main (dev) or release (prod promotion).
+    # Build + push public images to GHCR on pushes to main (dev) / release (prod promotion).
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # for OIDC auth to AWS (configure-aws-credentials)
       contents: read
+      packages: write # push to GHCR
     env:
-      AWS_REGION: us-east-1
+      REGISTRY: ghcr.io/joyaroin
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Login to Amazon ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Build & push images (tag = git SHA)
-        env:
-          REGISTRY: ${{ steps.ecr.outputs.registry }}
-          TAG: ${{ github.sha }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push (env tag + git SHA)
         run: |
-          docker build -f api/Dockerfile -t "$REGISTRY/wc2026/api:$TAG" .
-          docker build -f web/Dockerfile --build-arg VITE_API_URL="" -t "$REGISTRY/wc2026/web:$TAG" .
-          docker push "$REGISTRY/wc2026/api:$TAG"
-          docker push "$REGISTRY/wc2026/web:$TAG"
-      # Promotion: a follow-up step/PR updates image tags in infra/helm/wc2026/values-<env>.yaml,
-      # which ArgoCD then syncs (dev automatically, prod on manual approval).
+          SHA=${{ github.sha }}
+          # main → "dev" (auto-deployed); release → "prod".
+          if [ "$GITHUB_REF_NAME" = "release" ]; then ENVTAG=prod; else ENVTAG=dev; fi
+          docker build -f api/Dockerfile -t "$REGISTRY/wc2026-api:$SHA" -t "$REGISTRY/wc2026-api:$ENVTAG" .
+          docker build -f web/Dockerfile --build-arg VITE_API_URL="" -t "$REGISTRY/wc2026-web:$SHA" -t "$REGISTRY/wc2026-web:$ENVTAG" .
+          docker push --all-tags "$REGISTRY/wc2026-api"
+          docker push --all-tags "$REGISTRY/wc2026-web"
+      # dev Helm values use tag `dev` (auto-synced). For prod, pin the :<sha> in values-prod.yaml
+      # (or use :prod) and Sync the prod Application in ArgoCD.

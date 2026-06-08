@@ -63,5 +63,5 @@ Build order: shared → backend → web → infra
 - **Lock**: Predictions lock at match kickoff time
 - **Tie-breaker**: Most exact scores, then most correct results
 - **Fixtures**: Live free/low-cost football API; API key REQUIRED (no offline/seed mode)
-- **Deployment**: **Kubernetes on AWS EKS** with **dev + prod** environments, GitOps via **ArgoCD** + **Helm**; **Terraform** provisions substrate (EKS, DynamoDB ×2, ECR, IRSA). Containerized api (Node server) + web (nginx) + sync CronJob. (Changed 2026-06-08 from the earlier AWS serverless/Lambda design, which is archived in construction/infra/infrastructure-design/.)
-- **Persistence**: AWS DynamoDB (managed), accessed from pods via IRSA
+- **Deployment**: **Kubernetes via k3s on a single EC2 node** (~$12/mo, cheap public) with **dev + prod** namespaces, GitOps via **ArgoCD** + **Helm**; **Terraform** provisions EC2 + DynamoDB ×2 + SSM + IAM instance role; images on **public GHCR**. Containerized api (Node server) + web (nginx) + sync CronJob. (Evolved 2026-06-08: serverless/Lambda → EKS → **k3s-on-EC2** for cost; EKS design retained as HA option, serverless archived.)
+- **Persistence**: AWS DynamoDB (managed), accessed from pods via the **EC2 instance role** (no static keys, no IRSA)

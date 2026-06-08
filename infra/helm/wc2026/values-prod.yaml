@@ -1,26 +1,28 @@
 environment: prod
 
 image:
-  registry: "" # set to your ECR registry
-  api: { repository: wc2026/api, tag: "" } # pinned release SHA at promotion time
-  web: { repository: wc2026/web, tag: "" }
+  registry: ghcr.io/joyaroin
+  api: { repository: wc2026-api, tag: "" } # pin a built SHA at promotion time
+  web: { repository: wc2026-web, tag: "" }
 
 api:
-  replicas: 2
+  replicas: 1 # single small node — keep modest; bump with a larger instance
   env:
     TABLE_NAME: wc2026-prod
-    ALLOWED_ORIGIN: https://wc2026.example.com
+    ALLOWED_ORIGIN: http://REPLACE-EIP.nip.io
 
 serviceAccount:
-  roleArn: "" # arn:aws:iam::<acct>:role/wc2026-prod-api
+  roleArn: ""
 
 secret:
   existingSecret: wc2026-secrets
 
 ingress:
-  host: wc2026.example.com
+  host: REPLACE-EIP.nip.io
+  tls:
+    enabled: false
+  certManager:
+    clusterIssuer: ""
 
 hpa:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 6
+  enabled: false

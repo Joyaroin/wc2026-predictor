@@ -1,0 +1,48 @@
+#!/bin/bash
+# Bootstraps k3s + ArgoCD + ingress-nginx and applies the GitOps app-of-apps.
+# Terraform template vars: ${region}, ${football_ssm_param}, ${namespaces}, ${repo_raw_base}.
+# Shell variables are escaped as $${VAR} so Terraform leaves them intact.
+set -uxo pipefail
+exec > /var/log/wc2026-bootstrap.log 2>&1
+
+# --- AWS CLI (to read the secret from SSM) ---
+dnf install -y unzip openssl
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp && /tmp/aws/install
+
+# --- k3s (disable traefik; we use ingress-nginx). k3s ServiceLB exposes 80/443 on the node IP. ---
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik" sh -
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+until kubectl get nodes 2>/dev/null | grep -q " Ready"; do sleep 5; done
+
+# --- Helm ---
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# --- ingress-nginx (LoadBalancer → k3s ServiceLB binds host 80/443) ---
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  -n ingress-nginx --create-namespace \
+  --set controller.service.type=LoadBalancer \
+  --wait --timeout 5m || true
+
+# --- ArgoCD ---
+kubectl create namespace argocd || true
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl -n argocd rollout status deploy/argocd-server --timeout=300s || true
+
+# --- App secrets per namespace (token from SSM, signing secret generated here) ---
+TOKEN=$(/usr/local/bin/aws ssm get-parameter --with-decryption --name "${football_ssm_param}" --region "${region}" --query Parameter.Value --output text)
+for ns in ${namespaces}; do
+  kubectl create namespace "$${ns}" || true
+  kubectl -n "$${ns}" create secret generic wc2026-secrets \
+    --from-literal=SESSION_SIGNING_SECRET="$(openssl rand -hex 32)" \
+    --from-literal=FOOTBALL_DATA_TOKEN="$${TOKEN}" \
+    --dry-run=client -o yaml | kubectl apply -f -
+done
+
+# --- GitOps: apply the AppProject + app-of-apps; ArgoCD then deploys from git ---
+kubectl apply -f "${repo_raw_base}/infra/gitops/projects/wc2026.yaml"
+kubectl apply -f "${repo_raw_base}/infra/gitops/bootstrap/root-app.yaml"
+
+echo "wc2026 bootstrap complete"
