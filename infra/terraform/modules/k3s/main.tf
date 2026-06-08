@@ -119,6 +119,12 @@ resource "aws_instance" "k3s" {
   associate_public_ip_address = true
   key_name                    = var.key_name
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
+
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
     region             = var.region
     repo_raw_base      = var.repo_raw_base

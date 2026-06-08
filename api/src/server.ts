@@ -16,6 +16,7 @@ import {
 export function buildApp(services: Services, config: Config, logger: Logger): Express {
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', 1);
 
   app.use(helmet()); // SECURITY-04
   app.use(cors({ origin: config.allowedOrigin })); // SECURITY-08 (strict allowlist)

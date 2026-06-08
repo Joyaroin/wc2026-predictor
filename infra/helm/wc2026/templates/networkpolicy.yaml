@@ -27,4 +27,29 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+---
+# API and sync pods need IMDS to exchange the EC2 instance role for AWS credentials.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wc2026-api-imds
+  labels:
+    {{- include "wc2026.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - wc2026-api
+          - wc2026-sync
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 80
 {{- end }}
