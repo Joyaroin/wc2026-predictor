@@ -13,11 +13,12 @@ spec:
     - Ingress
     - Egress
   ingress:
-    - ports:
-        - protocol: TCP
-          port: {{ .Values.api.port }}
-        - protocol: TCP
-          port: {{ .Values.web.port }}
+    # Allow all traffic from the ingress-nginx controller — this covers the api/web ports
+    # AND the cert-manager ACME HTTP-01 solver pods (which listen on their own port 8089).
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
   egress:
     - ports:
         - protocol: UDP
