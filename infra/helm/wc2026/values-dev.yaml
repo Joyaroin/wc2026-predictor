@@ -1,24 +1,19 @@
 environment: dev
-
 # Public GHCR images (no registry auth needed on the cluster).
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: { repository: wc2026-api, tag: dev }
-  web: { repository: wc2026-web, tag: dev }
-
+  api: {repository: wc2026-api, tag: 232977ff6317a4e37e6c0c01fb732bd1dbaa8ddf}
+  web: {repository: wc2026-web, tag: 232977ff6317a4e37e6c0c01fb732bd1dbaa8ddf}
 api:
   replicas: 1
   env:
     TABLE_NAME: wc2026-dev
     ALLOWED_ORIGIN: https://dev.wc-predictions-2026.com
-
 serviceAccount:
   roleArn: "" # k3s on EC2 uses the node instance role for DynamoDB — no IRSA
-
 secret:
   existingSecret: wc2026-secrets # created by the k3s bootstrap
-
 ingress:
   host: dev.wc-predictions-2026.com
   tls:
@@ -26,6 +21,5 @@ ingress:
     secretName: wc2026-dev-tls
   certManager:
     clusterIssuer: letsencrypt-prod
-
 hpa:
   enabled: false
