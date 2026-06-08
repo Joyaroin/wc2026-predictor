@@ -1,6 +1,6 @@
 import type { Match } from '@wc2026/shared';
 
-export type MatchState = 'Played' | 'Locked' | 'Open';
+export type MatchState = 'Played' | 'Live' | 'Locked' | 'Open';
 
 export function matchState(m: {
   status: Match['status'];
@@ -9,8 +9,13 @@ export function matchState(m: {
   awayScore: number | null;
 }): MatchState {
   if (m.status === 'FINISHED' && m.homeScore !== null && m.awayScore !== null) return 'Played';
+  if (m.status === 'IN_PLAY' || m.status === 'PAUSED') return 'Live';
   if (m.locked) return 'Locked';
   return 'Open';
+}
+
+export function isLive(status: Match['status']): boolean {
+  return status === 'IN_PLAY' || status === 'PAUSED';
 }
 
 export function pointsLabel(points: number): string {
@@ -26,13 +31,16 @@ export function pointsLabel(points: number): string {
   }
 }
 
-export function formatKickoff(iso: string): string {
+/** Format a kickoff time in the given IANA timezone (defaults to the device's), showing the zone. */
+export function formatKickoff(iso: string, timeZone?: string): string {
   return new Date(iso).toLocaleString(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone,
+    timeZoneName: 'short',
   });
 }
 

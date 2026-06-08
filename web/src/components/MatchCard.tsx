@@ -3,6 +3,7 @@ import type { Prediction } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
 import { matchState, pointsLabel, formatKickoff, stageLabel } from '../lib/format';
+import { usePrefs } from '../context/PrefsContext';
 
 interface Props {
   match: MatchView;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props) {
+  const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
   const [away, setAway] = useState<string>(prediction ? String(prediction.away) : '');
@@ -34,8 +36,13 @@ export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props)
         <span className="vs">vs</span>
         <span className="team away">{match.awayTeam}</span>
       </div>
-      <div className="kickoff">{formatKickoff(match.kickoff)}</div>
+      <div className="kickoff">{formatKickoff(match.kickoff, timeZone)}</div>
 
+      {state === 'Live' && (
+        <div className="result live" data-testid={`live-${match.id}`}>
+          <span className="live-dot">●</span> LIVE <strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
+        </div>
+      )}
       {state === 'Played' && (
         <div className="result">
           Result: <strong>{match.homeScore}–{match.awayScore}</strong>

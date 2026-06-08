@@ -83,6 +83,12 @@ input {
 .badge.open { background: #14324a; color: #6fd3ff; }
 .badge.locked { background: #3a2a14; color: var(--accent2); }
 .badge.played { background: #14321f; color: var(--accent); }
+.badge.live { background: #3a1414; color: var(--danger); animation: pulse 1.4s infinite; }
+.result.live { color: var(--danger); font-weight: 700; }
+.live-dot { animation: pulse 1.4s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+select { background: #0d1428; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 1rem; max-width: 100%; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }

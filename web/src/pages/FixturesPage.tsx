@@ -7,7 +7,15 @@ import { stageLabel } from '../lib/format';
 
 export function FixturesPage() {
   const qc = useQueryClient();
-  const matches = useQuery({ queryKey: ['matches'], queryFn: api.matches });
+  const matches = useQuery({
+    queryKey: ['matches'],
+    queryFn: api.matches,
+    // While any match is in play, refetch every 60s for live scores; otherwise don't poll.
+    refetchInterval: (query) => {
+      const data = query.state.data as MatchView[] | undefined;
+      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 60_000 : false;
+    },
+  });
   const predictions = useQuery({ queryKey: ['my-predictions'], queryFn: api.myPredictions });
 
   const save = useMutation({
