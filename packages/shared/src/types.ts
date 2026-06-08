@@ -70,6 +70,8 @@ export interface Prediction {
   home: number;
   away: number;
   points: Points;
+  /** When true, this match is the player's Joker for its matchday — points count double. */
+  joker?: boolean;
   createdAt: string;
   updatedAt: string;
 }

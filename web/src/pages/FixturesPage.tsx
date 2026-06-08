@@ -16,6 +16,11 @@ export function FixturesPage() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
   });
 
+  const joker = useMutation({
+    mutationFn: ({ matchId, on }: { matchId: string; on: boolean }) => api.setJoker(matchId, on),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
+  });
+
   const predByMatch = useMemo(() => {
     const map = new Map<string, Prediction>();
     for (const p of predictions.data ?? []) map.set(p.matchId, p);
@@ -30,7 +35,8 @@ export function FixturesPage() {
   return (
     <div className="fixtures">
       <h2>Fixtures</h2>
-      {save.isError && <p className="error">Could not save — the match may have started.</p>}
+      <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per matchday to double its points.</p>
+      {(save.isError || joker.isError) && <p className="error">Could not save — the match may have started.</p>}
       {groups.map(([label, list]) => (
         <section key={label}>
           <h3 className="stage-header">{label}</h3>
@@ -40,8 +46,9 @@ export function FixturesPage() {
                 key={m.id}
                 match={m}
                 prediction={predByMatch.get(m.id)}
-                saving={save.isPending}
+                saving={save.isPending || joker.isPending}
                 onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
+                onJoker={(matchId, on) => joker.mutate({ matchId, on })}
               />
             ))}
           </div>

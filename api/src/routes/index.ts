@@ -32,6 +32,7 @@ const pinSchema = z.string().regex(/^\d{4}$/, 'PIN must be 4 digits');
 const changePinSchema = z.object({ currentPin: pinSchema, newPin: pinSchema });
 const createGroupSchema = z.object({ name: groupNameSchema });
 const joinSchema = z.object({ inviteCode: inviteCodeSchema });
+const jokerSchema = z.object({ joker: z.boolean() });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -75,6 +76,10 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/matches', auth, wrap(() => services.matches.list()));
   r.get('/predictions/me', auth, wrap((req) => services.predictions.getMine(caller(req))));
   r.put('/predictions/:matchId', auth, validateBody(predictionInputSchema), wrap((req) => services.predictions.upsert(caller(req), param(req, 'matchId'), req.body)));
+  r.put('/predictions/:matchId/joker', auth, validateBody(jokerSchema), wrap((req) => services.predictions.setJoker(caller(req), param(req, 'matchId'), req.body.joker)));
+
+  // --- Global leaderboard ---
+  r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));
 
   return r;
 }

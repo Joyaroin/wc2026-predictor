@@ -8,6 +8,7 @@ import { GroupDetailPage } from './pages/GroupDetailPage';
 import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
+import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><MyBreakdownPage /></RequireAuth>} />
+          <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

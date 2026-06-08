@@ -28,6 +28,11 @@ export function computePoints(prediction: Score, actual: Score): Points {
   return 2; // BR-1.3 correct outcome only
 }
 
+/** Points after applying the Joker multiplier (doubles when joker is set). */
+export function effectivePoints(p: { points: number; joker?: boolean }): number {
+  return p.joker ? p.points * 2 : p.points;
+}
+
 /**
  * BR-3 — total ordering for leaderboard standings (use with Array.prototype.sort).
  * Returns < 0 if `a` ranks before `b`.

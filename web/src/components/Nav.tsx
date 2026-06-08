@@ -13,6 +13,7 @@ export function Nav() {
         <NavLink to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
         <NavLink to="/groups" data-testid="nav-groups">Groups</NavLink>
         <NavLink to="/me" data-testid="nav-me">My Points</NavLink>
+        <NavLink to="/global" data-testid="nav-global">Global</NavLink>
         <NavLink to="/settings" data-testid="nav-settings">Account</NavLink>
       </div>
       <div className="nav-user">

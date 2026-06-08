@@ -37,6 +37,11 @@ export interface MatchPredictionsView {
   actual: { home: number; away: number } | null;
   predictions: MatchPredictionRow[];
 }
+export interface GlobalLeaderboardView {
+  total: number;
+  top: LeaderboardRow[];
+  me: LeaderboardRow | null;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -96,4 +101,7 @@ export const api = {
   myPredictions: () => req<Prediction[]>('/predictions/me'),
   upsertPrediction: (matchId: string, home: number, away: number) =>
     req<Prediction>(`/predictions/${matchId}`, { method: 'PUT', body: { home, away } }),
+  setJoker: (matchId: string, joker: boolean) =>
+    req<Prediction>(`/predictions/${matchId}/joker`, { method: 'PUT', body: { joker } }),
+  globalLeaderboard: () => req<GlobalLeaderboardView>('/leaderboard/global'),
 };

@@ -21,6 +21,7 @@ const arbPrediction = fc.record({
   home: arbGoal,
   away: arbGoal,
   points: fc.constantFrom(0, 2, 3, 5) as fc.Arbitrary<0 | 2 | 3 | 5>,
+  joker: fc.boolean(),
   createdAt: arbIso,
   updatedAt: arbIso,
 });

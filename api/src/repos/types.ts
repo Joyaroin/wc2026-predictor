@@ -19,6 +19,8 @@ export interface PlayerRepo {
   rename(id: string, name: string, nameKey: string): Promise<boolean>;
   /** Replace the stored PIN hash. */
   updatePin(id: string, pinHash: string): Promise<void>;
+  /** All players (used for the global leaderboard). */
+  listAll(): Promise<PlayerRecord[]>;
 }
 
 export interface GroupRepo {
@@ -48,6 +50,8 @@ export interface PredictionRepo {
   get(playerId: string, matchId: string): Promise<Prediction | null>;
   listByPlayer(playerId: string): Promise<Prediction[]>;
   listByMatch(matchId: string): Promise<Prediction[]>;
+  /** All predictions (used for the global leaderboard). */
+  scanAll(): Promise<Prediction[]>;
 }
 
 export interface Repositories {

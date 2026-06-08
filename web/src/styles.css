@@ -73,6 +73,12 @@ input {
 .points { margin-left: 8px; color: var(--accent2); font-weight: 700; }
 .result { margin-top: 6px; }
 
+.head-right { display: flex; align-items: center; gap: 6px; }
+.joker-badge { font-size: 0.7rem; font-weight: 800; color: #2a1a00; background: var(--accent2); padding: 1px 6px; border-radius: 999px; }
+.joker-btn { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); padding: 6px 10px; border-radius: 8px; font-weight: 700; }
+.joker-btn.on { background: var(--accent2); color: #2a1a00; }
+.joker-btn:disabled { opacity: 0.4; }
+
 .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
 .badge.open { background: #14324a; color: #6fd3ff; }
 .badge.locked { background: #3a2a14; color: var(--accent2); }

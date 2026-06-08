@@ -8,6 +8,7 @@ import {
   TransactWriteCommand,
   DeleteCommand,
   UpdateCommand,
+  ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { Group, Match, Prediction } from '@wc2026/shared';
 import type { Config } from '../lib/config';
@@ -50,6 +51,19 @@ function isConditionFailed(err: unknown): boolean {
 export function createDynamoRepositories(config: Config): Repositories {
   const doc = createDynamoDocClient(config);
   const Table = config.tableName;
+
+  async function scanItems(filter: string, values: Record<string, unknown>): Promise<Item[]> {
+    const items: Item[] = [];
+    let ExclusiveStartKey: Record<string, unknown> | undefined;
+    do {
+      const r = await doc.send(
+        new ScanCommand({ TableName: Table, FilterExpression: filter, ExpressionAttributeValues: values, ExclusiveStartKey }),
+      );
+      items.push(...((r.Items ?? []) as Item[]));
+      ExclusiveStartKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (ExclusiveStartKey);
+    return items;
+  }
 
   const players: PlayerRepo = {
     async getById(id) {
@@ -130,6 +144,10 @@ export function createDynamoRepositories(config: Config): Repositories {
           ExpressionAttributeValues: { ':p': pinHash, ':u': new Date().toISOString() },
         }),
       );
+    },
+    async listAll() {
+      const items = await scanItems('SK = :sk', { ':sk': 'PROFILE' });
+      return items.map((i) => playerFromItem(i));
     },
   };
 
@@ -281,6 +299,10 @@ export function createDynamoRepositories(config: Config): Repositories {
         }),
       );
       return (r.Items ?? []).map((i) => predictionFromItem(i as Item));
+    },
+    async scanAll() {
+      const items = await scanItems('begins_with(SK, :p)', { ':p': 'PRED#' });
+      return items.map((i) => predictionFromItem(i));
     },
   };
 

@@ -10,6 +10,7 @@ export interface PredictionService {
   upsert(callerId: string, matchId: string, score: Score): Promise<Prediction>;
   getMine(callerId: string): Promise<Prediction[]>;
   getMatchPredictions(callerId: string, groupId: string, matchId: string): Promise<MatchPredictionsView>;
+  setJoker(callerId: string, matchId: string, joker: boolean): Promise<Prediction>;
 }
 
 export function createPredictionService(
@@ -39,6 +40,7 @@ export function createPredictionService(
         home: score.home,
         away: score.away,
         points: existing?.points ?? 0,
+        joker: existing?.joker ?? false,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
@@ -48,6 +50,29 @@ export function createPredictionService(
 
     getMine(callerId) {
       return predictions.listByPlayer(callerId);
+    },
+
+    async setJoker(callerId, matchId, joker) {
+      const match = await matchService.get(matchId);
+      if (!match) throw new NotFoundError('Match not found');
+      if (matchService.isLocked(match)) throw new LockedError();
+      const target = await predictions.get(callerId, matchId);
+      if (!target) throw new NotFoundError('Predict the match before setting a Joker on it');
+
+      const now = clock.now().toISOString();
+      if (joker) {
+        // Enforce one Joker per matchday: clear it from the caller's other predictions in this matchday.
+        const matchdayById = new Map((await matchService.list()).map((m) => [m.id, m.matchday]));
+        const mine = await predictions.listByPlayer(callerId);
+        for (const p of mine) {
+          if (p.matchId !== matchId && p.joker && matchdayById.get(p.matchId) === match.matchday) {
+            await predictions.put({ ...p, joker: false, updatedAt: now });
+          }
+        }
+      }
+      const updated: Prediction = { ...target, joker, updatedAt: now };
+      await predictions.put(updated);
+      return updated;
     },
 
     async getMatchPredictions(callerId, groupId, matchId) {

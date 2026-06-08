@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { effectivePoints } from '@wc2026/shared';
 import { api } from '../api/client';
 import { pointsLabel, matchState } from '../lib/format';
 
@@ -17,7 +18,7 @@ export function MyBreakdownPage() {
     .filter((r) => r.match)
     .sort((a, b) => (a.match!.kickoff < b.match!.kickoff ? -1 : 1));
 
-  const total = (predictions.data ?? []).reduce((s, p) => s + p.points, 0);
+  const total = (predictions.data ?? []).reduce((s, p) => s + effectivePoints(p), 0);
 
   return (
     <div className="breakdown">
@@ -31,9 +32,9 @@ export function MyBreakdownPage() {
           {rows.map(({ pred, match }) => (
             <tr key={pred.matchId}>
               <td>{match!.homeTeam} vs {match!.awayTeam}</td>
-              <td>{pred.home}–{pred.away}</td>
+              <td>{pred.home}–{pred.away}{pred.joker ? ' ★' : ''}</td>
               <td>{matchState(match!) === 'Played' ? `${match!.homeScore}–${match!.awayScore}` : '—'}</td>
-              <td>{matchState(match!) === 'Played' ? pointsLabel(pred.points) : '—'}</td>
+              <td>{matchState(match!) === 'Played' ? `${pointsLabel(pred.points)}${pred.joker ? ' ×2' : ''}` : '—'}</td>
             </tr>
           ))}
           {rows.length === 0 && (

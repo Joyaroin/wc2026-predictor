@@ -102,6 +102,7 @@ export function predictionToItem(p: Prediction): Item {
     home: p.home,
     away: p.away,
     points: p.points,
+    joker: p.joker ?? false,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -113,6 +114,7 @@ export function predictionFromItem(item: Item): Prediction {
     home: item.home as number,
     away: item.away as number,
     points: item.points as Prediction['points'],
+    joker: (item.joker ?? false) as boolean,
     createdAt: item.createdAt as string,
     updatedAt: item.updatedAt as string,
   };

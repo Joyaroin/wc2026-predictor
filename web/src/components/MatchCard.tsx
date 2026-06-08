@@ -8,10 +8,11 @@ interface Props {
   match: MatchView;
   prediction: Prediction | undefined;
   onSave: (matchId: string, home: number, away: number) => void;
+  onJoker: (matchId: string, joker: boolean) => void;
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props) {
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
   const [away, setAway] = useState<string>(prediction ? String(prediction.away) : '');
@@ -23,7 +24,10 @@ export function MatchCard({ match, prediction, onSave, saving }: Props) {
     <div className="match-card" data-testid={`match-${match.id}`}>
       <div className="match-head">
         <span className="stage">{stageLabel(match.stage, match.groupName)}</span>
-        <StatusBadge state={state} />
+        <span className="head-right">
+          {prediction?.joker && <span className="joker-badge" title="Joker — points double">★2×</span>}
+          <StatusBadge state={state} />
+        </span>
       </div>
       <div className="match-teams">
         <span className="team home">{match.homeTeam}</span>
@@ -65,6 +69,16 @@ export function MatchCard({ match, prediction, onSave, saving }: Props) {
             data-testid={`pred-save-${match.id}`}
           >
             Save
+          </button>
+          <button
+            type="button"
+            className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
+            disabled={!prediction || saving}
+            title={prediction ? 'Double this match (one Joker per matchday)' : 'Save a prediction first'}
+            onClick={() => onJoker(match.id, !prediction?.joker)}
+            data-testid={`joker-${match.id}`}
+          >
+            {prediction?.joker ? '★ Joker' : '☆ Joker'}
           </button>
         </div>
       ) : match.placeholder ? (

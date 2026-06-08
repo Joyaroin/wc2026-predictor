@@ -51,6 +51,9 @@ export function createMemoryRepositories(): Repositories {
       if (!existing) return;
       players.set(id, { ...existing, pinHash, updatedAt: new Date().toISOString() });
     },
+    async listAll() {
+      return [...players.values()];
+    },
   };
 
   const groupRepo: GroupRepo = {
@@ -123,6 +126,9 @@ export function createMemoryRepositories(): Repositories {
     },
     async listByMatch(matchId) {
       return [...predictions.values()].filter((p) => p.matchId === matchId);
+    },
+    async scanAll() {
+      return [...predictions.values()];
     },
   };
 

@@ -37,6 +37,11 @@ export interface LeaderboardRow {
   exacts: number;
   correctResults: number;
 }
+export interface GlobalLeaderboardView {
+  total: number;
+  top: LeaderboardRow[];
+  me: LeaderboardRow | null;
+}
 export interface BreakdownRow {
   matchId: string;
   home: number | null;

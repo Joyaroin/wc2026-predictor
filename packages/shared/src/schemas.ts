@@ -57,6 +57,7 @@ export const predictionSchema = z.object({
   home: goalSchema,
   away: goalSchema,
   points: pointsSchema,
+  joker: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -1,13 +1,27 @@
 // Leaderboard service: aggregate stored points, order via shared comparator (US-5.3/5.4/5.5).
-import { compareStandings, type StandingAgg } from '@wc2026/shared';
+import { compareStandings, effectivePoints, type StandingAgg, type Prediction } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
-import type { LeaderboardRow, BreakdownRow } from './dtos';
+import type { LeaderboardRow, BreakdownRow, GlobalLeaderboardView } from './dtos';
 import { ForbiddenError } from '../lib/errors';
+
+const GLOBAL_TOP = 100;
+
+/** Build a standing aggregate from a player's predictions (joker-adjusted points). */
+function aggregate(playerId: string, name: string, preds: Prediction[]): StandingAgg {
+  return {
+    playerId,
+    name,
+    points: preds.reduce((s, p) => s + effectivePoints(p), 0),
+    exacts: preds.filter((p) => p.points === 5).length,
+    correctResults: preds.filter((p) => p.points >= 2).length,
+  };
+}
 
 export interface LeaderboardService {
   getLeaderboard(callerId: string, groupId: string): Promise<LeaderboardRow[]>;
   getBreakdown(callerId: string, groupId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
+  getGlobal(callerId: string): Promise<GlobalLeaderboardView>;
 }
 
 export function createLeaderboardService(
@@ -31,18 +45,29 @@ export function createLeaderboardService(
       for (const id of memberIds) {
         const player = await players.getById(id);
         if (!player) continue;
-        const preds = await predictions.listByPlayer(id);
-        const agg: StandingAgg = {
-          playerId: id,
-          name: player.name,
-          points: preds.reduce((s, p) => s + p.points, 0),
-          exacts: preds.filter((p) => p.points === 5).length,
-          correctResults: preds.filter((p) => p.points >= 2).length,
-        };
-        aggs.push(agg);
+        aggs.push(aggregate(id, player.name, await predictions.listByPlayer(id)));
       }
       aggs.sort(compareStandings);
       return aggs.map((a, i) => ({ rank: i + 1, ...a }));
+    },
+
+    async getGlobal(callerId) {
+      // Aggregate every player's predictions in one pass (scan), then rank.
+      const allPlayers = await players.listAll();
+      const nameById = new Map(allPlayers.map((p) => [p.id, p.name]));
+      const byPlayer = new Map<string, Prediction[]>();
+      for (const pred of await predictions.scanAll()) {
+        const list = byPlayer.get(pred.playerId) ?? [];
+        list.push(pred);
+        byPlayer.set(pred.playerId, list);
+      }
+      const aggs: StandingAgg[] = allPlayers.map((p) =>
+        aggregate(p.id, nameById.get(p.id) ?? p.name, byPlayer.get(p.id) ?? []),
+      );
+      aggs.sort(compareStandings);
+      const ranked: LeaderboardRow[] = aggs.map((a, i) => ({ rank: i + 1, ...a }));
+      const me = ranked.find((r) => r.playerId === callerId) ?? null;
+      return { total: ranked.length, top: ranked.slice(0, GLOBAL_TOP), me };
     },
 
     async getBreakdown(callerId, groupId, targetPlayerId) {
