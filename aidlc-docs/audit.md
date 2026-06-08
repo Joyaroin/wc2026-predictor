@@ -333,6 +333,34 @@
 
 ---
 
+## Build and Test Stage
+**Timestamp**: 2026-06-08T18:50:00Z
+**Build Status**: Success
+**Test Status**: Pass
+**Files Generated**:
+- build-instructions.md
+- unit-test-instructions.md
+- integration-test-instructions.md
+- performance-test-instructions.md
+- security-test-instructions.md
+- e2e-test-instructions.md
+- build-and-test-summary.md
+**Verification Executed**:
+- `npm run build` passed.
+- `npm test` passed: 57/57 tests.
+- `npm audit --omit=dev` passed: 0 vulnerabilities.
+- `npm run build:server --workspace @wc2026/api` passed.
+- Docker image builds passed for `wc2026/api` and `wc2026/web`.
+- Helm dev/prod lint and template passed.
+- Terraform init and validate passed for `infra/terraform/environments/aws`.
+**Fixes During Stage**:
+- Fixed blank prod Helm image tags in `infra/helm/wc2026/values-prod.yaml`; prod now defaults to the CI-published `prod` tag.
+- Pinned `@codegenie/serverless-express` from `5.0.0` to the documented `4.16.0` to avoid a Node 22 engine mismatch during Docker builds.
+**Notes**:
+- Docker builds were verified locally after Docker Desktop was started. GitHub Actions remains responsible for GHCR image publishing.
+
+---
+
 **Decoded answers**:
 - Q1 Scoring = Exact 5 / Goal-difference 3 / Result 2 / Wrong 0
 - Q2 Knockouts = predict 90-minute scoreline only (draws allowed)

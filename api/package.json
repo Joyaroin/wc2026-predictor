@@ -13,10 +13,10 @@
     "create-table": "tsx scripts/create-table.ts"
   },
   "dependencies": {
-    "@wc2026/shared": "*",
     "@aws-sdk/client-dynamodb": "3.1063.0",
     "@aws-sdk/lib-dynamodb": "3.1063.0",
-    "@codegenie/serverless-express": "5.0.0",
+    "@codegenie/serverless-express": "4.16.0",
+    "@wc2026/shared": "*",
     "cors": "2.8.6",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",

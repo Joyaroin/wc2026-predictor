@@ -9,7 +9,7 @@ Built with the **AWS AI-DLC** workflow — see `aidlc-docs/` for the full requir
 packages/shared/   # domain types, zod schemas, pure scoring engine (+ PBT tests)
 api/               # backend: Express REST API (Lambda-adaptable) + sync job   (built in a later unit)
 web/               # React SPA (Vite + TanStack Query)                          (built in a later unit)
-infra/             # AWS CDK (Lambda, API Gateway, DynamoDB, S3/CloudFront)     (built in a later unit)
+infra/             # Terraform + k3s-on-EC2 + Helm + ArgoCD GitOps
 ```
 
 ## Scoring
@@ -26,8 +26,8 @@ Leaderboard tie-break: total points → most exact scores → most correct resul
 ```bash
 nvm use            # Node 22
 npm install
-npm test           # runs workspace tests (currently: shared)
+npm test           # runs all workspace tests
 ```
 
 ## Status
-This repository is being generated unit-by-unit via AI-DLC. Current unit: **`shared`** (complete).
+AI-DLC Build and Test is complete. The app is ready for the Operations/deployment phase once AWS deployment variables are supplied.
