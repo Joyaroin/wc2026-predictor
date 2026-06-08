@@ -1,5 +1,5 @@
-# prod: tracks the `release` ref and syncs MANUALLY (promotion). Updates apply only when you
-# move the `release` branch/tag (or bump the pinned image tag in values-prod.yaml) and click Sync.
+# prod: tracks the `release` ref. Promote via the `promote-to-prod` GitHub workflow
+# (which requires approval, then pins a commit-SHA image and pushes to `release`).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -19,6 +19,10 @@ spec:
     server: https://kubernetes.default.svc
     namespace: wc2026-prod
   syncPolicy:
-    # No `automated:` block → manual sync (promotion gate).
+    # Auto-sync: the approval gate is the `promote-to-prod` GitHub workflow (production
+    # environment). Once a promotion lands on `release`, ArgoCD deploys it automatically.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true

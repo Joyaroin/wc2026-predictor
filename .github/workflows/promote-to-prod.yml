@@ -1,0 +1,66 @@
+name: promote-to-prod
+
+# Manual promotion: pins prod to an already-built commit-SHA image, pushed to `release`.
+# Requires approval via the `production` environment. ArgoCD (auto-sync) then deploys it.
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA from main to promote (blank = latest main)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production # ← approval gate (configured with a required reviewer)
+    env:
+      REGISTRY: ghcr.io/joyaroin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve commit to promote
+        id: r
+        run: |
+          if [ -n "${{ inputs.sha }}" ]; then SHA="${{ inputs.sha }}"; else SHA=$(git rev-parse origin/main); fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Promoting commit $SHA"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify prod images exist for this SHA
+        env:
+          SHA: ${{ steps.r.outputs.sha }}
+        run: |
+          for img in wc2026-api wc2026-web; do
+            echo "Checking $REGISTRY/$img:$SHA"
+            docker manifest inspect "$REGISTRY/$img:$SHA" >/dev/null \
+              || { echo "::error::$img:$SHA not found in GHCR — was the main CI build successful for this commit?"; exit 1; }
+          done
+
+      - name: Pin prod to the SHA and push to release
+        env:
+          SHA: ${{ steps.r.outputs.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin release
+          git checkout release
+          # Take the chart/values from the promoted commit, then pin the image tags to the SHA.
+          git checkout "$SHA" -- infra/helm/wc2026
+          yq -i '.image.api.tag = strenv(SHA) | .image.web.tag = strenv(SHA)' infra/helm/wc2026/values-prod.yaml
+          git add infra/helm/wc2026
+          git commit -m "promote: deploy ${SHA} to prod" || { echo "Nothing to promote (already on this SHA)."; exit 0; }
+          git push origin release
+          echo "### ✅ Promoted \`${SHA}\` to prod" >> "$GITHUB_STEP_SUMMARY"
+          echo "ArgoCD \`wc2026-prod\` will auto-sync the new image." >> "$GITHUB_STEP_SUMMARY"
