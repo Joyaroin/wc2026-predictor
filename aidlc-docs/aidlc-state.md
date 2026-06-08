@@ -4,7 +4,7 @@
 - **Project Name**: WC2026 Predictor (FIFA-style score prediction game)
 - **Project Type**: Greenfield
 - **Start Date**: 2026-06-07T12:10:00Z
-- **Current Stage**: CONSTRUCTION - Build and Test (complete)
+- **Current Stage**: OPERATIONS - Placeholder (workflow complete)
 
 ## Workspace State
 - **Existing Code**: Yes (monorepo application generated)
@@ -21,9 +21,9 @@
 
 ## Execution Plan Summary
 - **Total Stages**: 14 (incl. completed)
-- **Stages to Execute (remaining)**: Operations
+- **Stages to Execute (remaining)**: None
 - **Stages Skipped**: Reverse Engineering (greenfield)
-- **Current Status**: Build and Test complete; next = Operations
+- **Current Status**: Build and Test approved; AI-DLC workflow complete. Operations is currently a placeholder stage.
 
 ## Stage Progress
 ### 🔵 INCEPTION PHASE
@@ -43,10 +43,10 @@ Build order: shared → backend → web → infra
 - [x] Unit `infra`: Infrastructure Design → Code Generation [x] (Terraform+Helm+ArgoCD; helm lint/template + terraform validate ×3 envs + bundles all pass)
 - [x] Build and Test (all units) (npm build/test/audit pass; API bundles pass; Docker api/web image builds pass; Helm dev/prod lint+template pass; Terraform init+validate pass)
 
-**Current**: CONSTRUCTION — Build and Test COMPLETE; next = Operations.
+**Current**: CONSTRUCTION — Build and Test COMPLETE and approved.
 
 ### 🟡 OPERATIONS PHASE
-- [ ] Operations (placeholder)
+- [x] Operations (placeholder; no executable AI-DLC workflow in this ruleset)
 
 ## Extension Configuration
 | Extension | Enabled | Mode | Decided At |
