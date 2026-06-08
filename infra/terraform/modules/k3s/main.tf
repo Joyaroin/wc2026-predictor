@@ -138,6 +138,11 @@ resource "aws_instance" "k3s" {
     encrypted   = true
   }
 
+  # Never replace the running node on AMI/user-data drift (re-bootstrap is destructive).
+  lifecycle {
+    ignore_changes = [ami, user_data]
+  }
+
   tags = merge(var.tags, { Name = var.name })
 }
 

@@ -20,6 +20,11 @@ variable "football_data_token" {
   type        = string
   sensitive   = true
 }
+variable "domain" {
+  description = "Registered domain (hosted zone must exist in this account)."
+  type        = string
+  default     = "wc-predictions-2026.com"
+}
 variable "repo_url" {
   type    = string
   default = "https://github.com/Joyaroin/wc2026-predictor.git"

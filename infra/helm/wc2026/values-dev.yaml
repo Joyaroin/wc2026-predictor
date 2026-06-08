@@ -11,8 +11,7 @@ api:
   replicas: 1
   env:
     TABLE_NAME: wc2026-dev
-    # Replace REPLACE-EIP with your dashed EC2 EIP (see `terraform output app_url_dev`).
-    ALLOWED_ORIGIN: http://dev.52-203-104-117.nip.io
+    ALLOWED_ORIGIN: https://dev.wc-predictions-2026.com
 
 serviceAccount:
   roleArn: "" # k3s on EC2 uses the node instance role for DynamoDB — no IRSA
@@ -21,11 +20,12 @@ secret:
   existingSecret: wc2026-secrets # created by the k3s bootstrap
 
 ingress:
-  host: dev.52-203-104-117.nip.io
+  host: dev.wc-predictions-2026.com
   tls:
-    enabled: false # add a domain + cert-manager later for HTTPS
+    enabled: true
+    secretName: wc2026-dev-tls
   certManager:
-    clusterIssuer: ""
+    clusterIssuer: letsencrypt-prod
 
 hpa:
   enabled: false
