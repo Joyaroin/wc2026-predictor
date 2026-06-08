@@ -26,12 +26,14 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # push the values-dev SHA bump (auto-deploy to dev)
       packages: write # push to GHCR
     env:
       REGISTRY: ghcr.io/joyaroin
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -54,5 +56,17 @@ jobs:
             --build-arg VITE_API_URL="" \
             -t "$REGISTRY/wc2026-web:$SHA" -t "$REGISTRY/wc2026-web:$ENVTAG" \
             --push .
-      # dev Helm values use tag `dev` (auto-synced). For prod, pin the :<sha> in values-prod.yaml
-      # (or use :prod) and Sync the prod Application in ArgoCD.
+
+      - name: Auto-deploy to dev (pin values-dev to this SHA)
+        if: github.ref_name == 'main'
+        run: |
+          export SHA=${{ github.sha }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main && git pull --rebase origin main
+          yq -i '.image.api.tag = strenv(SHA) | .image.web.tag = strenv(SHA)' infra/helm/wc2026/values-dev.yaml
+          git add infra/helm/wc2026/values-dev.yaml
+          # [skip ci] avoids re-triggering this workflow on the bot commit.
+          git commit -m "chore(dev): deploy ${SHA} [skip ci]" || { echo "dev already on this SHA"; exit 0; }
+          git push origin main
+      # prod is promoted via the `promote-to-prod` workflow (commit-SHA pinned, approved).
