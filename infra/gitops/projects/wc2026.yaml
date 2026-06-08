@@ -9,6 +9,8 @@ spec:
     - https://github.com/Joyaroin/wc2026-predictor.git
   destinations:
     - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
       namespace: wc2026-dev
     - server: https://kubernetes.default.svc
       namespace: wc2026-prod
