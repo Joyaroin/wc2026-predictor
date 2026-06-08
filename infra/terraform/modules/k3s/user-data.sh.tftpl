@@ -2,7 +2,8 @@
 # Bootstraps k3s + ArgoCD + ingress-nginx and applies the GitOps app-of-apps.
 # Terraform template vars: ${region}, ${football_ssm_param}, ${namespaces}, ${repo_raw_base}.
 # Shell variables are escaped as $${VAR} so Terraform leaves them intact.
-set -uxo pipefail
+# Avoid xtrace here: this script handles secrets from SSM and Kubernetes Secret literals.
+set -euo pipefail
 exec > /var/log/wc2026-bootstrap.log 2>&1
 
 # --- AWS CLI (to read the secret from SSM) ---
