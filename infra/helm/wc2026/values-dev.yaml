@@ -3,6 +3,7 @@ environment: dev
 # Public GHCR images (no registry auth needed on the cluster).
 image:
   registry: ghcr.io/joyaroin
+  pullPolicy: Always
   api: { repository: wc2026-api, tag: dev }
   web: { repository: wc2026-web, tag: dev }
 

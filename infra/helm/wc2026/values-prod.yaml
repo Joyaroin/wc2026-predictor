@@ -2,6 +2,7 @@ environment: prod
 
 image:
   registry: ghcr.io/joyaroin
+  pullPolicy: Always
   api: { repository: wc2026-api, tag: prod } # optionally pin a built SHA at promotion time
   web: { repository: wc2026-web, tag: prod }
 

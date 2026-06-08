@@ -12,7 +12,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 # Only the self-contained bundles are needed at runtime.
 COPY --from=build /repo/api/dist ./dist
-USER node
+USER 1000:1000
 EXPOSE 4000
 # Default command runs the API server; the sync CronJob overrides with ["node","dist/sync.cjs"].
 CMD ["node", "dist/server.cjs"]
