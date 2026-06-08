@@ -26,7 +26,8 @@ export function LandingPage() {
 
   return (
     <div className="landing">
-      <h1>⚽ WC2026 Predictor</h1>
+      <img src="/logo.svg" alt="" className="landing-logo" />
+      <h1>WC Predictions <span className="accent">2026</span></h1>
       <p className="muted">Pick scorelines, beat your friends. Enter a name and a 4-digit PIN to start or resume.</p>
       <form onSubmit={submit} className="card login-form">
         <label>
