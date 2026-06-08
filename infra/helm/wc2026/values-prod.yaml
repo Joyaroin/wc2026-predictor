@@ -9,7 +9,7 @@ api:
   replicas: 1 # single small node — keep modest; bump with a larger instance
   env:
     TABLE_NAME: wc2026-prod
-    ALLOWED_ORIGIN: http://REPLACE-EIP.nip.io
+    ALLOWED_ORIGIN: http://52-203-104-117.nip.io
 
 serviceAccount:
   roleArn: ""
@@ -18,7 +18,7 @@ secret:
   existingSecret: wc2026-secrets
 
 ingress:
-  host: REPLACE-EIP.nip.io
+  host: 52-203-104-117.nip.io
   tls:
     enabled: false
   certManager:
