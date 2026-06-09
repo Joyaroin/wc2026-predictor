@@ -1,5 +1,5 @@
 // Prediction service: lock + ownership enforcement (LR, OR-2) and pre/post-lock visibility (VR).
-import type { Prediction, Score } from '@wc2026/shared';
+import { weekKey, type Prediction, type Score } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { MatchService } from './matches';
@@ -61,11 +61,12 @@ export function createPredictionService(
 
       const now = clock.now().toISOString();
       if (joker) {
-        // Enforce one Joker per matchday: clear it from the caller's other predictions in this matchday.
-        const matchdayById = new Map((await matchService.list()).map((m) => [m.id, m.matchday]));
+        // Enforce one Joker per match week: clear it from the caller's other predictions that week.
+        const weekById = new Map((await matchService.list()).map((m) => [m.id, weekKey(m.kickoff)]));
+        const targetWeek = weekKey(match.kickoff);
         const mine = await predictions.listByPlayer(callerId);
         for (const p of mine) {
-          if (p.matchId !== matchId && p.joker && matchdayById.get(p.matchId) === match.matchday) {
+          if (p.matchId !== matchId && p.joker && weekById.get(p.matchId) === targetWeek) {
             await predictions.put({ ...p, joker: false, updatedAt: now });
           }
         }

@@ -43,7 +43,7 @@ export function FixturesPage() {
   return (
     <div className="fixtures">
       <h2>Fixtures</h2>
-      <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per matchday to double its points.</p>
+      <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per match week to double its points.</p>
       {(save.isError || joker.isError) && <p className="error">Could not save — the match may have started.</p>}
       {groups.map(([label, list]) => (
         <section key={label}>

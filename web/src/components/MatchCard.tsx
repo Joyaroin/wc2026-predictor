@@ -81,7 +81,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props)
             type="button"
             className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
             disabled={!prediction || saving}
-            title={prediction ? 'Double this match (one Joker per matchday)' : 'Save a prediction first'}
+            title={prediction ? 'Double this match (one Joker per match week)' : 'Save a prediction first'}
             onClick={() => onJoker(match.id, !prediction?.joker)}
             data-testid={`joker-${match.id}`}
           >

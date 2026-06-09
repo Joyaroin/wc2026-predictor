@@ -22,7 +22,7 @@ describe('joker (double points)', () => {
     expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 10], ['Mia', 5]]);
   });
 
-  it('requires a prediction, enforces one joker per matchday, and rejects locked matches', async () => {
+  it('requires a prediction, enforces one joker per match week, and rejects locked matches', async () => {
     const t = makeTestApp({ now: new Date('2026-06-15T10:00:00.000Z') }); // before kickoff
     const sam = (await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' })).body;
     await t.repos.matches.upsert(sampleMatch({ id: 'm1', matchday: 1, kickoff: '2026-06-15T18:00:00.000Z' }));
