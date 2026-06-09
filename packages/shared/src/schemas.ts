@@ -40,6 +40,10 @@ export const matchStatusSchema = z.enum([
   'FINISHED',
 ]);
 
+export const outcomeSchema = z.enum(['HOME', 'DRAW', 'AWAY']);
+export const bracketSideSchema = z.enum(['HOME', 'AWAY']);
+export const bracketInputSchema = z.object({ side: bracketSideSchema });
+
 export const pointsSchema = z.union([
   z.literal(0),
   z.literal(2),
@@ -75,7 +79,18 @@ export const matchSchema = z.object({
   status: matchStatusSchema,
   homeScore: goalSchema.nullable(),
   awayScore: goalSchema.nullable(),
+  winner: outcomeSchema.nullable().optional(),
   placeholder: z.boolean(),
+});
+
+export const bracketPickSchema = z.object({
+  playerId: z.string().min(1),
+  matchId: z.string().min(1),
+  side: bracketSideSchema,
+  teamName: z.string(),
+  points: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export const createGroupSchema = z.object({ name: groupNameSchema });

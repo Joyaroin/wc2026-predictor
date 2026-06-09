@@ -10,6 +10,8 @@ import {
   groupFromItem,
   playerToItem,
   playerFromItem,
+  bracketToItem,
+  bracketFromItem,
 } from '../../src/repos/mappers';
 
 const arbGoal = fc.integer({ min: 0, max: 30 });
@@ -43,7 +45,18 @@ const arbMatch = fc.record({
   >,
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
+  winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW') as fc.Arbitrary<'HOME' | 'AWAY' | 'DRAW'>, { nil: null }),
   placeholder: fc.boolean(),
+});
+
+const arbBracket = fc.record({
+  playerId: fc.uuid(),
+  matchId: fc.string({ minLength: 1, maxLength: 24 }),
+  side: fc.constantFrom('HOME', 'AWAY') as fc.Arbitrary<'HOME' | 'AWAY'>,
+  teamName: fc.string({ minLength: 1, maxLength: 30 }),
+  points: fc.integer({ min: 0, max: 20 }),
+  createdAt: arbIso,
+  updatedAt: arbIso,
 });
 
 const arbGroup = fc.record({
@@ -82,6 +95,11 @@ describe('mappers round-trip (PBT-02)', () => {
   it('player', () => {
     fc.assert(fc.property(arbPlayer, (p) => {
       expect(playerFromItem(playerToItem(p))).toEqual(p);
+    }));
+  });
+  it('bracket pick', () => {
+    fc.assert(fc.property(arbBracket, (b) => {
+      expect(bracketFromItem(bracketToItem(b))).toEqual(b);
     }));
   });
 });

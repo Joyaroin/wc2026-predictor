@@ -1,6 +1,21 @@
 // Pure scoring engine. No I/O, no clock, no randomness (BR-5).
 // See aidlc-docs/construction/shared/functional-design/business-logic-model.md
-import type { Score, Outcome, Points, StandingAgg } from './types';
+import type { Score, Outcome, Points, StandingAgg, Stage } from './types';
+
+/** Bonus points for correctly predicting who advances, escalating by round. */
+export const ADVANCEMENT_POINTS: Record<Stage, number> = {
+  GROUP_STAGE: 0,
+  LAST_32: 2,
+  LAST_16: 4,
+  QUARTER_FINALS: 7,
+  SEMI_FINALS: 11,
+  THIRD_PLACE: 3,
+  FINAL: 16,
+};
+
+export function advancementPoints(stage: Stage): number {
+  return ADVANCEMENT_POINTS[stage];
+}
 
 /** BR-1.5 — classify a scoreline's outcome. */
 export function outcomeOf(s: Score): Outcome {

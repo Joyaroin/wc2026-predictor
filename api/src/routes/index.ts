@@ -5,6 +5,7 @@ import {
   groupNameSchema,
   inviteCodeSchema,
   predictionInputSchema,
+  bracketInputSchema,
 } from '@wc2026/shared';
 import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
@@ -77,6 +78,10 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/predictions/me', auth, wrap((req) => services.predictions.getMine(caller(req))));
   r.put('/predictions/:matchId', auth, validateBody(predictionInputSchema), wrap((req) => services.predictions.upsert(caller(req), param(req, 'matchId'), req.body)));
   r.put('/predictions/:matchId/joker', auth, validateBody(jokerSchema), wrap((req) => services.predictions.setJoker(caller(req), param(req, 'matchId'), req.body.joker)));
+
+  // --- Knockout bracket (advancement picks) ---
+  r.get('/bracket/me', auth, wrap((req) => services.bracket.getMine(caller(req))));
+  r.put('/bracket/:matchId', auth, validateBody(bracketInputSchema), wrap((req) => services.bracket.setPick(caller(req), param(req, 'matchId'), req.body.side)));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

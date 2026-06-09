@@ -1,4 +1,4 @@
-import type { Match, Group, Prediction } from '@wc2026/shared';
+import type { Match, Group, Prediction, BracketPick, BracketSide } from '@wc2026/shared';
 
 export interface AuthResult {
   playerId: string;
@@ -104,4 +104,7 @@ export const api = {
   setJoker: (matchId: string, joker: boolean) =>
     req<Prediction>(`/predictions/${matchId}/joker`, { method: 'PUT', body: { joker } }),
   globalLeaderboard: () => req<GlobalLeaderboardView>('/leaderboard/global'),
+  myBracket: () => req<BracketPick[]>('/bracket/me'),
+  setBracketPick: (matchId: string, side: BracketSide) =>
+    req<BracketPick>(`/bracket/${matchId}`, { method: 'PUT', body: { side } }),
 };

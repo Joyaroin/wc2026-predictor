@@ -1,4 +1,4 @@
-import type { Group, Match, Prediction } from '@wc2026/shared';
+import type { Group, Match, Prediction, BracketPick } from '@wc2026/shared';
 
 /** Backend-only player record (adds credential + uniqueness key, never exposed to clients). */
 export interface PlayerRecord {
@@ -54,10 +54,19 @@ export interface PredictionRepo {
   scanAll(): Promise<Prediction[]>;
 }
 
+export interface BracketRepo {
+  put(pick: BracketPick): Promise<void>;
+  get(playerId: string, matchId: string): Promise<BracketPick | null>;
+  listByPlayer(playerId: string): Promise<BracketPick[]>;
+  listByMatch(matchId: string): Promise<BracketPick[]>;
+  scanAll(): Promise<BracketPick[]>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
   memberships: MembershipRepo;
   matches: MatchRepo;
   predictions: PredictionRepo;
+  bracket: BracketRepo;
 }

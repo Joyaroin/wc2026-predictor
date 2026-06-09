@@ -61,7 +61,22 @@ export interface Match {
   status: MatchStatus;
   homeScore: number | null; // full-time goals, null until played
   awayScore: number | null;
+  /** Who advanced/won (knockouts) — includes penalty-shootout outcomes. Null until decided. */
+  winner?: Outcome | null;
   placeholder: boolean; // true when participants are not yet determined
+}
+
+export type BracketSide = 'HOME' | 'AWAY';
+
+/** A player's prediction of which team advances from a knockout match. */
+export interface BracketPick {
+  playerId: string;
+  matchId: string;
+  side: BracketSide; // which side of the tie advances
+  teamName: string; // snapshot of the picked team's name (for display)
+  points: number; // awarded once the match is decided
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Prediction {

@@ -1,5 +1,5 @@
 // In-memory repositories — used by automated tests and the optional PERSISTENCE=memory mode.
-import type { Group, Match, Prediction } from '@wc2026/shared';
+import type { Group, Match, Prediction, BracketPick } from '@wc2026/shared';
 import type {
   Repositories,
   PlayerRepo,
@@ -8,6 +8,7 @@ import type {
   MembershipRepo,
   MatchRepo,
   PredictionRepo,
+  BracketRepo,
 } from './types';
 
 export function createMemoryRepositories(): Repositories {
@@ -18,6 +19,7 @@ export function createMemoryRepositories(): Repositories {
   const members = new Map<string, Set<string>>(); // groupId -> playerIds
   const matches = new Map<string, Match>();
   const predictions = new Map<string, Prediction>(); // `${playerId}|${matchId}`
+  const bracketPicks = new Map<string, BracketPick>(); // `${playerId}|${matchId}`
 
   const predKey = (playerId: string, matchId: string): string => `${playerId}|${matchId}`;
 
@@ -132,11 +134,30 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const bracketRepo: BracketRepo = {
+    async put(pick) {
+      bracketPicks.set(predKey(pick.playerId, pick.matchId), pick);
+    },
+    async get(playerId, matchId) {
+      return bracketPicks.get(predKey(playerId, matchId)) ?? null;
+    },
+    async listByPlayer(playerId) {
+      return [...bracketPicks.values()].filter((b) => b.playerId === playerId);
+    },
+    async listByMatch(matchId) {
+      return [...bracketPicks.values()].filter((b) => b.matchId === matchId);
+    },
+    async scanAll() {
+      return [...bracketPicks.values()];
+    },
+  };
+
   return {
     players: playerRepo,
     groups: groupRepo,
     memberships: membershipRepo,
     matches: matchRepo,
     predictions: predictionRepo,
+    bracket: bracketRepo,
   };
 }

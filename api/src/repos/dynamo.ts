@@ -19,6 +19,7 @@ import type {
   MembershipRepo,
   MatchRepo,
   PredictionRepo,
+  BracketRepo,
 } from './types';
 import {
   keys,
@@ -30,6 +31,8 @@ import {
   matchFromItem,
   predictionToItem,
   predictionFromItem,
+  bracketToItem,
+  bracketFromItem,
   type Item,
 } from './mappers';
 
@@ -295,7 +298,8 @@ export function createDynamoRepositories(config: Config): Repositories {
           TableName: Table,
           IndexName: 'GSI1',
           KeyConditionExpression: 'GSI1PK = :pk',
-          ExpressionAttributeValues: { ':pk': keys.matchPk(matchId) },
+          FilterExpression: 'begins_with(SK, :p)',
+          ExpressionAttributeValues: { ':pk': keys.matchPk(matchId), ':p': 'PRED#' },
         }),
       );
       return (r.Items ?? []).map((i) => predictionFromItem(i as Item));
@@ -306,5 +310,43 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions };
+  const bracket: BracketRepo = {
+    async put(pick) {
+      await doc.send(new PutCommand({ TableName: Table, Item: bracketToItem(pick) }));
+    },
+    async get(playerId, matchId) {
+      const r = await doc.send(
+        new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: keys.brkSk(matchId) } }),
+      );
+      return r.Item ? bracketFromItem(r.Item as Item) : null;
+    },
+    async listByPlayer(playerId) {
+      const r = await doc.send(
+        new QueryCommand({
+          TableName: Table,
+          KeyConditionExpression: 'PK = :pk AND begins_with(SK, :b)',
+          ExpressionAttributeValues: { ':pk': keys.playerPk(playerId), ':b': 'BRK#' },
+        }),
+      );
+      return (r.Items ?? []).map((i) => bracketFromItem(i as Item));
+    },
+    async listByMatch(matchId) {
+      const r = await doc.send(
+        new QueryCommand({
+          TableName: Table,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'GSI1PK = :pk',
+          FilterExpression: 'begins_with(SK, :b)',
+          ExpressionAttributeValues: { ':pk': keys.matchPk(matchId), ':b': 'BRK#' },
+        }),
+      );
+      return (r.Items ?? []).map((i) => bracketFromItem(i as Item));
+    },
+    async scanAll() {
+      const items = await scanItems('begins_with(SK, :b)', { ':b': 'BRK#' });
+      return items.map((i) => bracketFromItem(i));
+    },
+  };
+
+  return { players, groups, memberships, matches, predictions, bracket };
 }

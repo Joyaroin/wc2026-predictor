@@ -32,8 +32,22 @@ describe('mapToDomain', () => {
       status: 'FINISHED',
       homeScore: 2,
       awayScore: 1,
+      winner: null,
       placeholder: false,
     });
+  });
+
+  it('maps the knockout winner (incl. penalty outcomes)', () => {
+    const pm: ProviderMatch = {
+      id: 50,
+      stage: 'LAST_16',
+      utcDate: '2026-07-01T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Brazil' },
+      awayTeam: { name: 'Korea' },
+      score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 1 } },
+    };
+    expect(mapToDomain(pm).winner).toBe('HOME');
   });
 
   it('marks undetermined knockout teams as placeholder', () => {

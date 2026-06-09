@@ -40,6 +40,7 @@ const arbMatch = fc.record({
   status: fc.constantFrom('SCHEDULED', 'TIMED', 'IN_PLAY', 'PAUSED', 'FINISHED'),
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
+  winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW'), { nil: null }),
   placeholder: fc.boolean(),
 });
 

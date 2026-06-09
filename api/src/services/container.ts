@@ -10,6 +10,7 @@ import { createMatchService, type MatchService } from './matches';
 import { createPredictionService, type PredictionService } from './predictions';
 import { createScoringService, type ScoringService } from './scoring';
 import { createLeaderboardService, type LeaderboardService } from './leaderboard';
+import { createBracketService, type BracketService } from './bracket';
 import { createSyncService, type SyncService } from './sync';
 
 export interface Services {
@@ -20,6 +21,7 @@ export interface Services {
   predictions: PredictionService;
   scoring: ScoringService;
   leaderboard: LeaderboardService;
+  bracket: BracketService;
   sync: SyncService;
 }
 
@@ -33,7 +35,7 @@ export interface ServiceDeps {
 
 export function createServices({ repos, config, clock, logger, footballApi }: ServiceDeps): Services {
   const matches = createMatchService(repos.matches, clock);
-  const scoring = createScoringService(repos.predictions, repos.matches);
+  const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
   return {
     auth: createAuthService(repos.players, config, clock),
     players: createPlayerService(repos.players),
@@ -41,7 +43,8 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     matches,
     predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
     scoring,
-    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, clock),
+    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, clock),
+    bracket: createBracketService(repos.bracket, matches, clock),
     sync: createSyncService(footballApi, repos.matches, scoring, logger),
   };
 }

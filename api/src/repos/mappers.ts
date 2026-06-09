@@ -1,5 +1,5 @@
 // Pure mappers: domain object <-> DynamoDB single-table item. Exported for round-trip property tests (PBT-02).
-import type { Group, Match, Prediction } from '@wc2026/shared';
+import type { Group, Match, Prediction, BracketPick } from '@wc2026/shared';
 import type { PlayerRecord } from './types';
 
 export type Item = Record<string, unknown>;
@@ -12,6 +12,7 @@ export const keys = {
   codeGsi: (code: string) => `CODE#${code}`,
   memberSk: (playerId: string) => `MEMBER#${playerId}`,
   predSk: (matchId: string) => `PRED#${matchId}`,
+  brkSk: (matchId: string) => `BRK#${matchId}`,
 };
 
 // --- Player ---
@@ -86,7 +87,36 @@ export function matchFromItem(item: Item): Match {
     status: item.status as Match['status'],
     homeScore: (item.homeScore ?? null) as number | null,
     awayScore: (item.awayScore ?? null) as number | null,
+    winner: (item.winner ?? null) as Match['winner'],
     placeholder: item.placeholder as boolean,
+  };
+}
+
+// --- Bracket pick ---
+export function bracketToItem(b: BracketPick): Item {
+  return {
+    PK: keys.playerPk(b.playerId),
+    SK: keys.brkSk(b.matchId),
+    GSI1PK: keys.matchPk(b.matchId),
+    GSI1SK: keys.playerPk(b.playerId),
+    playerId: b.playerId,
+    matchId: b.matchId,
+    side: b.side,
+    teamName: b.teamName,
+    points: b.points,
+    createdAt: b.createdAt,
+    updatedAt: b.updatedAt,
+  };
+}
+export function bracketFromItem(item: Item): BracketPick {
+  return {
+    playerId: item.playerId as string,
+    matchId: item.matchId as string,
+    side: item.side as BracketPick['side'],
+    teamName: item.teamName as string,
+    points: item.points as number,
+    createdAt: item.createdAt as string,
+    updatedAt: item.updatedAt as string,
   };
 }
 

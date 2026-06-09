@@ -17,8 +17,14 @@ export interface ProviderMatch {
   status?: string;
   homeTeam?: ProviderTeam;
   awayTeam?: ProviderTeam;
-  score?: { fullTime?: { home: number | null; away: number | null } };
+  score?: { winner?: string | null; fullTime?: { home: number | null; away: number | null } };
 }
+
+const WINNER: Record<string, 'HOME' | 'AWAY' | 'DRAW'> = {
+  HOME_TEAM: 'HOME',
+  AWAY_TEAM: 'AWAY',
+  DRAW: 'DRAW',
+};
 
 const STAGES: Record<string, Stage> = {
   GROUP_STAGE: 'GROUP_STAGE',
@@ -55,6 +61,7 @@ export function mapToDomain(pm: ProviderMatch): Match {
     status: (pm.status && STATUSES[pm.status]) || 'SCHEDULED',
     homeScore: pm.score?.fullTime?.home ?? null,
     awayScore: pm.score?.fullTime?.away ?? null,
+    winner: (pm.score?.winner && WINNER[pm.score.winner]) || null,
     placeholder,
   };
 }
