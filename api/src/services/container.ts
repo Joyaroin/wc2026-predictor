@@ -11,7 +11,9 @@ import { createPredictionService, type PredictionService } from './predictions';
 import { createScoringService, type ScoringService } from './scoring';
 import { createLeaderboardService, type LeaderboardService } from './leaderboard';
 import { createBracketService, type BracketService } from './bracket';
+import { createGoldenBootService, type GoldenBootService } from './goldenBoot';
 import { createSyncService, type SyncService } from './sync';
+import { createEspnClient } from '../integration/espnClient';
 
 export interface Services {
   auth: AuthService;
@@ -22,6 +24,7 @@ export interface Services {
   scoring: ScoringService;
   leaderboard: LeaderboardService;
   bracket: BracketService;
+  goldenBoot: GoldenBootService;
   sync: SyncService;
 }
 
@@ -36,6 +39,7 @@ export interface ServiceDeps {
 export function createServices({ repos, config, clock, logger, footballApi }: ServiceDeps): Services {
   const matches = createMatchService(repos.matches, clock);
   const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
+  const espn = createEspnClient(logger);
   return {
     auth: createAuthService(repos.players, config, clock),
     players: createPlayerService(repos.players),
@@ -43,8 +47,9 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     matches,
     predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
     scoring,
-    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, clock),
+    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, clock),
     bracket: createBracketService(repos.bracket, matches, clock),
+    goldenBoot: createGoldenBootService(repos.goldenBoot, repos.stats, matches, espn, clock, logger),
     sync: createSyncService(footballApi, repos.matches, scoring, logger),
   };
 }

@@ -62,6 +62,35 @@ export interface BracketRepo {
   scanAll(): Promise<BracketPick[]>;
 }
 
+/** A user's pre-tournament Golden Boot (top scorer) prediction. */
+export interface GoldenBootPick {
+  playerId: string; // our user
+  scorerId: string; // picked footballer (ESPN athlete id)
+  scorerName: string;
+  points: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoldenBootRepo {
+  put(pick: GoldenBootPick): Promise<void>;
+  get(playerId: string): Promise<GoldenBootPick | null>;
+  scanAll(): Promise<GoldenBootPick[]>;
+}
+
+export interface TopScorer {
+  scorerId: string;
+  scorerName: string;
+  goals: number;
+}
+
+export interface StatsRepo {
+  getLeader(): Promise<TopScorer | null>;
+  setLeader(leader: TopScorer): Promise<void>;
+  getLastEspnRun(): Promise<string | null>;
+  setLastEspnRun(iso: string): Promise<void>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -69,4 +98,6 @@ export interface Repositories {
   matches: MatchRepo;
   predictions: PredictionRepo;
   bracket: BracketRepo;
+  goldenBoot: GoldenBootRepo;
+  stats: StatsRepo;
 }

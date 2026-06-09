@@ -20,6 +20,9 @@ import type {
   MatchRepo,
   PredictionRepo,
   BracketRepo,
+  GoldenBootRepo,
+  GoldenBootPick,
+  StatsRepo,
 } from './types';
 import {
   keys,
@@ -348,5 +351,50 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket };
+  const gbFromItem = (i: Item): GoldenBootPick => ({
+    playerId: i.playerId as string,
+    scorerId: i.scorerId as string,
+    scorerName: i.scorerName as string,
+    points: i.points as number,
+    createdAt: i.createdAt as string,
+    updatedAt: i.updatedAt as string,
+  });
+
+  const goldenBoot: GoldenBootRepo = {
+    async put(pick) {
+      await doc.send(
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'GBPICK', ...pick } }),
+      );
+    },
+    async get(playerId) {
+      const r = await doc.send(
+        new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: 'GBPICK' } }),
+      );
+      return r.Item ? gbFromItem(r.Item as Item) : null;
+    },
+    async scanAll() {
+      const items = await scanItems('SK = :sk', { ':sk': 'GBPICK' });
+      return items.map((i) => gbFromItem(i));
+    },
+  };
+
+  const stats: StatsRepo = {
+    async getLeader() {
+      const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
+      if (!r.Item) return null;
+      return { scorerId: r.Item.scorerId as string, scorerName: r.Item.scorerName as string, goals: r.Item.goals as number };
+    },
+    async setLeader(l) {
+      await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'LEADER', ...l } }));
+    },
+    async getLastEspnRun() {
+      const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'META' } }));
+      return r.Item ? ((r.Item.lastEspnRun ?? null) as string | null) : null;
+    },
+    async setLastEspnRun(iso) {
+      await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'META', lastEspnRun: iso } }));
+    },
+  };
+
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, stats };
 }

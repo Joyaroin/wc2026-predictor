@@ -5,12 +5,16 @@ const { services, logger } = composeFromEnv();
 
 services.sync
   .sync()
-  .then((report) => {
+  .then(async (report) => {
     logger.info('cronjob sync finished', {
       ok: report.ok,
       fetched: report.fetched,
       scored: report.scored,
       errors: report.errors,
+    });
+    // Refresh the Golden Boot top-scorer tally (self-throttled to ~15 min; no-op until KO).
+    await services.goldenBoot.refresh().catch((err) => {
+      logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
     });
     process.exit(report.ok ? 0 : 1);
   })

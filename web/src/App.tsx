@@ -9,6 +9,7 @@ import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
 import { BracketPage } from './pages/BracketPage';
+import { GoldenBootPage } from './pages/GoldenBootPage';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />
           <Route path="/fixtures" element={<RequireAuth><FixturesPage /></RequireAuth>} />
           <Route path="/bracket" element={<RequireAuth><BracketPage /></RequireAuth>} />
+          <Route path="/golden-boot" element={<RequireAuth><GoldenBootPage /></RequireAuth>} />
           <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
           <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />

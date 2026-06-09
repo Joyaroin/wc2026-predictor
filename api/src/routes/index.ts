@@ -34,6 +34,7 @@ const changePinSchema = z.object({ currentPin: pinSchema, newPin: pinSchema });
 const createGroupSchema = z.object({ name: groupNameSchema });
 const joinSchema = z.object({ inviteCode: inviteCodeSchema });
 const jokerSchema = z.object({ joker: z.boolean() });
+const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -82,6 +83,11 @@ export function buildRouter(services: Services, config: Config): Router {
   // --- Knockout bracket (advancement picks) ---
   r.get('/bracket/me', auth, wrap((req) => services.bracket.getMine(caller(req))));
   r.put('/bracket/:matchId', auth, validateBody(bracketInputSchema), wrap((req) => services.bracket.setPick(caller(req), param(req, 'matchId'), req.body.side)));
+
+  // --- Golden Boot / Player of the Tournament ---
+  r.get('/players/pool', auth, wrap(() => services.goldenBoot.getPlayerPool()));
+  r.get('/golden-boot', auth, wrap((req) => services.goldenBoot.getStatus(caller(req))));
+  r.put('/golden-boot', auth, validateBody(goldenBootSchema), wrap((req) => services.goldenBoot.setPick(caller(req), req.body.scorerId, req.body.scorerName)));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

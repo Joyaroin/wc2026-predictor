@@ -102,6 +102,11 @@ tr.me { background: #12233b; }
 .pick.winner { border-color: var(--accent2); }
 .pick:disabled { opacity: 0.7; cursor: default; }
 
+.gb-row { margin: 4px 0; }
+.gb-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 360px; overflow-y: auto; }
+.gb-results .pick { width: 100%; text-align: left; }
+.points { color: var(--accent); font-weight: 700; }
+
 .group-list { list-style: none; padding: 0; }
 .group-list li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 

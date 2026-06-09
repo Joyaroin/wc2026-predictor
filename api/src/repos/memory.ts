@@ -9,6 +9,10 @@ import type {
   MatchRepo,
   PredictionRepo,
   BracketRepo,
+  GoldenBootRepo,
+  GoldenBootPick,
+  StatsRepo,
+  TopScorer,
 } from './types';
 
 export function createMemoryRepositories(): Repositories {
@@ -152,6 +156,36 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const goldenBootPicks = new Map<string, GoldenBootPick>(); // playerId -> pick
+  const goldenBootRepo: GoldenBootRepo = {
+    async put(pick) {
+      goldenBootPicks.set(pick.playerId, pick);
+    },
+    async get(playerId) {
+      return goldenBootPicks.get(playerId) ?? null;
+    },
+    async scanAll() {
+      return [...goldenBootPicks.values()];
+    },
+  };
+
+  let leader: TopScorer | null = null;
+  let lastEspnRun: string | null = null;
+  const statsRepo: StatsRepo = {
+    async getLeader() {
+      return leader;
+    },
+    async setLeader(l) {
+      leader = l;
+    },
+    async getLastEspnRun() {
+      return lastEspnRun;
+    },
+    async setLastEspnRun(iso) {
+      lastEspnRun = iso;
+    },
+  };
+
   return {
     players: playerRepo,
     groups: groupRepo,
@@ -159,5 +193,7 @@ export function createMemoryRepositories(): Repositories {
     matches: matchRepo,
     predictions: predictionRepo,
     bracket: bracketRepo,
+    goldenBoot: goldenBootRepo,
+    stats: statsRepo,
   };
 }

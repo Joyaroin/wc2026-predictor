@@ -107,4 +107,19 @@ export const api = {
   myBracket: () => req<BracketPick[]>('/bracket/me'),
   setBracketPick: (matchId: string, side: BracketSide) =>
     req<BracketPick>(`/bracket/${matchId}`, { method: 'PUT', body: { side } }),
+  playerPool: () => req<WcPlayer[]>('/players/pool'),
+  goldenBoot: () => req<GoldenBootStatus>('/golden-boot'),
+  setGoldenBoot: (scorerId: string, scorerName: string) =>
+    req<{ scorerId: string; scorerName: string }>('/golden-boot', { method: 'PUT', body: { scorerId, scorerName } }),
 };
+
+export interface WcPlayer {
+  id: string;
+  name: string;
+  team: string;
+}
+export interface GoldenBootStatus {
+  pick: { scorerId: string; scorerName: string; points: number } | null;
+  leader: { scorerId: string; scorerName: string; goals: number } | null;
+  locked: boolean;
+}
