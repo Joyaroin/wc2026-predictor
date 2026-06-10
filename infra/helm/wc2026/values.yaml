@@ -36,7 +36,8 @@ web:
 
 sync:
   enabled: true
-  schedule: "*/10 * * * *"
+  # Every 2 minutes so live scores stay fresh (1 request/run; within free-tier limits).
+  schedule: "*/2 * * * *"
   resources:
     requests: { cpu: 25m, memory: 128Mi }
     limits: { cpu: 250m, memory: 256Mi }

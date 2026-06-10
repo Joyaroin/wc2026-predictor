@@ -40,6 +40,13 @@ spec:
                 secretKeyRef:
                   name: {{ include "wc2026.secretName" . }}
                   key: FOOTBALL_DATA_TOKEN
+            # Optional — gates admin actions (Player of the Tournament). Absent = admin disabled.
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: ADMIN_TOKEN
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health
