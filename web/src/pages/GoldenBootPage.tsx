@@ -24,29 +24,25 @@ export function GoldenBootPage() {
   const leader = status.data?.leader;
 
   return (
-    <div className="golden-boot">
+    <section className="card award">
       <h2>🥇 Golden Boot</h2>
       <p className="muted fine">Predict the <b>top scorer</b> of the tournament before kick-off. Correct pick = <b>+15</b> bonus points.</p>
 
-      <div className="card">
-        <div className="gb-row"><span className="muted">Your pick:</span> <strong>{myPick ? myPick.scorerName : '— none yet —'}</strong>{myPick && myPick.points > 0 && <span className="points"> +{myPick.points}</span>}</div>
-        <div className="gb-row"><span className="muted">Current top scorer:</span> <strong>{leader ? `${leader.scorerName} (${leader.goals})` : 'TBD'}</strong></div>
-        {locked && <p className="muted fine">🔒 Picks are locked — the tournament has started.</p>}
-      </div>
+      <div className="gb-row"><span className="muted">Your pick: </span><strong>{myPick ? myPick.scorerName : '— none yet —'}</strong>{myPick && myPick.points > 0 && <span className="points"> +{myPick.points}</span>}</div>
+      <div className="gb-row"><span className="muted">Current top scorer: </span><strong>{leader ? `${leader.scorerName} (${leader.goals})` : 'TBD'}</strong></div>
 
-      {!locked && (
-        <div className="card">
-          <label>
-            Search a player or team
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="e.g. Mbappé, Brazil…"
-              data-testid="gb-search"
-              disabled={pool.isLoading}
-            />
-          </label>
+      {locked ? (
+        <p className="muted fine">🔒 Picks are locked — the tournament has started.</p>
+      ) : (
+        <div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search a player or team…"
+            data-testid="gb-search"
+            disabled={pool.isLoading}
+          />
           {pool.isLoading && <p className="muted">Loading squads…</p>}
           {search.trim().length >= 2 && matches.length === 0 && !pool.isLoading && <p className="muted">No players found.</p>}
           <ul className="gb-results">
@@ -65,6 +61,6 @@ export function GoldenBootPage() {
           </ul>
         </div>
       )}
-    </div>
+    </section>
   );
 }

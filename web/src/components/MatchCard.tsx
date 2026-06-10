@@ -30,7 +30,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
-  const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)}` : '–';
+  const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)} pts` : '- pts';
   const selectedPos = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId)?.position : undefined;
 
   const teamSide = (code: string | null, name: string, side: 'home' | 'away') => (
@@ -91,6 +91,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
 
         {editable && (
           <div className="mc-bonus">
+            <div className="mc-divider" />
             <div className="bonus-title">First team to score</div>
             <div className="firstteam-row">
               <button
@@ -115,6 +116,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
               </button>
             </div>
 
+            <div className="mc-divider" />
             <div className="bonus-title">First player to score</div>
             <button
               type="button"
