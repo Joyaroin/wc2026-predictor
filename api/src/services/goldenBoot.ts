@@ -10,6 +10,15 @@ export const GOLDEN_BOOT_BONUS = 15;
 const POOL_TTL_MS = 6 * 60 * 60 * 1000;
 const ESPN_THROTTLE_MS = 15 * 60 * 1000;
 
+// Custom joke entries added to the player pool (just for fun).
+const FUN_PLAYERS: WcPlayer[] = [
+  { id: 'fun-ryan-masri', name: 'Ryan Masri', team: 'Lebanon', position: '' },
+  { id: 'fun-tarek-eid', name: 'Tarek Eid', team: 'Israel / Lebanon', position: '' },
+  { id: 'fun-dany-alamedinne', name: 'Dany Alamedinne', team: 'Israel', position: '' },
+  { id: 'fun-ziad', name: 'Ziad', team: 'Israel', position: '' },
+  { id: 'fun-adham-sedik', name: 'Adham Sedik', team: 'Tanzania', position: '' },
+];
+
 export interface GoldenBootStatus {
   pick: { scorerId: string; scorerName: string; points: number } | null;
   leader: TopScorer | null;
@@ -55,7 +64,7 @@ export function createGoldenBootService(
 
   return {
     async getPlayerPool() {
-      if (pool.length > 0 && Date.now() - poolAt < POOL_TTL_MS) return pool;
+      if (pool.length > 0 && Date.now() - poolAt < POOL_TTL_MS) return [...FUN_PLAYERS, ...pool];
       try {
         const fetched = await espn.fetchPlayerPool();
         if (fetched.length > 0) {
@@ -65,7 +74,7 @@ export function createGoldenBootService(
       } catch (err) {
         logger.warn('golden boot pool fetch failed', { error: err instanceof Error ? err.message : 'unknown' });
       }
-      return pool;
+      return [...FUN_PLAYERS, ...pool];
     },
 
     async setPick(callerId, scorerId, scorerName) {
