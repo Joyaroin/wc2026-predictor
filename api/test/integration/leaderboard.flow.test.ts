@@ -29,7 +29,7 @@ describe('leaderboard flow (US-2.x / US-5.x)', () => {
     const lb = await request(t.app).get(`/api/groups/${groupId}/leaderboard`).set('Authorization', `Bearer ${samTok}`);
     expect(lb.status).toBe(200);
     expect(lb.body.map((r: { name: string; points: number; rank: number }) => [r.rank, r.name, r.points])).toEqual([
-      [1, 'Sam', 5],
+      [1, 'Sam', 12],
       [2, 'Mia', 2],
     ]);
   });

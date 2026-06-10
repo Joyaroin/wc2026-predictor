@@ -19,8 +19,8 @@ export type MatchStatus =
 
 export type Outcome = 'HOME' | 'DRAW' | 'AWAY';
 
-/** Points awarded for a single match prediction. */
-export type Points = 0 | 2 | 3 | 5;
+/** Points awarded for a single match scoreline prediction (additive, 0–12). */
+export type Points = number;
 
 /** A scoreline (predicted or actual). Goals are integers in [0, 30] (see schemas). */
 export interface Score {

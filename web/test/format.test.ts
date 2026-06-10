@@ -28,10 +28,11 @@ describe('formatKickoff timezone', () => {
 });
 
 describe('pointsLabel', () => {
-  it('labels each tier', () => {
-    expect(pointsLabel(5)).toContain('Exact');
-    expect(pointsLabel(3)).toContain('Goal diff');
-    expect(pointsLabel(2)).toContain('Result');
+  it('labels points additively', () => {
+    expect(pointsLabel(12)).toContain('Exact');
+    expect(pointsLabel(12)).toContain('12');
+    expect(pointsLabel(5)).toBe('+5');
+    expect(pointsLabel(2)).toBe('+2');
     expect(pointsLabel(0)).toBe('+0');
   });
 });

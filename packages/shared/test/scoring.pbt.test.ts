@@ -1,53 +1,53 @@
-// Property-based tests for the scoring engine (PBT-03 invariants, PBT-07 generators, PBT-08 shrink/seed).
-// fast-check logs the seed and shrunk counterexample automatically on failure.
+// Property-based tests for the additive scoring engine.
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { computePoints, outcomeOf, compareStandings } from '../src/scoring';
+import { computePoints, outcomeOf, compareStandings, MAX_SCORELINE_POINTS } from '../src/scoring';
 import type { Score, StandingAgg } from '../src/types';
 
-// PBT-07 — domain generators (bounded, realistic goal counts incl. boundaries 0 and 30).
 const arbGoal = fc.integer({ min: 0, max: 30 });
 const arbScore: fc.Arbitrary<Score> = fc.record({ home: arbGoal, away: arbGoal });
 
 const arbStanding: fc.Arbitrary<StandingAgg> = fc.record({
   playerId: fc.uuid(),
   name: fc.string({ minLength: 1, maxLength: 30 }),
-  points: fc.nat({ max: 500 }),
+  points: fc.nat({ max: 5000 }),
   exacts: fc.nat({ max: 104 }),
   correctResults: fc.nat({ max: 104 }),
 });
 
 const swap = (s: Score): Score => ({ home: s.away, away: s.home });
 
-describe('computePoints — invariants (SP-1..SP-7)', () => {
-  it('SP-1: result is always one of {0,2,3,5}', () => {
+describe('computePoints — additive invariants', () => {
+  it('SP-1: 0 ≤ points ≤ 12', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
-        expect([0, 2, 3, 5]).toContain(computePoints(p, a));
+        const pts = computePoints(p, a);
+        expect(pts).toBeGreaterThanOrEqual(0);
+        expect(pts).toBeLessThanOrEqual(MAX_SCORELINE_POINTS);
       }),
     );
   });
 
-  it('SP-2/SP-5: exact prediction ⇔ 5', () => {
+  it('SP-2: exact prediction ⇔ 12', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
         const exact = p.home === a.home && p.away === a.away;
-        expect(computePoints(p, a) === 5).toBe(exact);
+        expect(computePoints(p, a) === 12).toBe(exact);
       }),
     );
   });
 
-  it('SP-3: wrong outcome ⇒ 0', () => {
+  it('SP-3: wrong outcome ⇒ points ∈ {0, 2} (at most one team’s goals can match)', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
         if (outcomeOf(p) !== outcomeOf(a)) {
-          expect(computePoints(p, a)).toBe(0);
+          expect([0, 2]).toContain(computePoints(p, a));
         }
       }),
     );
   });
 
-  it('SP-4: correct outcome ⇒ never 0', () => {
+  it('SP-4: correct outcome ⇒ at least 2', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
         if (outcomeOf(p) === outcomeOf(a)) {
@@ -57,13 +57,12 @@ describe('computePoints — invariants (SP-1..SP-7)', () => {
     );
   });
 
-  it('SP-6: 3 ⇒ same outcome and same goal difference (not exact)', () => {
+  it('SP-5: correct goal difference ⇒ outcome also correct and ≥ 5', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
-        if (computePoints(p, a) === 3) {
+        if (p.home - p.away === a.home - a.away) {
           expect(outcomeOf(p)).toBe(outcomeOf(a));
-          expect(p.home - p.away).toBe(a.home - a.away);
-          expect(p.home === a.home && p.away === a.away).toBe(false);
+          expect(computePoints(p, a)).toBeGreaterThanOrEqual(5);
         }
       }),
     );

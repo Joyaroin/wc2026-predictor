@@ -2,30 +2,52 @@
 // See aidlc-docs/construction/shared/functional-design/business-logic-model.md
 import type { Score, Outcome, Points, StandingAgg } from './types';
 
-/** BR-1.5 — classify a scoreline's outcome. */
+/** Classify a scoreline's outcome. */
 export function outcomeOf(s: Score): Outcome {
   if (s.home > s.away) return 'HOME';
   if (s.home < s.away) return 'AWAY';
   return 'DRAW';
 }
 
-/**
- * BR-1 — points for a prediction against the actual full-time score.
- *   exact = 5, correct goal difference = 3, correct result = 2, wrong = 0.
- * @param prediction the player's predicted scoreline
- * @param actual the actual full-time scoreline (must be a complete score)
- */
+/** Additive scoreline breakdown — each component scores independently. */
+export interface ScoreBreakdown {
+  outcome: boolean; // correct win/draw/win
+  goalDiff: boolean; // correct goal difference
+  exact: boolean; // exact final scoreline
+  home: boolean; // correct goals for team 1 (home)
+  away: boolean; // correct goals for team 2 (away)
+  points: number;
+}
+
+export const SCORE_POINTS = {
+  outcome: 2,
+  goalDiff: 3,
+  exact: 3,
+  home: 2,
+  away: 2,
+} as const;
+
+/** Highest possible scoreline points (a perfect exact score). First team/player to score add up to +8 more. */
+export const MAX_SCORELINE_POINTS = SCORE_POINTS.outcome + SCORE_POINTS.goalDiff + SCORE_POINTS.exact + SCORE_POINTS.home + SCORE_POINTS.away; // 12
+
+/** Additive points for a scoreline prediction vs the actual full-time score. */
+export function scoreBreakdown(prediction: Score, actual: Score): ScoreBreakdown {
+  const outcome = outcomeOf(prediction) === outcomeOf(actual);
+  const goalDiff = prediction.home - prediction.away === actual.home - actual.away;
+  const home = prediction.home === actual.home;
+  const away = prediction.away === actual.away;
+  const exact = home && away;
+  const points =
+    (outcome ? SCORE_POINTS.outcome : 0) +
+    (goalDiff ? SCORE_POINTS.goalDiff : 0) +
+    (exact ? SCORE_POINTS.exact : 0) +
+    (home ? SCORE_POINTS.home : 0) +
+    (away ? SCORE_POINTS.away : 0);
+  return { outcome, goalDiff, exact, home, away, points };
+}
+
 export function computePoints(prediction: Score, actual: Score): Points {
-  if (prediction.home === actual.home && prediction.away === actual.away) {
-    return 5; // BR-1.1 exact
-  }
-  if (outcomeOf(prediction) !== outcomeOf(actual)) {
-    return 0; // BR-1.4 wrong outcome
-  }
-  if (prediction.home - prediction.away === actual.home - actual.away) {
-    return 3; // BR-1.2 same outcome + same goal difference
-  }
-  return 2; // BR-1.3 correct outcome only
+  return scoreBreakdown(prediction, actual).points;
 }
 
 /** Points after applying the Joker multiplier (doubles when joker is set). */

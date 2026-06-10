@@ -44,12 +44,8 @@ export const outcomeSchema = z.enum(['HOME', 'DRAW', 'AWAY']);
 export const bracketSideSchema = z.enum(['HOME', 'AWAY']);
 export const bracketInputSchema = z.object({ side: bracketSideSchema });
 
-export const pointsSchema = z.union([
-  z.literal(0),
-  z.literal(2),
-  z.literal(3),
-  z.literal(5),
-]);
+// Per-prediction points: scoreline (max 12) + first team to score (+2) + first player to score (+6) = max 20.
+export const pointsSchema = z.number().int().min(0).max(20);
 
 /** Request body when a player submits/updates a prediction. */
 export const predictionInputSchema = scoreSchema;

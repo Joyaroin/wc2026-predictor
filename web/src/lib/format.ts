@@ -19,16 +19,9 @@ export function isLive(status: Match['status']): boolean {
 }
 
 export function pointsLabel(points: number): string {
-  switch (points) {
-    case 5:
-      return 'Exact +5';
-    case 3:
-      return 'Goal diff +3';
-    case 2:
-      return 'Result +2';
-    default:
-      return '+0';
-  }
+  if (points >= 12) return `Exact +${points}`;
+  if (points > 0) return `+${points}`;
+  return '+0';
 }
 
 /** Format a kickoff time in the given IANA timezone (defaults to the device's), showing the zone. */

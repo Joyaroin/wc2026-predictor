@@ -9,15 +9,15 @@ describe('scoringService.scoreMatch', () => {
     await repos.matches.upsert(sampleMatch({ id: 'm1', status: 'FINISHED', homeScore: 2, awayScore: 1 }));
 
     const now = new Date().toISOString();
-    await repos.predictions.put({ playerId: 'a', matchId: 'm1', home: 2, away: 1, points: 0, createdAt: now, updatedAt: now }); // exact → 5
-    await repos.predictions.put({ playerId: 'b', matchId: 'm1', home: 3, away: 0, points: 0, createdAt: now, updatedAt: now }); // home win, wrong margin → result only → 2
-    await repos.predictions.put({ playerId: 'c', matchId: 'm1', home: 0, away: 1, points: 0, createdAt: now, updatedAt: now }); // wrong → 0
+    await repos.predictions.put({ playerId: 'a', matchId: 'm1', home: 2, away: 1, points: 0, createdAt: now, updatedAt: now }); // exact → 12
+    await repos.predictions.put({ playerId: 'b', matchId: 'm1', home: 3, away: 0, points: 0, createdAt: now, updatedAt: now }); // home win only → 2
+    await repos.predictions.put({ playerId: 'c', matchId: 'm1', home: 0, away: 2, points: 0, createdAt: now, updatedAt: now }); // nothing right → 0
 
     const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
     const count = await scoring.scoreMatch('m1');
 
     expect(count).toBe(3);
-    expect((await repos.predictions.get('a', 'm1'))?.points).toBe(5);
+    expect((await repos.predictions.get('a', 'm1'))?.points).toBe(12);
     expect((await repos.predictions.get('b', 'm1'))?.points).toBe(2);
     expect((await repos.predictions.get('c', 'm1'))?.points).toBe(0);
   });

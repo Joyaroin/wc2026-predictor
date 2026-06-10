@@ -19,7 +19,7 @@ describe('joker (double points)', () => {
     await t.services.scoring.scoreMatch('m1');
 
     const lb = await request(t.app).get(`/api/groups/${group.id}/leaderboard`).set(auth(sam.token));
-    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 10], ['Mia', 5]]);
+    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 24], ['Mia', 12]]);
   });
 
   it('requires a prediction, enforces one joker per match week, and rejects locked matches', async () => {
@@ -64,7 +64,7 @@ describe('global leaderboard', () => {
 
     const g = (await request(t.app).get('/api/leaderboard/global').set(auth(mia.token))).body;
     expect(g.total).toBe(2);
-    expect(g.top.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 10], ['Mia', 2]]);
+    expect(g.top.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 24], ['Mia', 2]]);
     expect(g.me.name).toBe('Mia');
   });
 });

@@ -22,7 +22,7 @@ const arbPrediction = fc.record({
   matchId: fc.string({ minLength: 1, maxLength: 24 }),
   home: arbGoal,
   away: arbGoal,
-  points: fc.constantFrom(0, 2, 3, 5) as fc.Arbitrary<0 | 2 | 3 | 5>,
+  points: fc.integer({ min: 0, max: 20 }),
   joker: fc.boolean(),
   createdAt: arbIso,
   updatedAt: arbIso,
