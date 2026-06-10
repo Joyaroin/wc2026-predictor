@@ -15,8 +15,11 @@ import type {
   DarkHorsePick,
   TournamentWinnerRepo,
   TournamentWinnerPick,
+  PottRepo,
+  PottPick,
   StatsRepo,
   TopScorer,
+  Winner,
 } from './types';
 
 export function createMemoryRepositories(): Repositories {
@@ -199,8 +202,22 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const pottPicks = new Map<string, PottPick>();
+  const pottRepo: PottRepo = {
+    async put(pick) {
+      pottPicks.set(pick.playerId, pick);
+    },
+    async get(playerId) {
+      return pottPicks.get(playerId) ?? null;
+    },
+    async scanAll() {
+      return [...pottPicks.values()];
+    },
+  };
+
   let leader: TopScorer | null = null;
   let lastEspnRun: string | null = null;
+  let pottWinner: Winner | null = null;
   const statsRepo: StatsRepo = {
     async getLeader() {
       return leader;
@@ -214,6 +231,12 @@ export function createMemoryRepositories(): Repositories {
     async setLastEspnRun(iso) {
       lastEspnRun = iso;
     },
+    async getPottWinner() {
+      return pottWinner;
+    },
+    async setPottWinner(w) {
+      pottWinner = w;
+    },
   };
 
   return {
@@ -226,6 +249,7 @@ export function createMemoryRepositories(): Repositories {
     goldenBoot: goldenBootRepo,
     darkHorse: darkHorseRepo,
     tournamentWinner: tournamentWinnerRepo,
+    pott: pottRepo,
     stats: statsRepo,
   };
 }

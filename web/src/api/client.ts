@@ -117,7 +117,16 @@ export const api = {
   tournamentWinner: () => req<TournamentWinnerStatus>('/tournament-winner'),
   setTournamentWinner: (teamCode: string, teamName: string) =>
     req<{ teamCode: string; teamName: string }>('/tournament-winner', { method: 'PUT', body: { teamCode, teamName } }),
+  playerOfTournament: () => req<PottStatus>('/player-of-tournament'),
+  setPlayerOfTournament: (winnerId: string, winnerName: string) =>
+    req<{ winnerId: string; winnerName: string }>('/player-of-tournament', { method: 'PUT', body: { winnerId, winnerName } }),
 };
+
+export interface PottStatus {
+  pick: { winnerId: string; winnerName: string; points: number } | null;
+  winner: { id: string; name: string } | null;
+  locked: boolean;
+}
 
 export interface TournamentWinnerStatus {
   teams: DarkHorseTeam[];

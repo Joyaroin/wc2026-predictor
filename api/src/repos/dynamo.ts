@@ -26,6 +26,8 @@ import type {
   DarkHorsePick,
   TournamentWinnerRepo,
   TournamentWinnerPick,
+  PottRepo,
+  PottPick,
   StatsRepo,
 } from './types';
 import {
@@ -436,6 +438,33 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  const pottFromItem = (i: Item): PottPick => ({
+    playerId: i.playerId as string,
+    winnerId: i.winnerId as string,
+    winnerName: i.winnerName as string,
+    points: i.points as number,
+    createdAt: i.createdAt as string,
+    updatedAt: i.updatedAt as string,
+  });
+
+  const pott: PottRepo = {
+    async put(pick) {
+      await doc.send(
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'POTTPICK', ...pick } }),
+      );
+    },
+    async get(playerId) {
+      const r = await doc.send(
+        new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: 'POTTPICK' } }),
+      );
+      return r.Item ? pottFromItem(r.Item as Item) : null;
+    },
+    async scanAll() {
+      const items = await scanItems('SK = :sk', { ':sk': 'POTTPICK' });
+      return items.map((i) => pottFromItem(i));
+    },
+  };
+
   const stats: StatsRepo = {
     async getLeader() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
@@ -452,7 +481,14 @@ export function createDynamoRepositories(config: Config): Repositories {
     async setLastEspnRun(iso) {
       await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'META', lastEspnRun: iso } }));
     },
+    async getPottWinner() {
+      const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'POTT' } }));
+      return r.Item ? { id: r.Item.id as string, name: r.Item.name as string } : null;
+    },
+    async setPottWinner(w) {
+      await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'POTT', ...w } }));
+    },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, stats };
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, stats };
 }

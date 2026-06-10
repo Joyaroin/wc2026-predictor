@@ -26,6 +26,7 @@ export const testConfig: Config = {
   allowedOrigin: '*',
   sessionTtlDays: 30,
   persistence: 'memory',
+  adminToken: 'test-admin-token',
 };
 
 export interface TestApp {

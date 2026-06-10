@@ -36,6 +36,7 @@ const joinSchema = z.object({ inviteCode: inviteCodeSchema });
 const jokerSchema = z.object({ joker: z.boolean() });
 const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
 const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
+const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -93,6 +94,10 @@ export function buildRouter(services: Services, config: Config): Router {
   r.put('/dark-horse', auth, validateBody(darkHorseSchema), wrap((req) => services.darkHorse.setPick(caller(req), req.body.teamCode, req.body.teamName)));
   r.get('/tournament-winner', auth, wrap((req) => services.tournamentWinner.getStatus(caller(req))));
   r.put('/tournament-winner', auth, validateBody(darkHorseSchema), wrap((req) => services.tournamentWinner.setPick(caller(req), req.body.teamCode, req.body.teamName)));
+  r.get('/player-of-tournament', auth, wrap((req) => services.pott.getStatus(caller(req))));
+  r.put('/player-of-tournament', auth, validateBody(pottSchema), wrap((req) => services.pott.setPick(caller(req), req.body.winnerId, req.body.winnerName)));
+  // Admin-only (X-Admin-Token header): set the official Player of the Tournament winner.
+  r.post('/admin/player-of-tournament', validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

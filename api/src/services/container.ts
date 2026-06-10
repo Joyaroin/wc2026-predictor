@@ -14,6 +14,7 @@ import { createBracketService, type BracketService } from './bracket';
 import { createGoldenBootService, type GoldenBootService } from './goldenBoot';
 import { createDarkHorseService, type DarkHorseService } from './darkHorse';
 import { createTournamentWinnerService, type TournamentWinnerService } from './tournamentWinner';
+import { createPottService, type PottService } from './playerOfTournament';
 import { createSyncService, type SyncService } from './sync';
 import { createEspnClient } from '../integration/espnClient';
 
@@ -29,6 +30,7 @@ export interface Services {
   goldenBoot: GoldenBootService;
   darkHorse: DarkHorseService;
   tournamentWinner: TournamentWinnerService;
+  pott: PottService;
   sync: SyncService;
 }
 
@@ -51,11 +53,12 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     matches,
     predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
     scoring,
-    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, repos.darkHorse, repos.tournamentWinner, clock),
+    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, repos.darkHorse, repos.tournamentWinner, repos.pott, clock),
     bracket: createBracketService(repos.bracket, matches, clock),
     goldenBoot: createGoldenBootService(repos.goldenBoot, repos.stats, matches, espn, clock, logger),
     darkHorse: createDarkHorseService(repos.darkHorse, matches, clock),
     tournamentWinner: createTournamentWinnerService(repos.tournamentWinner, matches, clock),
+    pott: createPottService(repos.pott, repos.stats, matches, clock, config.adminToken),
     sync: createSyncService(footballApi, repos.matches, scoring, logger),
   };
 }

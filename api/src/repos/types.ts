@@ -89,6 +89,9 @@ export interface StatsRepo {
   setLeader(leader: TopScorer): Promise<void>;
   getLastEspnRun(): Promise<string | null>;
   setLastEspnRun(iso: string): Promise<void>;
+  /** Admin-set Player of the Tournament winner. */
+  getPottWinner(): Promise<Winner | null>;
+  setPottWinner(winner: Winner): Promise<void>;
 }
 
 /** A user's pre-tournament Dark Horse pick (a team). */
@@ -123,6 +126,27 @@ export interface TournamentWinnerRepo {
   scanAll(): Promise<TournamentWinnerPick[]>;
 }
 
+/** A user's pre-tournament Player of the Tournament pick (a footballer). */
+export interface PottPick {
+  playerId: string; // our user
+  winnerId: string; // picked footballer (ESPN athlete id)
+  winnerName: string;
+  points: number; // +25 if they win the award (admin-set)
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PottRepo {
+  put(pick: PottPick): Promise<void>;
+  get(playerId: string): Promise<PottPick | null>;
+  scanAll(): Promise<PottPick[]>;
+}
+
+export interface Winner {
+  id: string;
+  name: string;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -133,5 +157,6 @@ export interface Repositories {
   goldenBoot: GoldenBootRepo;
   darkHorse: DarkHorseRepo;
   tournamentWinner: TournamentWinnerRepo;
+  pott: PottRepo;
   stats: StatsRepo;
 }

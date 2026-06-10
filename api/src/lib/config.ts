@@ -9,6 +9,8 @@ export interface Config {
   allowedOrigin: string;
   sessionTtlDays: number;
   persistence: 'dynamo' | 'memory';
+  /** Token gating admin actions (e.g. setting Player of the Tournament). Empty = admin disabled. */
+  adminToken: string;
 }
 
 export class ConfigError extends Error {}
@@ -35,5 +37,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     allowedOrigin: required('ALLOWED_ORIGIN'),
     sessionTtlDays: Number(env.SESSION_TTL_DAYS ?? '30'),
     persistence,
+    adminToken: (env.ADMIN_TOKEN ?? '').trim(),
   };
 }
