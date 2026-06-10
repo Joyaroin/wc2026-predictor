@@ -1,9 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Prediction } from '@wc2026/shared';
+import { weekKey, type Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
 import { stageLabel } from '../lib/format';
+
+interface Week {
+  key: string;
+  label: string; // date range, e.g. "Jun 8 – 14"
+  summary: string; // groups / stages in the week
+  matches: MatchView[];
+}
 
 export function FixturesPage() {
   const qc = useQueryClient();
@@ -35,7 +42,16 @@ export function FixturesPage() {
     return map;
   }, [predictions.data]);
 
-  const groups = useMemo(() => groupByStage(matches.data ?? []), [matches.data]);
+  const weeks = useMemo(() => groupByWeek(matches.data ?? []), [matches.data]);
+
+  // Default-open the "active" week (first with an unplayed match); collapse the rest.
+  const activeKey = useMemo(() => {
+    const active = weeks.find((w) => w.matches.some((m) => m.status !== 'FINISHED'));
+    return active?.key ?? weeks[0]?.key;
+  }, [weeks]);
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const isOpen = (key: string) => overrides[key] ?? key === activeKey;
+  const toggle = (key: string) => setOverrides((o) => ({ ...o, [key]: !(o[key] ?? key === activeKey) }));
 
   if (matches.isLoading) return <p>Loading fixtures…</p>;
   if (matches.isError) return <p className="error">Could not load fixtures. Is the API running?</p>;
@@ -45,41 +61,72 @@ export function FixturesPage() {
       <h2>Fixtures</h2>
       <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per match week to double its points.</p>
       {(save.isError || joker.isError) && <p className="error">Could not save — the match may have started.</p>}
-      {groups.map(([label, list]) => (
-        <section key={label}>
-          <h3 className="stage-header">{label}</h3>
-          <div className="match-grid">
-            {list.map((m) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                prediction={predByMatch.get(m.id)}
-                saving={save.isPending || joker.isPending}
-                onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
-                onJoker={(matchId, on) => joker.mutate({ matchId, on })}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+
+      <div className="weeks">
+        {weeks.map((w, i) => {
+          const open = isOpen(w.key);
+          return (
+            <section key={w.key} className={`week ${open ? 'open' : ''}`}>
+              <button className="week-header" onClick={() => toggle(w.key)} aria-expanded={open} data-testid={`week-${w.key}`}>
+                <span className="week-cal" aria-hidden>📅</span>
+                <span className="week-title">
+                  Matchweek {i + 1}
+                  <span className="muted fine"> · {w.label}</span>
+                </span>
+                <span className="week-sum muted fine">{w.summary} · {w.matches.length}</span>
+                <span className={`chevron ${open ? 'down' : ''}`} aria-hidden>▸</span>
+              </button>
+              {open && (
+                <div className="match-grid">
+                  {w.matches.map((m) => (
+                    <MatchCard
+                      key={m.id}
+                      match={m}
+                      prediction={predByMatch.get(m.id)}
+                      saving={save.isPending || joker.isPending}
+                      onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
+                      onJoker={(matchId, on) => joker.mutate({ matchId, on })}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function groupByStage(matches: MatchView[]): [string, MatchView[]][] {
-  const order = ['GROUP_STAGE', 'LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'];
-  const byLabel = new Map<string, MatchView[]>();
+function groupByWeek(matches: MatchView[]): Week[] {
+  const byWeek = new Map<string, MatchView[]>();
   for (const m of matches) {
-    const label = stageLabel(m.stage, m.groupName);
-    const list = byLabel.get(label) ?? [];
+    const k = weekKey(m.kickoff);
+    const list = byWeek.get(k) ?? [];
     list.push(m);
-    byLabel.set(label, list);
+    byWeek.set(k, list);
   }
-  return [...byLabel.entries()].sort(
-    (a, b) => order.indexOf(stageOf(a[1])) - order.indexOf(stageOf(b[1])) || a[0].localeCompare(b[0]),
-  );
+  return [...byWeek.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, list]) => {
+      list.sort((a, b) => a.kickoff.localeCompare(b.kickoff));
+      return { key, label: weekRange(key), summary: weekSummary(list), matches: list };
+    });
 }
 
-function stageOf(list: MatchView[]): string {
-  return list[0]?.stage ?? 'GROUP_STAGE';
+function weekRange(mondayISO: string): string {
+  const mon = new Date(`${mondayISO}T00:00:00Z`);
+  const sun = new Date(mon);
+  sun.setUTCDate(mon.getUTCDate() + 6);
+  const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return `${fmt(mon)} – ${fmt(sun)}`;
+}
+
+function weekSummary(list: MatchView[]): string {
+  const groups = [...new Set(list.filter((m) => m.stage === 'GROUP_STAGE' && m.groupName).map((m) => m.groupName as string))].sort();
+  const stages = [...new Set(list.filter((m) => m.stage !== 'GROUP_STAGE').map((m) => stageLabel(m.stage, null)))];
+  const parts: string[] = [];
+  if (groups.length > 0) parts.push(groups.length > 2 ? `Groups ${groups[0]}–${groups[groups.length - 1]}` : `Group ${groups.join(', ')}`);
+  parts.push(...stages);
+  return parts.join(' · ') || 'Fixtures';
 }

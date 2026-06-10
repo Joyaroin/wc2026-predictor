@@ -61,6 +61,20 @@ input {
 .match-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .match-grid { grid-template-columns: 1fr 1fr; } }
 
+/* Match-week accordion */
+.weeks { display: grid; gap: 10px; }
+.week { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+.week.open { border-color: #2a3a5c; }
+.week-header { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: transparent; border: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.week-header:hover { background: #131c30; }
+.week-cal { font-size: 1.05rem; flex: none; }
+.week-title { font-weight: 700; flex: none; }
+.week-sum { margin-left: auto; text-align: right; }
+.chevron { flex: none; color: var(--muted); transition: transform 0.15s ease; }
+.chevron.down { transform: rotate(90deg); color: var(--accent); }
+.week .match-grid { padding: 0 14px 14px; }
+@media (max-width: 560px) { .week-sum { display: none; } }
+
 .match-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
 .match-head { display: flex; justify-content: space-between; align-items: center; }
 .stage { font-size: 0.8rem; color: var(--muted); }
