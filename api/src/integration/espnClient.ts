@@ -9,6 +9,41 @@ export interface WcPlayer {
   name: string;
   team: string;
 }
+const TURKIYE_MANUAL_ROSTER: WcPlayer[] = [
+  // Goalkeepers
+  { id: 'turkiye-altay-bayindir', name: 'Altay Bayındır', team: 'Türkiye' },
+  { id: 'turkiye-mert-gunok', name: 'Mert Günok', team: 'Türkiye' },
+  { id: 'turkiye-ugurcan-cakir', name: 'Uğurcan Çakır', team: 'Türkiye' },
+
+  // Defenders
+  { id: 'turkiye-abdulkerim-bardakci', name: 'Abdülkerim Bardakcı', team: 'Türkiye' },
+  { id: 'turkiye-caglar-soyuncu', name: 'Çağlar Söyüncü', team: 'Türkiye' },
+  { id: 'turkiye-eren-elmali', name: 'Eren Elmalı', team: 'Türkiye' },
+  { id: 'turkiye-ferdi-kadioglu', name: 'Ferdi Kadıoğlu', team: 'Türkiye' },
+  { id: 'turkiye-merih-demiral', name: 'Merih Demiral', team: 'Türkiye' },
+  { id: 'turkiye-mert-muldur', name: 'Mert Müldür', team: 'Türkiye' },
+  { id: 'turkiye-ozan-kabak', name: 'Ozan Kabak', team: 'Türkiye' },
+  { id: 'turkiye-samet-akaydin', name: 'Samet Akaydın', team: 'Türkiye' },
+  { id: 'turkiye-zeki-celik', name: 'Zeki Çelik', team: 'Türkiye' },
+
+  // Midfielders
+  { id: 'turkiye-hakan-calhanoglu', name: 'Hakan Çalhanoğlu', team: 'Türkiye' },
+  { id: 'turkiye-ismail-yuksek', name: 'İsmail Yüksek', team: 'Türkiye' },
+  { id: 'turkiye-kaan-ayhan', name: 'Kaan Ayhan', team: 'Türkiye' },
+  { id: 'turkiye-orkun-kokcu', name: 'Orkun Kökçü', team: 'Türkiye' },
+  { id: 'turkiye-salih-ozcan', name: 'Salih Özcan', team: 'Türkiye' },
+
+  // Forwards
+  { id: 'turkiye-arda-guler', name: 'Arda Güler', team: 'Türkiye' },
+  { id: 'turkiye-baris-alper-yilmaz', name: 'Barış Alper Yılmaz', team: 'Türkiye' },
+  { id: 'turkiye-can-uzun', name: 'Can Uzun', team: 'Türkiye' },
+  { id: 'turkiye-deniz-gul', name: 'Deniz Gül', team: 'Türkiye' },
+  { id: 'turkiye-irfan-can-kahveci', name: 'İrfan Can Kahveci', team: 'Türkiye' },
+  { id: 'turkiye-kenan-yildiz', name: 'Kenan Yıldız', team: 'Türkiye' },
+  { id: 'turkiye-kerem-akturkoglu', name: 'Kerem Aktürkoğlu', team: 'Türkiye' },
+  { id: 'turkiye-oguz-aydin', name: 'Oğuz Aydın', team: 'Türkiye' },
+  { id: 'turkiye-yunus-akgun', name: 'Yunus Akgün', team: 'Türkiye' },
+];
 export interface ScorerTally {
   scorerId: string;
   scorerName: string;
@@ -91,7 +126,24 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
           logger.warn('espn roster failed', { teamId, error: err instanceof Error ? err.message : 'unknown' });
         }
       }
-      return players;
+      const hasTurkiye = players.some((p) => {
+          const team = p.team.toLowerCase();
+          return team === 'turkey' || team === 'turkiye' || team === 'türkiye';
+        });
+
+        const combinedPlayers = hasTurkiye
+          ? players
+          : [...players, ...TURKIYE_MANUAL_ROSTER];
+
+        if (!hasTurkiye) {
+          logger.warn('ESPN player pool missing Türkiye; added manual Türkiye roster fallback');
+        }
+
+        const dedupedPlayers = Array.from(
+          new Map(combinedPlayers.map((p) => [p.id, p])).values()
+        );
+
+        return dedupedPlayers;
     },
 
     async fetchFinishedEventGoals(dates, skipEventIds) {
