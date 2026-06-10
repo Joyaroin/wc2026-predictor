@@ -4,6 +4,7 @@ import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
 import { matchState, pointsLabel, formatKickoff, stageLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
+import { Flag } from './Flag';
 
 interface Props {
   match: MatchView;
@@ -32,9 +33,9 @@ export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props)
         </span>
       </div>
       <div className="match-teams">
-        <span className="team home">{match.homeTeam}</span>
+        <span className="team home"><Flag code={match.homeCode} name={match.homeTeam} />{match.homeTeam}</span>
         <span className="vs">vs</span>
-        <span className="team away">{match.awayTeam}</span>
+        <span className="team away"><Flag code={match.awayCode} name={match.awayTeam} />{match.awayTeam}</span>
       </div>
       <div className="kickoff">{formatKickoff(match.kickoff, timeZone)}</div>
 

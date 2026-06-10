@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { advancementPoints, type BracketPick, type BracketSide, type Stage } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { matchState, stageLabel } from '../lib/format';
+import { Flag } from '../components/Flag';
 
 const KO_ORDER: Stage[] = ['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'];
 
@@ -66,7 +67,7 @@ function BracketRow({
   const canPick = !match.placeholder && state === 'Open';
   const decided = match.winner === 'HOME' || match.winner === 'AWAY';
 
-  const teamBtn = (side: BracketSide, name: string) => {
+  const teamBtn = (side: BracketSide, name: string, code: string | null) => {
     const picked = pick?.side === side;
     const isWinner = decided && match.winner === side;
     return (
@@ -76,7 +77,7 @@ function BracketRow({
         onClick={() => onPick(side)}
         data-testid={`bracket-${match.id}-${side}`}
       >
-        {name}{isWinner ? ' ✓' : ''}
+        <Flag code={code} name={name} />{name}{isWinner ? ' ✓' : ''}
       </button>
     );
   };
@@ -87,9 +88,9 @@ function BracketRow({
         <span className="muted">{match.homeTeam} vs {match.awayTeam} — to be decided</span>
       ) : (
         <div className="bracket-teams">
-          {teamBtn('HOME', match.homeTeam)}
+          {teamBtn('HOME', match.homeTeam, match.homeCode)}
           <span className="vs">vs</span>
-          {teamBtn('AWAY', match.awayTeam)}
+          {teamBtn('AWAY', match.awayTeam, match.awayCode)}
           {pick && decided && (
             <span className={pick.points > 0 ? 'points' : 'muted'}>
               {pick.points > 0 ? `+${pick.points}` : '+0'}

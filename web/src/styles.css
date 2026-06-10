@@ -66,6 +66,8 @@ input {
 .stage { font-size: 0.8rem; color: var(--muted); }
 .match-teams { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 8px 0; }
 .match-teams .vs { color: var(--muted); font-weight: 400; }
+.match-teams .team { display: inline-flex; align-items: center; gap: 6px; }
+.flag { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12); flex: none; }
 .kickoff { font-size: 0.85rem; color: var(--muted); }
 .prediction-edit { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
 .prediction-edit input { width: 56px; text-align: center; }
@@ -97,7 +99,7 @@ tr.me { background: #12233b; }
 .bracket-list { display: grid; gap: 8px; }
 .bracket-row { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .bracket-teams { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.pick { background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 8px; font-weight: 600; flex: 1; min-width: 90px; }
+.pick { background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 8px; font-weight: 600; flex: 1; min-width: 90px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .pick.on { background: #12233b; border-color: var(--accent); color: var(--accent); }
 .pick.winner { border-color: var(--accent2); }
 .pick:disabled { opacity: 0.7; cursor: default; }
