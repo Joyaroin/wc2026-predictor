@@ -38,6 +38,9 @@ describe('golden boot refresh', () => {
       async fetchPlayerPool() {
         return [];
       },
+      async fetchMatchFirstGoals() {
+        return [];
+      },
       async fetchFinishedEventGoals() {
         return [
           {

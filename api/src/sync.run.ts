@@ -12,6 +12,10 @@ services.sync
       scored: report.scored,
       errors: report.errors,
     });
+    // Ingest ESPN first-goal facts (first team / first scorer) and re-score affected matches.
+    await services.espnFacts.ingest().catch((err) => {
+      logger.warn('espn facts ingest failed', { error: err instanceof Error ? err.message : 'unknown' });
+    });
     // Refresh the Golden Boot top-scorer tally (self-throttled to ~15 min; no-op until KO).
     await services.goldenBoot.refresh().catch((err) => {
       logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' });

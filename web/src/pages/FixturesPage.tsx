@@ -4,6 +4,7 @@ import { weekKey, type Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
 import { stageLabel } from '../lib/format';
+import { canonTeam } from '../lib/teams';
 
 interface Week {
   key: string;
@@ -24,6 +25,18 @@ export function FixturesPage() {
     },
   });
   const predictions = useQuery({ queryKey: ['my-predictions'], queryFn: api.myPredictions });
+  const pool = useQuery({ queryKey: ['player-pool'], queryFn: api.playerPool, staleTime: 60 * 60 * 1000 });
+
+  const squadByTeam = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }[]>();
+    for (const p of pool.data ?? []) {
+      const k = canonTeam(p.team);
+      const list = map.get(k) ?? [];
+      list.push({ id: p.id, name: p.name });
+      map.set(k, list);
+    }
+    return map;
+  }, [pool.data]);
 
   const save = useMutation({
     mutationFn: ({ matchId, home, away }: { matchId: string; home: number; away: number }) =>
@@ -39,6 +52,12 @@ export function FixturesPage() {
   const firstTeam = useMutation({
     mutationFn: ({ matchId, home, away, side }: { matchId: string; home: number; away: number; side: 'HOME' | 'AWAY' | null }) =>
       api.upsertPrediction(matchId, { home, away, firstTeam: side }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
+  });
+
+  const firstScorer = useMutation({
+    mutationFn: ({ matchId, home, away, scorerId, scorerName }: { matchId: string; home: number; away: number; scorerId: string | null; scorerName: string | null }) =>
+      api.upsertPrediction(matchId, { home, away, firstScorerId: scorerId, firstScorerName: scorerName }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
   });
 
@@ -89,12 +108,17 @@ export function FixturesPage() {
                       key={m.id}
                       match={m}
                       prediction={predByMatch.get(m.id)}
-                      saving={save.isPending || joker.isPending || firstTeam.isPending}
+                      saving={save.isPending || joker.isPending || firstTeam.isPending || firstScorer.isPending}
+                      squad={[...(squadByTeam.get(canonTeam(m.homeTeam)) ?? []), ...(squadByTeam.get(canonTeam(m.awayTeam)) ?? [])]}
                       onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
                       onJoker={(matchId, on) => joker.mutate({ matchId, on })}
                       onFirstTeam={(matchId, side) => {
                         const p = predByMatch.get(matchId);
                         if (p) firstTeam.mutate({ matchId, home: p.home, away: p.away, side });
+                      }}
+                      onFirstScorer={(matchId, scorerId, scorerName) => {
+                        const p = predByMatch.get(matchId);
+                        if (p) firstScorer.mutate({ matchId, home: p.home, away: p.away, scorerId, scorerName });
                       }}
                     />
                   ))}

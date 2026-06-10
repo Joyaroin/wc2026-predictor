@@ -12,14 +12,21 @@ interface Props {
   onSave: (matchId: string, home: number, away: number) => void;
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
+  onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
+  squad: { id: string; name: string }[];
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onFirstScorer, squad, saving }: Props) {
   const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
   const [away, setAway] = useState<string>(prediction ? String(prediction.away) : '');
+  const [scorerOpen, setScorerOpen] = useState(false);
+  const [scorerQ, setScorerQ] = useState('');
+  const scorerMatches = scorerQ.trim().length < 1
+    ? squad.slice(0, 20)
+    : squad.filter((p) => p.name.toLowerCase().includes(scorerQ.toLowerCase())).slice(0, 20);
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
@@ -112,6 +119,43 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, sav
               >
                 <Flag code={match.awayCode} name={match.awayTeam} />
               </button>
+              <button
+                type="button"
+                className={prediction.firstScorerId ? 'scorer-btn on' : 'scorer-btn'}
+                disabled={saving}
+                onClick={() => setScorerOpen((o) => !o)}
+                data-testid={`scorer-toggle-${match.id}`}
+                title="First goalscorer (+6)"
+              >
+                ⚽ {prediction.firstScorerName ?? 'First scorer'}
+              </button>
+            </div>
+          )}
+          {prediction && scorerOpen && (
+            <div className="scorer-pick" data-testid={`scorer-pick-${match.id}`}>
+              {squad.length === 0 ? (
+                <span className="muted fine">Squad not available yet.</span>
+              ) : (
+                <>
+                  <input type="text" value={scorerQ} onChange={(e) => setScorerQ(e.target.value)} placeholder="Search scorer…" aria-label="search scorer" />
+                  <ul>
+                    {prediction.firstScorerId && (
+                      <li><button className="muted" onClick={() => { onFirstScorer(match.id, null, null); setScorerOpen(false); }}>✕ Clear</button></li>
+                    )}
+                    {scorerMatches.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          className={prediction.firstScorerId === p.id ? 'on' : ''}
+                          onClick={() => { onFirstScorer(match.id, p.id, p.name); setScorerOpen(false); }}
+                          data-testid={`scorer-${match.id}-${p.id}`}
+                        >
+                          {p.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
         </div>

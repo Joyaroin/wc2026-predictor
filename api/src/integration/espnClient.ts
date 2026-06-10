@@ -56,9 +56,18 @@ export function extractGoals(summary: Json): { scorerId: string; scorerName: str
   return out;
 }
 
+export interface MatchFirstGoal {
+  date: string; // ISO
+  homeName: string;
+  awayName: string;
+  /** First goal: which ESPN side scored + the scorer. null = finished 0-0 (no goals). */
+  first: { side: 'HOME' | 'AWAY'; scorerId: string; scorerName: string } | null;
+}
+
 export interface EspnClient {
   fetchPlayerPool(): Promise<WcPlayer[]>;
   fetchFinishedEventGoals(dates: string[], skipEventIds: Set<string>): Promise<EventGoals[]>;
+  fetchMatchFirstGoals(dates: string[]): Promise<MatchFirstGoal[]>;
 }
 
 export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch): EspnClient {
@@ -92,6 +101,48 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         }
       }
       return players;
+    },
+
+    async fetchMatchFirstGoals(dates) {
+      const result: MatchFirstGoal[] = [];
+      for (const date of dates) {
+        let board: Json;
+        try {
+          board = await json(`${BASE}/scoreboard?dates=${date}`);
+        } catch (err) {
+          logger.warn('espn scoreboard failed', { date, error: err instanceof Error ? err.message : 'unknown' });
+          continue;
+        }
+        for (const e of get<Json[]>(board, 'events') ?? []) {
+          const state = get<string>(e, 'status', 'type', 'state');
+          if (state !== 'post') continue; // finished only
+          const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
+          if (!comp) continue;
+          const sideById = new Map<string, 'HOME' | 'AWAY'>();
+          let homeName = '';
+          let awayName = '';
+          for (const c of get<Json[]>(comp, 'competitors') ?? []) {
+            const side = get<string>(c, 'homeAway') === 'home' ? 'HOME' : 'AWAY';
+            const id = String(get<string | number>(c, 'team', 'id') ?? get<string | number>(c, 'id') ?? '');
+            const name = get<string>(c, 'team', 'displayName') ?? '';
+            if (id) sideById.set(id, side);
+            if (side === 'HOME') homeName = name;
+            else awayName = name;
+          }
+          const goal = (get<Json[]>(comp, 'details') ?? []).find((d) => get<boolean>(d, 'scoringPlay') === true);
+          let first: MatchFirstGoal['first'] = null;
+          if (goal) {
+            const teamId = String(get<string | number>(goal, 'team', 'id') ?? '');
+            const ath = (get<Json[]>(goal, 'athletesInvolved') ?? [])[0];
+            const scorerId = ath ? String(get<string | number>(ath, 'id') ?? '') : '';
+            const scorerName = (ath && get<string>(ath, 'displayName')) ?? 'Unknown';
+            const side = sideById.get(teamId);
+            if (side && scorerId) first = { side, scorerId, scorerName };
+          }
+          result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first });
+        }
+      }
+      return result;
     },
 
     async fetchFinishedEventGoals(dates, skipEventIds) {
