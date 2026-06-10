@@ -31,148 +31,159 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
 
+  const teamSide = (code: string | null, name: string, side: 'home' | 'away') => (
+    <div className={`mc-team ${side}`}>
+      {match.placeholder ? <span className="mc-flag-tbd" /> : <Flag code={code} name={name} big />}
+      <span className="mc-code" title={name}>{code ?? 'TBD'}</span>
+    </div>
+  );
+
+  const scoreBox = (value: string, set: (v: string) => void, side: 'home' | 'away') =>
+    editable ? (
+      <input
+        className={`mc-box ${value !== '' ? 'filled' : ''}`}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        max={30}
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        data-testid={`pred-${side}-${match.id}`}
+        aria-label={`${side === 'home' ? match.homeTeam : match.awayTeam} score`}
+      />
+    ) : (
+      <span className={`mc-box ${prediction ? 'filled' : ''}`} aria-label={`${side === 'home' ? match.homeTeam : match.awayTeam} predicted score`}>
+        {prediction ? (side === 'home' ? prediction.home : prediction.away) : '–'}
+      </span>
+    );
+
   return (
     <div className="match-card" data-testid={`match-${match.id}`}>
-      <div className="match-head">
-        <span className="stage">{stageLabel(match.stage, match.groupName)}</span>
+      <div className="mc-header">
+        <span className="mc-round">{stageLabel(match.stage, match.groupName)}</span>
         <span className="head-right">
           {prediction?.joker && <span className="joker-badge" title="Joker — points double">★2×</span>}
           <StatusBadge state={state} />
         </span>
       </div>
-      <div className="match-teams">
-        <span className="team home"><Flag code={match.homeCode} name={match.homeTeam} />{match.homeTeam}</span>
-        <span className="vs">vs</span>
-        <span className="team away"><Flag code={match.awayCode} name={match.awayTeam} />{match.awayTeam}</span>
+
+      <div className="mc-body">
+        <div className="mc-meta">{formatKickoff(match.kickoff, timeZone)}</div>
+
+        <div className="mc-pred">
+          {teamSide(match.homeCode, match.homeTeam, 'home')}
+          <div className="mc-scores">
+            {scoreBox(home, setHome, 'home')}
+            <span className="mc-dash">–</span>
+            {scoreBox(away, setAway, 'away')}
+          </div>
+          {teamSide(match.awayCode, match.awayTeam, 'away')}
+        </div>
+
+        {state === 'Live' && (
+          <div className="mc-result live" data-testid={`live-${match.id}`}>
+            <span className="live-dot">●</span> LIVE <strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
+          </div>
+        )}
+        {state === 'Played' && (
+          <div className="mc-result">
+            FT <strong>{match.homeScore}–{match.awayScore}</strong>
+            {prediction && <span className="points"> · {pointsLabel(prediction.points)}</span>}
+          </div>
+        )}
+        {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
+        {!editable && !match.placeholder && state !== 'Live' && state !== 'Played' && !prediction && (
+          <div className="mc-result muted">No prediction</div>
+        )}
+
+        {editable && (
+          <>
+            <div className="mc-actions">
+              <button
+                className="btn-save"
+                disabled={!canSave || saving}
+                onClick={() => onSave(match.id, Number(home), Number(away))}
+                data-testid={`pred-save-${match.id}`}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
+                disabled={!prediction || saving}
+                title={prediction ? 'Double this match (one Joker per match week)' : 'Save a prediction first'}
+                onClick={() => onJoker(match.id, !prediction?.joker)}
+                data-testid={`joker-${match.id}`}
+              >
+                {prediction?.joker ? '★ Joker' : '☆ Joker'}
+              </button>
+            </div>
+
+            {prediction && (
+              <div className="bonus-row" data-testid={`bonus-${match.id}`}>
+                <span className="bonus-label" title="First team to score (+2)">1st goal:</span>
+                <button
+                  type="button"
+                  className={prediction.firstTeam === 'HOME' ? 'firstteam on' : 'firstteam'}
+                  disabled={saving}
+                  title={match.homeTeam}
+                  onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'HOME' ? null : 'HOME')}
+                  data-testid={`first-home-${match.id}`}
+                >
+                  <Flag code={match.homeCode} name={match.homeTeam} />
+                </button>
+                <button
+                  type="button"
+                  className={prediction.firstTeam === 'AWAY' ? 'firstteam on' : 'firstteam'}
+                  disabled={saving}
+                  title={match.awayTeam}
+                  onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'AWAY' ? null : 'AWAY')}
+                  data-testid={`first-away-${match.id}`}
+                >
+                  <Flag code={match.awayCode} name={match.awayTeam} />
+                </button>
+                <button
+                  type="button"
+                  className={prediction.firstScorerId ? 'scorer-btn on' : 'scorer-btn'}
+                  disabled={saving}
+                  onClick={() => setScorerOpen((o) => !o)}
+                  data-testid={`scorer-toggle-${match.id}`}
+                  title="First goalscorer (+6)"
+                >
+                  ⚽ {prediction.firstScorerName ?? 'First scorer'}
+                </button>
+              </div>
+            )}
+            {prediction && scorerOpen && (
+              <div className="scorer-pick" data-testid={`scorer-pick-${match.id}`}>
+                {squad.length === 0 ? (
+                  <span className="muted fine">Squad not available yet.</span>
+                ) : (
+                  <>
+                    <input type="text" value={scorerQ} onChange={(e) => setScorerQ(e.target.value)} placeholder="Search scorer…" aria-label="search scorer" />
+                    <ul>
+                      {prediction.firstScorerId && (
+                        <li><button className="muted" onClick={() => { onFirstScorer(match.id, null, null); setScorerOpen(false); }}>✕ Clear</button></li>
+                      )}
+                      {scorerMatches.map((p) => (
+                        <li key={p.id}>
+                          <button
+                            className={prediction.firstScorerId === p.id ? 'on' : ''}
+                            onClick={() => { onFirstScorer(match.id, p.id, p.name); setScorerOpen(false); }}
+                            data-testid={`scorer-${match.id}-${p.id}`}
+                          >
+                            {p.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
-      <div className="kickoff">{formatKickoff(match.kickoff, timeZone)}</div>
-
-      {state === 'Live' && (
-        <div className="result live" data-testid={`live-${match.id}`}>
-          <span className="live-dot">●</span> LIVE <strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
-        </div>
-      )}
-      {state === 'Played' && (
-        <div className="result">
-          Result: <strong>{match.homeScore}–{match.awayScore}</strong>
-        </div>
-      )}
-
-      {editable ? (
-        <div className="prediction-edit">
-          <input
-            type="number"
-            min={0}
-            max={30}
-            value={home}
-            onChange={(e) => setHome(e.target.value)}
-            data-testid={`pred-home-${match.id}`}
-            aria-label="home score"
-          />
-          <span>–</span>
-          <input
-            type="number"
-            min={0}
-            max={30}
-            value={away}
-            onChange={(e) => setAway(e.target.value)}
-            data-testid={`pred-away-${match.id}`}
-            aria-label="away score"
-          />
-          <button
-            disabled={!canSave || saving}
-            onClick={() => onSave(match.id, Number(home), Number(away))}
-            data-testid={`pred-save-${match.id}`}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
-            disabled={!prediction || saving}
-            title={prediction ? 'Double this match (one Joker per match week)' : 'Save a prediction first'}
-            onClick={() => onJoker(match.id, !prediction?.joker)}
-            data-testid={`joker-${match.id}`}
-          >
-            {prediction?.joker ? '★ Joker' : '☆ Joker'}
-          </button>
-          {prediction && (
-            <div className="bonus-row" data-testid={`bonus-${match.id}`}>
-              <span className="bonus-label" title="First team to score (+2)">1st goal:</span>
-              <button
-                type="button"
-                className={prediction.firstTeam === 'HOME' ? 'firstteam on' : 'firstteam'}
-                disabled={saving}
-                title={match.homeTeam}
-                onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'HOME' ? null : 'HOME')}
-                data-testid={`first-home-${match.id}`}
-              >
-                <Flag code={match.homeCode} name={match.homeTeam} />
-              </button>
-              <button
-                type="button"
-                className={prediction.firstTeam === 'AWAY' ? 'firstteam on' : 'firstteam'}
-                disabled={saving}
-                title={match.awayTeam}
-                onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'AWAY' ? null : 'AWAY')}
-                data-testid={`first-away-${match.id}`}
-              >
-                <Flag code={match.awayCode} name={match.awayTeam} />
-              </button>
-              <button
-                type="button"
-                className={prediction.firstScorerId ? 'scorer-btn on' : 'scorer-btn'}
-                disabled={saving}
-                onClick={() => setScorerOpen((o) => !o)}
-                data-testid={`scorer-toggle-${match.id}`}
-                title="First goalscorer (+6)"
-              >
-                ⚽ {prediction.firstScorerName ?? 'First scorer'}
-              </button>
-            </div>
-          )}
-          {prediction && scorerOpen && (
-            <div className="scorer-pick" data-testid={`scorer-pick-${match.id}`}>
-              {squad.length === 0 ? (
-                <span className="muted fine">Squad not available yet.</span>
-              ) : (
-                <>
-                  <input type="text" value={scorerQ} onChange={(e) => setScorerQ(e.target.value)} placeholder="Search scorer…" aria-label="search scorer" />
-                  <ul>
-                    {prediction.firstScorerId && (
-                      <li><button className="muted" onClick={() => { onFirstScorer(match.id, null, null); setScorerOpen(false); }}>✕ Clear</button></li>
-                    )}
-                    {scorerMatches.map((p) => (
-                      <li key={p.id}>
-                        <button
-                          className={prediction.firstScorerId === p.id ? 'on' : ''}
-                          onClick={() => { onFirstScorer(match.id, p.id, p.name); setScorerOpen(false); }}
-                          data-testid={`scorer-${match.id}-${p.id}`}
-                        >
-                          {p.name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      ) : match.placeholder ? (
-        <div className="muted">Teams not decided yet</div>
-      ) : (
-        <div className="prediction-readonly">
-          {prediction ? (
-            <>
-              Your pick: <strong>{prediction.home}–{prediction.away}</strong>
-              {state === 'Played' && <span className="points">{pointsLabel(prediction.points)}</span>}
-            </>
-          ) : (
-            <span className="muted">No prediction</span>
-          )}
-        </div>
-      )}
     </div>
   );
 }
