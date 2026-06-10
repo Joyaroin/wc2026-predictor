@@ -103,6 +103,9 @@ tr.me { background: #12233b; }
 .pick.on { background: #12233b; border-color: var(--accent); color: var(--accent); }
 .pick.winner { border-color: var(--accent2); }
 .pick:disabled { opacity: 0.7; cursor: default; }
+.pick-name { flex: 1; text-align: left; }
+.dh { color: var(--accent); font-weight: 700; font-size: 0.78rem; flex: none; }
+.won { color: var(--accent2); font-weight: 800; flex: none; }
 
 .gb-row { margin: 4px 0; }
 .gb-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 360px; overflow-y: auto; }

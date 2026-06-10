@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { advancementPoints, type BracketPick, type BracketSide, type Stage } from '@wc2026/shared';
+import { darkHorsePoints, darkHorseMultiplier, type BracketPick, type BracketSide, type Stage } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { matchState, stageLabel } from '../lib/format';
 import { Flag } from '../components/Flag';
@@ -35,12 +35,12 @@ export function BracketPage() {
 
   return (
     <div className="bracket">
-      <h2>🏆 Bracket</h2>
-      <p className="muted fine">Pick who advances each knockout tie. Correct picks earn escalating bonus points (R32 +2 → Final +16).</p>
+      <h2>🐴 Dark Horse Bracket</h2>
+      <p className="muted fine">Pick who advances each knockout tie. The longer a team's odds, the more a correct pick is worth — favourites ×1 up to minnows ×10, multiplied by the round (R32 → Final). Back the underdogs!</p>
       {rounds.length === 0 && <p className="muted">Knockout matches appear once the bracket is set.</p>}
       {rounds.map(({ stage, list }) => (
         <section key={stage}>
-          <h3 className="stage-header">{stageLabel(stage, null)} <span className="muted fine">+{advancementPoints(stage)}</span></h3>
+          <h3 className="stage-header">{stageLabel(stage, null)}</h3>
           <div className="bracket-list">
             {list.map((m) => (
               <BracketRow key={m.id} match={m} pick={pickByMatch.get(m.id)} busy={pick.isPending} onPick={(side) => pick.mutate({ matchId: m.id, side })} />
@@ -70,6 +70,7 @@ function BracketRow({
   const teamBtn = (side: BracketSide, name: string, code: string | null) => {
     const picked = pick?.side === side;
     const isWinner = decided && match.winner === side;
+    const mult = darkHorseMultiplier(code);
     return (
       <button
         className={`pick${picked ? ' on' : ''}${isWinner ? ' winner' : ''}`}
@@ -77,7 +78,9 @@ function BracketRow({
         onClick={() => onPick(side)}
         data-testid={`bracket-${match.id}-${side}`}
       >
-        <Flag code={code} name={name} />{name}{isWinner ? ' ✓' : ''}
+        <Flag code={code} name={name} />
+        <span className="pick-name">{name}{mult >= 6 && <span title={`Dark horse ×${mult}`}> 🐴</span>}</span>
+        {isWinner ? <span className="won">✓</span> : <span className="dh" title={`Dark horse ×${mult}`}>+{darkHorsePoints(match.stage, code)}</span>}
       </button>
     );
   };

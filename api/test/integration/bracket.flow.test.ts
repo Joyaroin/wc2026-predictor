@@ -34,26 +34,27 @@ describe('knockout bracket picks', () => {
     expect((await request(late.app).put('/api/bracket/k3').set(auth(s2.token)).send({ side: 'HOME' })).status).toBe(409);
   });
 
-  it('awards escalating bonus to the correct advancer and feeds the leaderboard', async () => {
+  it('awards dark-horse points to the correct advancer and feeds the leaderboard', async () => {
     const t = makeTestApp({ now: new Date('2026-07-01T00:00:00.000Z') });
     const sam = (await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' })).body;
     const mia = (await request(t.app).post('/api/auth/login').send({ name: 'Mia', pin: '5678' })).body;
     const group = (await request(t.app).post('/api/groups').set(auth(sam.token)).send({ name: 'F' })).body;
     await request(t.app).post('/api/groups/join').set(auth(mia.token)).send({ inviteCode: group.inviteCode });
 
-    // QF, drawn 1-1 at 90' but HOME advanced on penalties.
+    // QF, drawn 1-1 at 90' but HOME (Mexico, ×6 dark horse) advanced on penalties.
     await t.repos.matches.upsert(
-      sampleMatch({ id: 'k1', stage: 'QUARTER_FINALS', status: 'FINISHED', homeScore: 1, awayScore: 1, winner: 'HOME', homeTeam: 'Brazil', awayTeam: 'Korea' }),
+      sampleMatch({ id: 'k1', stage: 'QUARTER_FINALS', status: 'FINISHED', homeScore: 1, awayScore: 1, winner: 'HOME', homeTeam: 'Mexico', homeCode: 'MEX', awayTeam: 'Korea', awayCode: 'KOR' }),
     );
     const now = new Date().toISOString();
-    await t.repos.bracket.put({ playerId: sam.playerId, matchId: 'k1', side: 'HOME', teamName: 'Brazil', points: 0, createdAt: now, updatedAt: now });
+    await t.repos.bracket.put({ playerId: sam.playerId, matchId: 'k1', side: 'HOME', teamName: 'Mexico', points: 0, createdAt: now, updatedAt: now });
     await t.repos.bracket.put({ playerId: mia.playerId, matchId: 'k1', side: 'AWAY', teamName: 'Korea', points: 0, createdAt: now, updatedAt: now });
     await t.services.scoring.scoreMatch('k1');
 
-    expect((await t.repos.bracket.get(sam.playerId, 'k1'))?.points).toBe(7); // QF correct
+    // QF weight 3 × Mexico multiplier 6 = 18
+    expect((await t.repos.bracket.get(sam.playerId, 'k1'))?.points).toBe(18);
     expect((await t.repos.bracket.get(mia.playerId, 'k1'))?.points).toBe(0);
 
     const lb = await request(t.app).get(`/api/groups/${group.id}/leaderboard`).set(auth(sam.token));
-    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 7], ['Mia', 0]]);
+    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 18], ['Mia', 0]]);
   });
 });

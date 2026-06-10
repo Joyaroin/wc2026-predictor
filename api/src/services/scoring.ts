@@ -1,6 +1,6 @@
 // Scoring service: precompute & persist points when a match is decided (SR-4 / US-5.2).
 // Scores both score-predictions and knockout bracket (advancement) picks.
-import { computePoints, advancementPoints } from '@wc2026/shared';
+import { computePoints, darkHorsePoints } from '@wc2026/shared';
 import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 
 export interface ScoringService {
@@ -28,9 +28,10 @@ export function createScoringService(
         scored++;
       }
 
-      // Knockout bracket (advancement) points — based on who actually advanced.
+      // Knockout bracket (advancement) points — Dark Horse: backing a longer shot pays more.
       if (match.stage !== 'GROUP_STAGE' && (match.winner === 'HOME' || match.winner === 'AWAY')) {
-        const reward = advancementPoints(match.stage);
+        const advancerCode = match.winner === 'HOME' ? match.homeCode : match.awayCode;
+        const reward = darkHorsePoints(match.stage, advancerCode);
         for (const pick of await bracket.listByMatch(matchId)) {
           const pts = pick.side === match.winner ? reward : 0;
           if (pts !== pick.points) await bracket.put({ ...pick, points: pts, updatedAt: now });
