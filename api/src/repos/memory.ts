@@ -11,6 +11,8 @@ import type {
   BracketRepo,
   GoldenBootRepo,
   GoldenBootPick,
+  DarkHorseRepo,
+  DarkHorsePick,
   StatsRepo,
   TopScorer,
 } from './types';
@@ -169,6 +171,19 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const darkHorsePicks = new Map<string, DarkHorsePick>(); // playerId -> pick
+  const darkHorseRepo: DarkHorseRepo = {
+    async put(pick) {
+      darkHorsePicks.set(pick.playerId, pick);
+    },
+    async get(playerId) {
+      return darkHorsePicks.get(playerId) ?? null;
+    },
+    async scanAll() {
+      return [...darkHorsePicks.values()];
+    },
+  };
+
   let leader: TopScorer | null = null;
   let lastEspnRun: string | null = null;
   const statsRepo: StatsRepo = {
@@ -194,6 +209,7 @@ export function createMemoryRepositories(): Repositories {
     predictions: predictionRepo,
     bracket: bracketRepo,
     goldenBoot: goldenBootRepo,
+    darkHorse: darkHorseRepo,
     stats: statsRepo,
   };
 }

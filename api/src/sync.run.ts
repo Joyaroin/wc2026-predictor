@@ -16,6 +16,10 @@ services.sync
     await services.goldenBoot.refresh().catch((err) => {
       logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
     });
+    // Recompute Dark Horse placements from match progress (cheap; no external calls).
+    await services.darkHorse.refresh().catch((err) => {
+      logger.warn('dark horse refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
+    });
     process.exit(report.ok ? 0 : 1);
   })
   .catch((err) => {

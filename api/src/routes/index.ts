@@ -35,6 +35,7 @@ const createGroupSchema = z.object({ name: groupNameSchema });
 const joinSchema = z.object({ inviteCode: inviteCodeSchema });
 const jokerSchema = z.object({ joker: z.boolean() });
 const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
+const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -88,6 +89,8 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/players/pool', auth, wrap(() => services.goldenBoot.getPlayerPool()));
   r.get('/golden-boot', auth, wrap((req) => services.goldenBoot.getStatus(caller(req))));
   r.put('/golden-boot', auth, validateBody(goldenBootSchema), wrap((req) => services.goldenBoot.setPick(caller(req), req.body.scorerId, req.body.scorerName)));
+  r.get('/dark-horse', auth, wrap((req) => services.darkHorse.getStatus(caller(req))));
+  r.put('/dark-horse', auth, validateBody(darkHorseSchema), wrap((req) => services.darkHorse.setPick(caller(req), req.body.teamCode, req.body.teamName)));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

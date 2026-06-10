@@ -1,7 +1,7 @@
 // Leaderboard service: aggregate stored points, order via shared comparator (US-5.3/5.4/5.5).
 import { compareStandings, effectivePoints, type StandingAgg, type Prediction } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
-import type { BracketRepo, GoldenBootRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
+import type { BracketRepo, GoldenBootRepo, DarkHorseRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { LeaderboardRow, BreakdownRow, GlobalLeaderboardView } from './dtos';
 import { ForbiddenError } from '../lib/errors';
 
@@ -31,6 +31,7 @@ export function createLeaderboardService(
   matches: MatchRepo,
   bracket: BracketRepo,
   goldenBoot: GoldenBootRepo,
+  darkHorse: DarkHorseRepo,
   clock: Clock,
 ): LeaderboardService {
   const sumPoints = (picks: { points: number }[]): number => picks.reduce((s, b) => s + b.points, 0);
@@ -48,7 +49,10 @@ export function createLeaderboardService(
       for (const id of memberIds) {
         const player = await players.getById(id);
         if (!player) continue;
-        const extra = sumPoints(await bracket.listByPlayer(id)) + ((await goldenBoot.get(id))?.points ?? 0);
+        const extra =
+          sumPoints(await bracket.listByPlayer(id)) +
+          ((await goldenBoot.get(id))?.points ?? 0) +
+          ((await darkHorse.get(id))?.points ?? 0);
         aggs.push(aggregate(id, player.name, await predictions.listByPlayer(id), extra));
       }
       aggs.sort(compareStandings);
@@ -71,6 +75,9 @@ export function createLeaderboardService(
       }
       for (const g of await goldenBoot.scanAll()) {
         extraByPlayer.set(g.playerId, (extraByPlayer.get(g.playerId) ?? 0) + g.points);
+      }
+      for (const d of await darkHorse.scanAll()) {
+        extraByPlayer.set(d.playerId, (extraByPlayer.get(d.playerId) ?? 0) + d.points);
       }
       const aggs: StandingAgg[] = allPlayers.map((p) =>
         aggregate(p.id, nameById.get(p.id) ?? p.name, byPlayer.get(p.id) ?? [], extraByPlayer.get(p.id) ?? 0),

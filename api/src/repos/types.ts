@@ -91,6 +91,22 @@ export interface StatsRepo {
   setLastEspnRun(iso: string): Promise<void>;
 }
 
+/** A user's pre-tournament Dark Horse pick (a team). */
+export interface DarkHorsePick {
+  playerId: string;
+  teamCode: string;
+  teamName: string;
+  points: number; // placement bonus (20/10/5), computed live
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DarkHorseRepo {
+  put(pick: DarkHorsePick): Promise<void>;
+  get(playerId: string): Promise<DarkHorsePick | null>;
+  scanAll(): Promise<DarkHorsePick[]>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -99,5 +115,6 @@ export interface Repositories {
   predictions: PredictionRepo;
   bracket: BracketRepo;
   goldenBoot: GoldenBootRepo;
+  darkHorse: DarkHorseRepo;
   stats: StatsRepo;
 }

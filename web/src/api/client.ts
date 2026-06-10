@@ -111,7 +111,22 @@ export const api = {
   goldenBoot: () => req<GoldenBootStatus>('/golden-boot'),
   setGoldenBoot: (scorerId: string, scorerName: string) =>
     req<{ scorerId: string; scorerName: string }>('/golden-boot', { method: 'PUT', body: { scorerId, scorerName } }),
+  darkHorse: () => req<DarkHorseStatus>('/dark-horse'),
+  setDarkHorse: (teamCode: string, teamName: string) =>
+    req<{ teamCode: string; teamName: string }>('/dark-horse', { method: 'PUT', body: { teamCode, teamName } }),
 };
+
+export interface DarkHorseTeam {
+  code: string;
+  name: string;
+  prob: number;
+}
+export interface DarkHorseStatus {
+  teams: DarkHorseTeam[];
+  pick: { teamCode: string; teamName: string; score: number; stage: string; placement: number; points: number } | null;
+  totalPicks: number;
+  locked: boolean;
+}
 
 export interface WcPlayer {
   id: string;

@@ -22,6 +22,8 @@ import type {
   BracketRepo,
   GoldenBootRepo,
   GoldenBootPick,
+  DarkHorseRepo,
+  DarkHorsePick,
   StatsRepo,
 } from './types';
 import {
@@ -378,6 +380,33 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  const dhFromItem = (i: Item): DarkHorsePick => ({
+    playerId: i.playerId as string,
+    teamCode: i.teamCode as string,
+    teamName: i.teamName as string,
+    points: i.points as number,
+    createdAt: i.createdAt as string,
+    updatedAt: i.updatedAt as string,
+  });
+
+  const darkHorse: DarkHorseRepo = {
+    async put(pick) {
+      await doc.send(
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'DHPICK', ...pick } }),
+      );
+    },
+    async get(playerId) {
+      const r = await doc.send(
+        new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: 'DHPICK' } }),
+      );
+      return r.Item ? dhFromItem(r.Item as Item) : null;
+    },
+    async scanAll() {
+      const items = await scanItems('SK = :sk', { ':sk': 'DHPICK' });
+      return items.map((i) => dhFromItem(i));
+    },
+  };
+
   const stats: StatsRepo = {
     async getLeader() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
@@ -396,5 +425,5 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, stats };
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, stats };
 }

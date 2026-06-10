@@ -130,6 +130,24 @@ tr.me { background: #12233b; }
 .menu-dropdown a:hover, .menu-dropdown button:hover { background: #16203a; }
 .menu-dropdown a.active { color: var(--accent); }
 
+.awards { display: grid; gap: 16px; }
+.award h2 { margin-top: 0; }
+.odds-btn { margin-top: 8px; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; width: 100%; max-width: 440px; max-height: 84vh; overflow-y: auto; padding: 16px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; }
+.modal-head h3 { margin: 0; }
+.modal-close { background: transparent; border: none; color: var(--muted); font-size: 1.1rem; }
+.odds-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 4px; }
+.odds-list button { width: 100%; display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; color: var(--ink); font: inherit; }
+.odds-list button:hover:not(:disabled) { background: #16203a; }
+.odds-list li.picked button { border-color: var(--accent); background: #12233b; }
+.odds-name { flex: 0 0 34%; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.odds-bar { flex: 1; height: 8px; background: #0d1428; border-radius: 4px; overflow: hidden; }
+.odds-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.odds-pct { flex: none; width: 44px; text-align: right; color: var(--muted); font-size: 0.85rem; }
+
 .gb-row { margin: 4px 0; }
 .gb-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 360px; overflow-y: auto; }
 .gb-results .pick { width: 100%; text-align: left; }

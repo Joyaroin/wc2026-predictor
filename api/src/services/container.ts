@@ -12,6 +12,7 @@ import { createScoringService, type ScoringService } from './scoring';
 import { createLeaderboardService, type LeaderboardService } from './leaderboard';
 import { createBracketService, type BracketService } from './bracket';
 import { createGoldenBootService, type GoldenBootService } from './goldenBoot';
+import { createDarkHorseService, type DarkHorseService } from './darkHorse';
 import { createSyncService, type SyncService } from './sync';
 import { createEspnClient } from '../integration/espnClient';
 
@@ -25,6 +26,7 @@ export interface Services {
   leaderboard: LeaderboardService;
   bracket: BracketService;
   goldenBoot: GoldenBootService;
+  darkHorse: DarkHorseService;
   sync: SyncService;
 }
 
@@ -47,9 +49,10 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     matches,
     predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
     scoring,
-    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, clock),
+    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, repos.darkHorse, clock),
     bracket: createBracketService(repos.bracket, matches, clock),
     goldenBoot: createGoldenBootService(repos.goldenBoot, repos.stats, matches, espn, clock, logger),
+    darkHorse: createDarkHorseService(repos.darkHorse, matches, clock),
     sync: createSyncService(footballApi, repos.matches, scoring, logger),
   };
 }

@@ -36,3 +36,28 @@ export const ADVANCE_WEIGHT: Record<Stage, number> = {
 export function darkHorsePoints(stage: Stage, code: string | null | undefined): number {
   return ADVANCE_WEIGHT[stage] * darkHorseMultiplier(code);
 }
+
+// --- Dark Horse award ---
+// Score = title probability × weight of the DEEPEST round a team reached. Weights DESCEND, so going
+// further multiplies by a smaller number → the LOWEST score is the biggest underdog that went furthest.
+export const STAGE_WEIGHT: Record<Stage, number> = {
+  GROUP_STAGE: 32, // never reached the knockouts → heaviest (worst)
+  LAST_32: 16,
+  LAST_16: 8,
+  QUARTER_FINALS: 4,
+  SEMI_FINALS: 2,
+  THIRD_PLACE: 2, // reached the semis (lost it)
+  FINAL: 1, // reached the final → lightest (best)
+};
+
+export function teamWinProbability(code: string | null | undefined): number {
+  return (code ? WIN_PROBABILITY[code.toUpperCase()] : undefined) ?? FALLBACK_PROB;
+}
+
+/** Dark-horse score (lower = better): title probability × the lightest (deepest) stage weight reached. */
+export function darkHorseScore(code: string | null | undefined, deepestWeight: number): number {
+  return teamWinProbability(code) * deepestWeight;
+}
+
+/** Leaderboard bonus for the dark-horse ranking by placement (1st, 2nd, 3rd). */
+export const DARK_HORSE_PLACEMENT = [20, 10, 5];
