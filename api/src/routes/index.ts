@@ -91,6 +91,8 @@ export function buildRouter(services: Services, config: Config): Router {
   r.put('/golden-boot', auth, validateBody(goldenBootSchema), wrap((req) => services.goldenBoot.setPick(caller(req), req.body.scorerId, req.body.scorerName)));
   r.get('/dark-horse', auth, wrap((req) => services.darkHorse.getStatus(caller(req))));
   r.put('/dark-horse', auth, validateBody(darkHorseSchema), wrap((req) => services.darkHorse.setPick(caller(req), req.body.teamCode, req.body.teamName)));
+  r.get('/tournament-winner', auth, wrap((req) => services.tournamentWinner.getStatus(caller(req))));
+  r.put('/tournament-winner', auth, validateBody(darkHorseSchema), wrap((req) => services.tournamentWinner.setPick(caller(req), req.body.teamCode, req.body.teamName)));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

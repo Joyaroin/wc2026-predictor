@@ -7,23 +7,27 @@ export function ProbabilitiesModal({
   locked,
   onPick,
   onClose,
+  title = '📊 Win probabilities',
+  hint,
 }: {
   teams: DarkHorseTeam[];
   pickCode: string | undefined;
   locked: boolean;
   onPick: (t: DarkHorseTeam) => void;
   onClose: () => void;
+  title?: string;
+  hint?: string;
 }) {
   const max = Math.max(...teams.map((t) => t.prob), 1);
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Win probabilities">
+      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
         <div className="modal-head">
-          <h3>📊 Win probabilities</h3>
+          <h3>{title}</h3>
           <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <p className="muted fine">
-          {locked ? '🔒 Picks are locked.' : 'Tap a team to set your Dark Horse — the longer the odds, the more you score if they go far.'}
+          {locked ? '🔒 Picks are locked.' : (hint ?? 'Tap a team to set your Dark Horse — the longer the odds, the more you score if they go far.')}
         </p>
         <ul className="odds-list">
           {teams.map((t) => (

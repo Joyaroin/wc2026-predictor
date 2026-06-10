@@ -34,8 +34,8 @@ describe('golden boot (player of the tournament)', () => {
     await request(t.app).post('/api/groups/join').set(auth(mia.token)).send({ inviteCode: group.inviteCode });
 
     const now = new Date().toISOString();
-    await t.repos.goldenBoot.put({ playerId: sam.playerId, scorerId: '9', scorerName: 'Kane', points: 25, createdAt: now, updatedAt: now });
+    await t.repos.goldenBoot.put({ playerId: sam.playerId, scorerId: '9', scorerName: 'Kane', points: 15, createdAt: now, updatedAt: now });
     const lb = await request(t.app).get(`/api/groups/${group.id}/leaderboard`).set(auth(sam.token));
-    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 25], ['Mia', 0]]);
+    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 15], ['Mia', 0]]);
   });
 });

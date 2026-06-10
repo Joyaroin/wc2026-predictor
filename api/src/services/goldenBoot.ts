@@ -6,7 +6,7 @@ import { tallyTopScorers, type EspnClient, type WcPlayer } from '../integration/
 import { LockedError, ValidationError } from '../lib/errors';
 import type { Logger } from '../lib/logger';
 
-export const GOLDEN_BOOT_BONUS = 25;
+export const GOLDEN_BOOT_BONUS = 15;
 const POOL_TTL_MS = 6 * 60 * 60 * 1000;
 const ESPN_THROTTLE_MS = 15 * 60 * 1000;
 

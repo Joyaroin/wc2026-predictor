@@ -107,6 +107,22 @@ export interface DarkHorseRepo {
   scanAll(): Promise<DarkHorsePick[]>;
 }
 
+/** A user's pre-tournament Tournament Winner pick (the champion). */
+export interface TournamentWinnerPick {
+  playerId: string;
+  teamCode: string;
+  teamName: string;
+  points: number; // +10 if their team wins the cup
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TournamentWinnerRepo {
+  put(pick: TournamentWinnerPick): Promise<void>;
+  get(playerId: string): Promise<TournamentWinnerPick | null>;
+  scanAll(): Promise<TournamentWinnerPick[]>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -116,5 +132,6 @@ export interface Repositories {
   bracket: BracketRepo;
   goldenBoot: GoldenBootRepo;
   darkHorse: DarkHorseRepo;
+  tournamentWinner: TournamentWinnerRepo;
   stats: StatsRepo;
 }

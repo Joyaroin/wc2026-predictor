@@ -20,6 +20,10 @@ services.sync
     await services.darkHorse.refresh().catch((err) => {
       logger.warn('dark horse refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
     });
+    // Score the Tournament Winner pick once the final is decided.
+    await services.tournamentWinner.refresh().catch((err) => {
+      logger.warn('tournament winner refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
+    });
     process.exit(report.ok ? 0 : 1);
   })
   .catch((err) => {

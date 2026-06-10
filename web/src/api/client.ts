@@ -114,7 +114,17 @@ export const api = {
   darkHorse: () => req<DarkHorseStatus>('/dark-horse'),
   setDarkHorse: (teamCode: string, teamName: string) =>
     req<{ teamCode: string; teamName: string }>('/dark-horse', { method: 'PUT', body: { teamCode, teamName } }),
+  tournamentWinner: () => req<TournamentWinnerStatus>('/tournament-winner'),
+  setTournamentWinner: (teamCode: string, teamName: string) =>
+    req<{ teamCode: string; teamName: string }>('/tournament-winner', { method: 'PUT', body: { teamCode, teamName } }),
 };
+
+export interface TournamentWinnerStatus {
+  teams: DarkHorseTeam[];
+  pick: { teamCode: string; teamName: string; points: number } | null;
+  champion: { code: string; name: string } | null;
+  locked: boolean;
+}
 
 export interface DarkHorseTeam {
   code: string;

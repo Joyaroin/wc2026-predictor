@@ -64,7 +64,7 @@ describe('golden boot refresh', () => {
     await svc.refresh();
 
     expect((await repos.stats.getLeader())?.scorerName).toBe('Ronaldo'); // 2 goals leads
-    expect((await repos.goldenBoot.get('sam'))?.points).toBe(25); // picked the leader
+    expect((await repos.goldenBoot.get('sam'))?.points).toBe(15); // picked the leader
     expect((await repos.goldenBoot.get('mia'))?.points).toBe(0);
   });
 });
