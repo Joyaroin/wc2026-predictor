@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { Prediction } from '@wc2026/shared';
+import { effectivePoints, type Prediction } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, pointsLabel, formatKickoff, stageLabel } from '../lib/format';
+import { matchState, formatKickoff, stageLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 
@@ -13,7 +13,7 @@ interface Props {
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
-  squad: { id: string; name: string }[];
+  squad: { id: string; name: string; position: string }[];
   saving: boolean;
 }
 
@@ -30,6 +30,8 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
+  const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)}` : '–';
+  const selectedPos = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId)?.position : undefined;
 
   const teamSide = (code: string | null, name: string, side: 'home' | 'away') => (
     <div className={`mc-team ${side}`}>
@@ -58,13 +60,10 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
     );
 
   return (
-    <div className="match-card" data-testid={`match-${match.id}`}>
+    <div className={`match-card ${prediction?.joker ? 'joker-on' : ''}`} data-testid={`match-${match.id}`}>
       <div className="mc-header">
         <span className="mc-round">{stageLabel(match.stage, match.groupName)}</span>
-        <span className="head-right">
-          {prediction?.joker && <span className="joker-badge" title="Joker — points double">★2×</span>}
-          <StatusBadge state={state} />
-        </span>
+        <StatusBadge state={state} />
       </div>
 
       <div className="mc-body">
@@ -86,74 +85,51 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
           </div>
         )}
         {state === 'Played' && (
-          <div className="mc-result">
-            FT <strong>{match.homeScore}–{match.awayScore}</strong>
-            {prediction && <span className="points"> · {pointsLabel(prediction.points)}</span>}
-          </div>
+          <div className="mc-result">FT <strong>{match.homeScore}–{match.awayScore}</strong></div>
         )}
         {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
-        {!editable && !match.placeholder && state !== 'Live' && state !== 'Played' && !prediction && (
-          <div className="mc-result muted">No prediction</div>
-        )}
 
         {editable && (
-          <>
-            <div className="mc-actions">
+          <div className="mc-bonus">
+            <div className="bonus-title">First team to score</div>
+            <div className="firstteam-row">
               <button
-                className="btn-save"
-                disabled={!canSave || saving}
-                onClick={() => onSave(match.id, Number(home), Number(away))}
-                data-testid={`pred-save-${match.id}`}
+                type="button"
+                className={prediction?.firstTeam === 'HOME' ? 'firstteam on' : 'firstteam'}
+                disabled={!prediction || saving}
+                title={prediction ? match.homeTeam : 'Save a score first'}
+                onClick={() => onFirstTeam(match.id, prediction?.firstTeam === 'HOME' ? null : 'HOME')}
+                data-testid={`first-home-${match.id}`}
               >
-                Save
+                <Flag code={match.homeCode} name={match.homeTeam} big />
               </button>
               <button
                 type="button"
-                className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
+                className={prediction?.firstTeam === 'AWAY' ? 'firstteam on' : 'firstteam'}
                 disabled={!prediction || saving}
-                title={prediction ? 'Double this match (one Joker per match week)' : 'Save a prediction first'}
-                onClick={() => onJoker(match.id, !prediction?.joker)}
-                data-testid={`joker-${match.id}`}
+                title={prediction ? match.awayTeam : 'Save a score first'}
+                onClick={() => onFirstTeam(match.id, prediction?.firstTeam === 'AWAY' ? null : 'AWAY')}
+                data-testid={`first-away-${match.id}`}
               >
-                {prediction?.joker ? '★ Joker' : '☆ Joker'}
+                <Flag code={match.awayCode} name={match.awayTeam} big />
               </button>
             </div>
 
-            {prediction && (
-              <div className="bonus-row" data-testid={`bonus-${match.id}`}>
-                <span className="bonus-label" title="First team to score (+2)">1st goal:</span>
-                <button
-                  type="button"
-                  className={prediction.firstTeam === 'HOME' ? 'firstteam on' : 'firstteam'}
-                  disabled={saving}
-                  title={match.homeTeam}
-                  onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'HOME' ? null : 'HOME')}
-                  data-testid={`first-home-${match.id}`}
-                >
-                  <Flag code={match.homeCode} name={match.homeTeam} />
-                </button>
-                <button
-                  type="button"
-                  className={prediction.firstTeam === 'AWAY' ? 'firstteam on' : 'firstteam'}
-                  disabled={saving}
-                  title={match.awayTeam}
-                  onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'AWAY' ? null : 'AWAY')}
-                  data-testid={`first-away-${match.id}`}
-                >
-                  <Flag code={match.awayCode} name={match.awayTeam} />
-                </button>
-                <button
-                  type="button"
-                  className={prediction.firstScorerId ? 'scorer-btn on' : 'scorer-btn'}
-                  disabled={saving}
-                  onClick={() => setScorerOpen((o) => !o)}
-                  data-testid={`scorer-toggle-${match.id}`}
-                  title="First goalscorer (+6)"
-                >
-                  ⚽ {prediction.firstScorerName ?? 'First scorer'}
-                </button>
-              </div>
-            )}
+            <div className="bonus-title">First player to score</div>
+            <button
+              type="button"
+              className={prediction?.firstScorerId ? 'select-btn on' : 'select-btn'}
+              disabled={!prediction || saving}
+              title={prediction ? 'Pick the first goalscorer (+6)' : 'Save a score first'}
+              onClick={() => setScorerOpen((o) => !o)}
+              data-testid={`scorer-toggle-${match.id}`}
+            >
+              {prediction?.firstScorerName ? (
+                <>{prediction.firstScorerName}{selectedPos ? <span className="pos"> · {selectedPos}</span> : null}</>
+              ) : (
+                'Select'
+              )}
+            </button>
             {prediction && scorerOpen && (
               <div className="scorer-pick" data-testid={`scorer-pick-${match.id}`}>
                 {squad.length === 0 ? (
@@ -172,7 +148,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
                             onClick={() => { onFirstScorer(match.id, p.id, p.name); setScorerOpen(false); }}
                             data-testid={`scorer-${match.id}-${p.id}`}
                           >
-                            {p.name}
+                            {p.name}{p.position ? <span className="pos"> · {p.position}</span> : null}
                           </button>
                         </li>
                       ))}
@@ -181,8 +157,40 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
                 )}
               </div>
             )}
-          </>
+          </div>
         )}
+      </div>
+
+      <div className="mc-footer">
+        <div className="mc-foot-left">
+          {editable ? (
+            <button
+              type="button"
+              className={prediction?.joker ? 'joker-btn on' : 'joker-btn'}
+              disabled={!prediction || saving}
+              title={prediction ? 'Double this match (one Joker per match week)' : 'Save a score first'}
+              onClick={() => onJoker(match.id, !prediction?.joker)}
+              data-testid={`joker-${match.id}`}
+            >
+              {prediction?.joker ? '★ Joker' : '☆ Joker'}
+            </button>
+          ) : prediction?.joker ? (
+            <span className="joker-static">★ Joker</span>
+          ) : null}
+        </div>
+        <span className={`pts-bubble ${ptsText === '–' ? 'empty' : ''}`} title="Points" data-testid={`pts-${match.id}`}>{ptsText}</span>
+        <div className="mc-foot-right">
+          {editable && (
+            <button
+              className="btn-save"
+              disabled={!canSave || saving}
+              onClick={() => onSave(match.id, Number(home), Number(away))}
+              data-testid={`pred-save-${match.id}`}
+            >
+              Save
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

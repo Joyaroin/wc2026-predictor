@@ -28,11 +28,11 @@ export function FixturesPage() {
   const pool = useQuery({ queryKey: ['player-pool'], queryFn: api.playerPool, staleTime: 60 * 60 * 1000 });
 
   const squadByTeam = useMemo(() => {
-    const map = new Map<string, { id: string; name: string }[]>();
+    const map = new Map<string, { id: string; name: string; position: string }[]>();
     for (const p of pool.data ?? []) {
       const k = canonTeam(p.team);
       const list = map.get(k) ?? [];
-      list.push({ id: p.id, name: p.name });
+      list.push({ id: p.id, name: p.name, position: p.position });
       map.set(k, list);
     }
     return map;

@@ -8,6 +8,7 @@ export interface WcPlayer {
   id: string;
   name: string;
   team: string;
+  position: string; // e.g. F / M / D / G
 }
 export interface ScorerTally {
   scorerId: string;
@@ -93,7 +94,8 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
             for (const a of items) {
               const id = get<string | number>(a, 'id');
               const name = get<string>(a, 'displayName');
-              if (id != null && name) players.push({ id: String(id), name, team: teamName });
+              const position = get<string>(a, 'position', 'abbreviation') ?? get<string>(a, 'position', 'name') ?? '';
+              if (id != null && name) players.push({ id: String(id), name, team: teamName, position });
             }
           }
         } catch (err) {

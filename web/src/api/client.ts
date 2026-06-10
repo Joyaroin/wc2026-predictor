@@ -153,6 +153,7 @@ export interface WcPlayer {
   id: string;
   name: string;
   team: string;
+  position: string;
 }
 export interface GoldenBootStatus {
   pick: { scorerId: string; scorerName: string; points: number } | null;
