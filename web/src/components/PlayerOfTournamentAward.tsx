@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type WcPlayer } from '../api/client';
+import { fold } from '../lib/search';
 
 export function PlayerOfTournamentAward() {
   const qc = useQueryClient();
@@ -14,9 +15,9 @@ export function PlayerOfTournamentAward() {
   });
 
   const matches = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = fold(search.trim());
     if (q.length < 2) return [];
-    return (pool.data ?? []).filter((p) => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)).slice(0, 30);
+    return (pool.data ?? []).filter((p) => fold(p.name).includes(q) || fold(p.team).includes(q)).slice(0, 30);
   }, [search, pool.data]);
 
   const s = status.data;

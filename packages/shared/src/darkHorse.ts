@@ -41,7 +41,7 @@ export function darkHorsePoints(stage: Stage, code: string | null | undefined): 
 // Score = title probability × weight of the DEEPEST round a team reached. Weights DESCEND, so going
 // further multiplies by a smaller number → the LOWEST score is the biggest underdog that went furthest.
 export const STAGE_WEIGHT: Record<Stage, number> = {
-  GROUP_STAGE: 32, // never reached the knockouts → heaviest (worst)
+  GROUP_STAGE: 5000, // never reached the knockouts → always worst (any knockout team beats them)
   LAST_32: 16,
   LAST_16: 8,
   QUARTER_FINALS: 4,

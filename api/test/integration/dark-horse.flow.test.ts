@@ -44,15 +44,15 @@ describe('dark horse award', () => {
     await seed(t);
 
     await request(t.app).put('/api/dark-horse').set(auth(sam.token)).send({ teamCode: 'HAI', teamName: 'Haiti' }); // 0.1 × final(1) = 0.1 → 1st
-    await request(t.app).put('/api/dark-horse').set(auth(mia.token)).send({ teamCode: 'QAT', teamName: 'Qatar' }); // 0.3 × group(32) = 9.6 → 2nd
-    await request(t.app).put('/api/dark-horse').set(auth(bob.token)).send({ teamCode: 'FRA', teamName: 'France' }); // 18.6 × final(1) = 18.6 → 3rd
+    await request(t.app).put('/api/dark-horse').set(auth(mia.token)).send({ teamCode: 'QAT', teamName: 'Qatar' }); // 0.3 × group(5000) = 1500 → 3rd
+    await request(t.app).put('/api/dark-horse').set(auth(bob.token)).send({ teamCode: 'FRA', teamName: 'France' }); // 18.6 × final(1) = 18.6 → 2nd
     await t.services.darkHorse.refresh();
 
     expect((await t.repos.darkHorse.get(sam.playerId))?.points).toBe(20);
-    expect((await t.repos.darkHorse.get(mia.playerId))?.points).toBe(10);
-    expect((await t.repos.darkHorse.get(bob.playerId))?.points).toBe(5);
+    expect((await t.repos.darkHorse.get(bob.playerId))?.points).toBe(10);
+    expect((await t.repos.darkHorse.get(mia.playerId))?.points).toBe(5);
 
     const lb = await request(t.app).get(`/api/groups/${group.id}/leaderboard`).set(auth(sam.token));
-    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 20], ['Mia', 10], ['Bob', 5]]);
+    expect(lb.body.map((r: { name: string; points: number }) => [r.name, r.points])).toEqual([['Sam', 20], ['Bob', 10], ['Mia', 5]]);
   });
 });

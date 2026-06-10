@@ -101,7 +101,8 @@ input.mc-box:focus { outline: none; border-color: var(--accent); }
 .mc-result.live { color: var(--danger); font-weight: 700; }
 .points { color: var(--accent2); font-weight: 700; }
 
-/* Joker on → fill the header panel yellow */
+/* Joker on → fill the header panel yellow + yellow border outline */
+.match-card.joker-on { border-color: var(--accent2); }
 .match-card.joker-on .mc-header { background: var(--accent2); border-bottom-color: var(--accent2); }
 .match-card.joker-on .mc-round { color: #2a1a00; }
 

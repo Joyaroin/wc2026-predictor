@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { matchState, formatKickoff, stageLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
+import { fold } from '../lib/search';
 
 interface Props {
   match: MatchView;
@@ -24,9 +25,10 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const [away, setAway] = useState<string>(prediction ? String(prediction.away) : '');
   const [scorerOpen, setScorerOpen] = useState(false);
   const [scorerQ, setScorerQ] = useState('');
-  const scorerMatches = scorerQ.trim().length < 1
+  const scorerQuery = fold(scorerQ.trim());
+  const scorerMatches = scorerQuery.length < 1
     ? squad.slice(0, 20)
-    : squad.filter((p) => p.name.toLowerCase().includes(scorerQ.toLowerCase())).slice(0, 20);
+    : squad.filter((p) => fold(p.name).includes(scorerQuery)).slice(0, 20);
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
