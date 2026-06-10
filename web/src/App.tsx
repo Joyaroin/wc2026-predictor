@@ -8,8 +8,7 @@ import { GroupDetailPage } from './pages/GroupDetailPage';
 import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
-import { BracketPage } from './pages/BracketPage';
-import { GoldenBootPage } from './pages/GoldenBootPage';
+import { AwardsPage } from './pages/AwardsPage';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -28,8 +27,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />
           <Route path="/fixtures" element={<RequireAuth><FixturesPage /></RequireAuth>} />
-          <Route path="/bracket" element={<RequireAuth><BracketPage /></RequireAuth>} />
-          <Route path="/golden-boot" element={<RequireAuth><GoldenBootPage /></RequireAuth>} />
+          <Route path="/awards" element={<RequireAuth><AwardsPage /></RequireAuth>} />
+          {/* legacy paths → awards */}
+          <Route path="/golden-boot" element={<Navigate to="/awards" replace />} />
+          <Route path="/bracket" element={<Navigate to="/awards" replace />} />
           <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
           <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />

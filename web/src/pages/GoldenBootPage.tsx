@@ -25,8 +25,8 @@ export function GoldenBootPage() {
 
   return (
     <div className="golden-boot">
-      <h2>👑 Player of the Tournament</h2>
-      <p className="muted fine">Predict the <b>Golden Boot</b> winner (top scorer) before the tournament kicks off. Correct pick = <b>+25</b> bonus points.</p>
+      <h2>🥇 Golden Boot</h2>
+      <p className="muted fine">Predict the <b>top scorer</b> of the tournament before kick-off. Correct pick = <b>+25</b> bonus points.</p>
 
       <div className="card">
         <div className="gb-row"><span className="muted">Your pick:</span> <strong>{myPick ? myPick.scorerName : '— none yet —'}</strong>{myPick && myPick.points > 0 && <span className="points"> +{myPick.points}</span>}</div>

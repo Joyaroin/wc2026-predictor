@@ -107,6 +107,15 @@ tr.me { background: #12233b; }
 .dh { color: var(--accent); font-weight: 700; font-size: 0.78rem; flex: none; }
 .won { color: var(--accent2); font-weight: 800; flex: none; }
 
+.nav-name { color: var(--muted); }
+.menu { position: relative; }
+.menu-btn { background: transparent; border: 1px solid var(--line); color: var(--ink); font-size: 1.2rem; line-height: 1; padding: 4px 10px; border-radius: 8px; }
+.menu-backdrop { position: fixed; inset: 0; z-index: 20; }
+.menu-dropdown { position: absolute; right: 0; top: calc(100% + 6px); z-index: 21; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px; min-width: 200px; display: grid; gap: 2px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.menu-dropdown a, .menu-dropdown button { display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: 7px; background: transparent; border: none; color: var(--ink); font: inherit; }
+.menu-dropdown a:hover, .menu-dropdown button:hover { background: #16203a; }
+.menu-dropdown a.active { color: var(--accent); }
+
 .gb-row { margin: 4px 0; }
 .gb-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 360px; overflow-y: auto; }
 .gb-results .pick { width: 100%; text-align: left; }
