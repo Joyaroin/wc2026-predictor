@@ -30,6 +30,10 @@ export const SCORE_POINTS = {
 /** Highest possible scoreline points (a perfect exact score). First team/player to score add up to +8 more. */
 export const MAX_SCORELINE_POINTS = SCORE_POINTS.outcome + SCORE_POINTS.goalDiff + SCORE_POINTS.exact + SCORE_POINTS.home + SCORE_POINTS.away; // 12
 
+/** Bonus for correctly predicting the first team to score / the first goalscorer. */
+export const FIRST_TEAM_POINTS = 2;
+export const FIRST_PLAYER_POINTS = 6;
+
 /** Additive points for a scoreline prediction vs the actual full-time score. */
 export function scoreBreakdown(prediction: Score, actual: Score): ScoreBreakdown {
   const outcome = outcomeOf(prediction) === outcomeOf(actual);

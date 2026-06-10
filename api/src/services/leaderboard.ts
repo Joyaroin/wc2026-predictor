@@ -13,7 +13,7 @@ function aggregate(playerId: string, name: string, preds: Prediction[], extraPoi
     playerId,
     name,
     points: preds.reduce((s, p) => s + effectivePoints(p), 0) + extraPoints,
-    exacts: preds.filter((p) => p.points >= 12).length, // exact scoreline (12) or better
+    exacts: preds.filter((p) => p.exact).length, // exact scoreline
     correctResults: preds.filter((p) => p.points >= 2).length,
   };
 }

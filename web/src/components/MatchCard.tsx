@@ -11,10 +11,11 @@ interface Props {
   prediction: Prediction | undefined;
   onSave: (matchId: string, home: number, away: number) => void;
   onJoker: (matchId: string, joker: boolean) => void;
+  onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, saving }: Props) {
   const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
@@ -88,6 +89,31 @@ export function MatchCard({ match, prediction, onSave, onJoker, saving }: Props)
           >
             {prediction?.joker ? '★ Joker' : '☆ Joker'}
           </button>
+          {prediction && (
+            <div className="bonus-row" data-testid={`bonus-${match.id}`}>
+              <span className="bonus-label" title="First team to score (+2)">1st goal:</span>
+              <button
+                type="button"
+                className={prediction.firstTeam === 'HOME' ? 'firstteam on' : 'firstteam'}
+                disabled={saving}
+                title={match.homeTeam}
+                onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'HOME' ? null : 'HOME')}
+                data-testid={`first-home-${match.id}`}
+              >
+                <Flag code={match.homeCode} name={match.homeTeam} />
+              </button>
+              <button
+                type="button"
+                className={prediction.firstTeam === 'AWAY' ? 'firstteam on' : 'firstteam'}
+                disabled={saving}
+                title={match.awayTeam}
+                onClick={() => onFirstTeam(match.id, prediction.firstTeam === 'AWAY' ? null : 'AWAY')}
+                data-testid={`first-away-${match.id}`}
+              >
+                <Flag code={match.awayCode} name={match.awayTeam} />
+              </button>
+            </div>
+          )}
         </div>
       ) : match.placeholder ? (
         <div className="muted">Teams not decided yet</div>

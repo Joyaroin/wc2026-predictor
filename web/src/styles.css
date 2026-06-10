@@ -94,6 +94,11 @@ input {
 .joker-btn { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); padding: 6px 10px; border-radius: 8px; font-weight: 700; }
 .joker-btn.on { background: var(--accent2); color: #2a1a00; }
 .joker-btn:disabled { opacity: 0.4; }
+.bonus-row { display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 2px; }
+.bonus-label { color: var(--muted); font-size: 0.8rem; }
+.firstteam { background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; line-height: 0; }
+.firstteam.on { border-color: var(--accent); background: #12233b; }
+.firstteam:disabled { opacity: 0.5; }
 
 .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
 .badge.open { background: #14324a; color: #6fd3ff; }

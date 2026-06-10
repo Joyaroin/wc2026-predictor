@@ -99,8 +99,10 @@ export const api = {
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
   myPredictions: () => req<Prediction[]>('/predictions/me'),
-  upsertPrediction: (matchId: string, home: number, away: number) =>
-    req<Prediction>(`/predictions/${matchId}`, { method: 'PUT', body: { home, away } }),
+  upsertPrediction: (
+    matchId: string,
+    body: { home: number; away: number; firstTeam?: 'HOME' | 'AWAY' | null; firstScorerId?: string | null; firstScorerName?: string | null },
+  ) => req<Prediction>(`/predictions/${matchId}`, { method: 'PUT', body }),
   setJoker: (matchId: string, joker: boolean) =>
     req<Prediction>(`/predictions/${matchId}/joker`, { method: 'PUT', body: { joker } }),
   globalLeaderboard: () => req<GlobalLeaderboardView>('/leaderboard/global'),

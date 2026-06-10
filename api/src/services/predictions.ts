@@ -1,13 +1,21 @@
 // Prediction service: lock + ownership enforcement (LR, OR-2) and pre/post-lock visibility (VR).
-import { weekKey, type Prediction, type Score } from '@wc2026/shared';
+import { weekKey, type Prediction, type BracketSide } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { MatchService } from './matches';
 import type { MatchPredictionsView, MatchPredictionRow } from './dtos';
 import { ForbiddenError, LockedError, NotFoundError } from '../lib/errors';
 
+export interface PredictionInput {
+  home: number;
+  away: number;
+  firstTeam?: BracketSide | null;
+  firstScorerId?: string | null;
+  firstScorerName?: string | null;
+}
+
 export interface PredictionService {
-  upsert(callerId: string, matchId: string, score: Score): Promise<Prediction>;
+  upsert(callerId: string, matchId: string, input: PredictionInput): Promise<Prediction>;
   getMine(callerId: string): Promise<Prediction[]>;
   getMatchPredictions(callerId: string, groupId: string, matchId: string): Promise<MatchPredictionsView>;
   setJoker(callerId: string, matchId: string, joker: boolean): Promise<Prediction>;
@@ -27,19 +35,24 @@ export function createPredictionService(
   }
 
   return {
-    async upsert(callerId, matchId, score) {
+    async upsert(callerId, matchId, input) {
       const match = await matchService.get(matchId);
       if (!match) throw new NotFoundError('Match not found');
       if (matchService.isLocked(match)) throw new LockedError();
 
       const now = clock.now().toISOString();
       const existing = await predictions.get(callerId, matchId);
+      // Optional fields preserve their previous value when omitted (undefined); null clears them.
       const prediction: Prediction = {
         playerId: callerId,
         matchId,
-        home: score.home,
-        away: score.away,
+        home: input.home,
+        away: input.away,
+        firstTeam: input.firstTeam !== undefined ? input.firstTeam : (existing?.firstTeam ?? null),
+        firstScorerId: input.firstScorerId !== undefined ? input.firstScorerId : (existing?.firstScorerId ?? null),
+        firstScorerName: input.firstScorerName !== undefined ? input.firstScorerName : (existing?.firstScorerName ?? null),
         points: existing?.points ?? 0,
+        exact: existing?.exact ?? false,
         joker: existing?.joker ?? false,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,

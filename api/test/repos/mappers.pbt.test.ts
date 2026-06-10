@@ -22,7 +22,11 @@ const arbPrediction = fc.record({
   matchId: fc.string({ minLength: 1, maxLength: 24 }),
   home: arbGoal,
   away: arbGoal,
+  firstTeam: fc.option(fc.constantFrom('HOME', 'AWAY') as fc.Arbitrary<'HOME' | 'AWAY'>, { nil: null }),
+  firstScorerId: fc.option(fc.string({ maxLength: 12 }), { nil: null }),
+  firstScorerName: fc.option(fc.string({ maxLength: 20 }), { nil: null }),
   points: fc.integer({ min: 0, max: 20 }),
+  exact: fc.boolean(),
   joker: fc.boolean(),
   createdAt: arbIso,
   updatedAt: arbIso,
@@ -46,6 +50,9 @@ const arbMatch = fc.record({
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
   winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW') as fc.Arbitrary<'HOME' | 'AWAY' | 'DRAW'>, { nil: null }),
+  firstGoalTeam: fc.option(fc.constantFrom('HOME', 'AWAY', 'NONE') as fc.Arbitrary<'HOME' | 'AWAY' | 'NONE'>, { nil: null }),
+  firstScorerId: fc.option(fc.string({ maxLength: 12 }), { nil: null }),
+  firstScorerName: fc.option(fc.string({ maxLength: 20 }), { nil: null }),
   placeholder: fc.boolean(),
 });
 

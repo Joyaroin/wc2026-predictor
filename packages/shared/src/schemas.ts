@@ -48,7 +48,13 @@ export const bracketInputSchema = z.object({ side: bracketSideSchema });
 export const pointsSchema = z.number().int().min(0).max(20);
 
 /** Request body when a player submits/updates a prediction. */
-export const predictionInputSchema = scoreSchema;
+export const predictionInputSchema = z.object({
+  home: goalSchema,
+  away: goalSchema,
+  firstTeam: bracketSideSchema.nullable().optional(),
+  firstScorerId: z.string().max(40).nullable().optional(),
+  firstScorerName: z.string().max(80).nullable().optional(),
+});
 
 /** Full persisted prediction shape (used for serialization round-trip — PBT-02). */
 export const predictionSchema = z.object({
@@ -56,7 +62,11 @@ export const predictionSchema = z.object({
   matchId: z.string().min(1),
   home: goalSchema,
   away: goalSchema,
+  firstTeam: bracketSideSchema.nullable().optional(),
+  firstScorerId: z.string().nullable().optional(),
+  firstScorerName: z.string().nullable().optional(),
   points: pointsSchema,
+  exact: z.boolean().optional(),
   joker: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -76,6 +86,9 @@ export const matchSchema = z.object({
   homeScore: goalSchema.nullable(),
   awayScore: goalSchema.nullable(),
   winner: outcomeSchema.nullable().optional(),
+  firstGoalTeam: z.enum(['HOME', 'AWAY', 'NONE']).nullable().optional(),
+  firstScorerId: z.string().nullable().optional(),
+  firstScorerName: z.string().nullable().optional(),
   placeholder: z.boolean(),
 });
 

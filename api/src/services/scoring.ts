@@ -1,6 +1,6 @@
 // Scoring service: precompute & persist points when a match is decided (SR-4 / US-5.2).
 // Scores both score-predictions and knockout bracket (advancement) picks.
-import { computePoints, darkHorsePoints } from '@wc2026/shared';
+import { scoreBreakdown, darkHorsePoints, FIRST_TEAM_POINTS, FIRST_PLAYER_POINTS } from '@wc2026/shared';
 import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 
 export interface ScoringService {
@@ -19,12 +19,22 @@ export function createScoringService(
       const actual = { home: match.homeScore, away: match.awayScore };
       const now = new Date().toISOString();
 
-      // Score-prediction points.
+      // Score-prediction points: scoreline + first-team (+2) + first-player (+6).
+      // First-goal facts come from a separate ESPN ingestion; absent until then (no bonus yet).
       const preds = await predictions.listByMatch(matchId);
       let scored = 0;
       for (const p of preds) {
-        const points = computePoints({ home: p.home, away: p.away }, actual);
-        if (points !== p.points) await predictions.put({ ...p, points, updatedAt: now });
+        const bd = scoreBreakdown({ home: p.home, away: p.away }, actual);
+        let points = bd.points;
+        if (p.firstTeam && match.firstGoalTeam && match.firstGoalTeam !== 'NONE' && p.firstTeam === match.firstGoalTeam) {
+          points += FIRST_TEAM_POINTS;
+        }
+        if (p.firstScorerId && match.firstScorerId && p.firstScorerId === match.firstScorerId) {
+          points += FIRST_PLAYER_POINTS;
+        }
+        if (points !== p.points || bd.exact !== p.exact) {
+          await predictions.put({ ...p, points, exact: bd.exact, updatedAt: now });
+        }
         scored++;
       }
 

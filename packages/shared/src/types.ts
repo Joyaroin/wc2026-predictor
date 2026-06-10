@@ -63,6 +63,11 @@ export interface Match {
   awayScore: number | null;
   /** Who advanced/won (knockouts) — includes penalty-shootout outcomes. Null until decided. */
   winner?: Outcome | null;
+  /** First team to score (from ESPN); 'NONE' for a 0-0. Null until ingested. */
+  firstGoalTeam?: BracketSide | 'NONE' | null;
+  /** First goalscorer (ESPN athlete id + name). Null until ingested. */
+  firstScorerId?: string | null;
+  firstScorerName?: string | null;
   placeholder: boolean; // true when participants are not yet determined
 }
 
@@ -84,7 +89,14 @@ export interface Prediction {
   matchId: string;
   home: number;
   away: number;
+  /** Optional: which team scores first (+2 if right). */
+  firstTeam?: BracketSide | null;
+  /** Optional: first goalscorer pick (ESPN athlete id) (+6 if right). */
+  firstScorerId?: string | null;
+  firstScorerName?: string | null;
   points: Points;
+  /** Set at scoring time: the scoreline was exact (used for leaderboard tie-breaks). */
+  exact?: boolean;
   /** When true, this match is the player's Joker for its matchday — points count double. */
   joker?: boolean;
   createdAt: string;
