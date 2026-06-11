@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react';
-import { effectivePoints, type Prediction } from '@wc2026/shared';
+import { useEffect, useState, type ReactNode } from 'react';
+import {
+  effectivePoints,
+  scoreBreakdown,
+  SCORE_POINTS,
+  FIRST_TEAM_POINTS,
+  FIRST_PLAYER_POINTS,
+  type Prediction,
+} from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
 import { matchState, formatKickoff, stageLabel } from '../lib/format';
@@ -46,6 +53,30 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
+
+  // Post-match receipt: per-rule breakdown computed against the final score.
+  const finished = state === 'Played' && match.homeScore != null && match.awayScore != null;
+  const bd = finished && prediction
+    ? scoreBreakdown({ home: prediction.home, away: prediction.away }, { home: match.homeScore!, away: match.awayScore! })
+    : null;
+  const firstGoalKnown = match.firstGoalTeam != null;
+  const firstTeamHit = !!prediction?.firstTeam && match.firstGoalTeam === prediction.firstTeam;
+  const firstScorerHit = !!prediction?.firstScorerId && match.firstScorerId === prediction.firstScorerId;
+  const pickedTeamCode = prediction?.firstTeam === 'HOME' ? match.homeCode : match.awayCode;
+  const pickedTeamName = prediction?.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam;
+
+  let rcptIdx = 0;
+  const rcptRow = (label: ReactNode, ok: boolean | undefined, pts: number) => (
+    <div className="rcpt-row" style={{ animationDelay: `${rcptIdx++ * 70}ms` }}>
+      <span className="rcpt-label">{label}</span>
+      {ok === undefined ? (
+        <span className="rcpt-pending muted" title="Waiting for match data">…</span>
+      ) : (
+        <span className={ok ? 'tick ok' : 'tick no'}>{ok ? '✓' : '✗'}</span>
+      )}
+      <span className="rcpt-pts">{ok ? `+${pts}` : ''}</span>
+    </div>
+  );
 
   const teamSide = (code: string | null, name: string, side: 'home' | 'away') => (
     <div className={`mc-team ${side}`}>
@@ -102,6 +133,48 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
           <div className="mc-result">FT <strong>{match.homeScore}–{match.awayScore}</strong></div>
         )}
         {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
+
+        {!editable && !match.placeholder && prediction && (
+          bd ? (
+            <div className="mc-receipt" data-testid={`receipt-${match.id}`}>
+              <div className="mc-divider" />
+              {rcptRow('Result', bd.outcome, SCORE_POINTS.outcome)}
+              {rcptRow('Goal difference', bd.goalDiff, SCORE_POINTS.goalDiff)}
+              {rcptRow('Exact score', bd.exact, SCORE_POINTS.exact)}
+              {rcptRow(`${match.homeCode ?? 'Home'} goals`, bd.home, SCORE_POINTS.home)}
+              {rcptRow(`${match.awayCode ?? 'Away'} goals`, bd.away, SCORE_POINTS.away)}
+              {prediction.firstTeam && rcptRow(
+                <>1st to score: <Flag code={pickedTeamCode} name={pickedTeamName} /></>,
+                firstGoalKnown ? firstTeamHit : undefined,
+                FIRST_TEAM_POINTS,
+              )}
+              {prediction.firstScorerId && rcptRow(
+                <>1st scorer: {prediction.firstScorerName}</>,
+                firstGoalKnown ? firstScorerHit : undefined,
+                FIRST_PLAYER_POINTS,
+              )}
+              {prediction.joker && (
+                <div className="rcpt-row rcpt-joker" style={{ animationDelay: `${rcptIdx * 70}ms` }}>
+                  <span className="rcpt-label">★ Joker</span>
+                  <span className="tick ok">✓</span>
+                  <span className="rcpt-pts">×2</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            (prediction.firstTeam || prediction.firstScorerName || prediction.joker) ? (
+              <div className="mc-receipt" data-testid={`locked-picks-${match.id}`}>
+                <div className="mc-divider" />
+                <div className="mc-yourpicks muted fine">
+                  Locked in:
+                  {prediction.firstTeam && <> 1st to score <Flag code={pickedTeamCode} name={pickedTeamName} /></>}
+                  {prediction.firstScorerName && <> · ⚽ {prediction.firstScorerName}</>}
+                  {prediction.joker && <> · ★ Joker ×2</>}
+                </div>
+              </div>
+            ) : null
+          )
+        )}
 
         {editable && (
           <div className="mc-bonus">

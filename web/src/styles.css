@@ -231,6 +231,46 @@ button.danger { background: var(--danger); color: #2a0a0a; }
 .settings label { display: grid; gap: 4px; font-size: 0.9rem; }
 .success { color: var(--accent); }
 
+/* Post-match receipt */
+.mc-receipt { display: grid; gap: 5px; }
+.rcpt-row { display: grid; grid-template-columns: 1fr 22px 44px; align-items: center; gap: 6px; font-size: 0.84rem; }
+.rcpt-label { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.rcpt-pts { text-align: right; font-weight: 800; color: var(--accent); }
+.rcpt-joker .rcpt-label, .rcpt-joker .rcpt-pts { color: var(--accent2); }
+.rcpt-pending { text-align: center; }
+.tick { text-align: center; font-weight: 900; }
+.tick.ok { color: var(--accent); }
+.tick.no { color: var(--muted); opacity: 0.6; }
+.mc-yourpicks { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
+
+/* ============ Animations (flair) ============ */
+@media (prefers-reduced-motion: no-preference) {
+  body, .card, .match-card, .nav, .week, .mc-header, .mc-footer { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+  .match-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.28); }
+  .match-card { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.3s ease; }
+  .pts-bubble:not(.empty) { animation: pop 0.55s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  .rcpt-row { animation: fadeUp 0.4s ease backwards; }
+  .tick.ok { animation: tickIn 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) backwards; animation-delay: inherit; }
+  .week .match-grid { animation: fadeUp 0.28s ease; }
+  .match-card.joker-on { animation: jokerGlow 2.4s ease-in-out infinite; }
+  .awards .award { animation: fadeUp 0.4s ease backwards; }
+  .awards .award:nth-child(1) { animation-delay: 0ms; }
+  .awards .award:nth-child(2) { animation-delay: 90ms; }
+  .awards .award:nth-child(3) { animation-delay: 180ms; }
+  .awards .award:nth-child(4) { animation-delay: 270ms; }
+  .theme-chip, .pick, .firstteam, .select-btn, .joker-btn, .btn-save { transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease; }
+  .theme-chip:active, .pick:active, .firstteam:active, .btn-save:active:not(:disabled) { transform: scale(0.96); }
+  .menu-dropdown { animation: fadeUp 0.16s ease; }
+  .modal { animation: pop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1); }
+}
+@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 65% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tickIn { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes jokerGlow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent2) 0%, transparent); }
+  50% { box-shadow: 0 0 16px 1px color-mix(in srgb, var(--accent2) 38%, transparent); }
+}
+
 /* Help & rules */
 .help { display: grid; gap: 10px; }
 .help-sec { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; }

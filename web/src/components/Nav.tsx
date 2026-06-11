@@ -15,6 +15,7 @@ export function Nav() {
 
       <div className="nav-links">
         <NavLink to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
+        <NavLink to="/awards" data-testid="nav-awards">Awards</NavLink>
         <NavLink to="/groups" data-testid="nav-groups">Groups</NavLink>
       </div>
 
@@ -36,7 +37,6 @@ export function Nav() {
               <div className="menu-dropdown" onClick={() => setMenuOpen(false)} data-testid="nav-dropdown">
                 <NavLink to="/me" data-testid="nav-me">My Points</NavLink>
                 <NavLink to="/global" data-testid="nav-global">Global leaderboard</NavLink>
-                <NavLink to="/awards" data-testid="nav-awards">Awards</NavLink>
                 <NavLink to="/settings" data-testid="nav-settings">Account</NavLink>
                 <NavLink to="/help" data-testid="nav-help">Help & rules</NavLink>
                 <button onClick={logout} data-testid="logout-button">Log out</button>
