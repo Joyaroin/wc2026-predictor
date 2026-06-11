@@ -10,6 +10,8 @@ const ALIAS: Record<string, string> = {
   congodr: 'congodr',
   czechrepublic: 'czechia',
   czechia: 'czechia',
+  capeverdeislands: 'capeverde',
+  caboverde: 'capeverde',
   turkiye: 'turkey',
   turkey: 'turkey',
   bosniaherzegovina: 'bosnia',

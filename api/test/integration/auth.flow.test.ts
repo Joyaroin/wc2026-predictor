@@ -25,6 +25,16 @@ describe('auth flow (US-1.1/1.2)', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 400 (not 500) for malformed JSON bodies', async () => {
+    const { app } = makeTestApp();
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set('Content-Type', 'application/json')
+      .send('"name":"broken"'); // invalid JSON
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/malformed/i);
+  });
+
   it('requires a session token for protected routes', async () => {
     const { app } = makeTestApp();
     expect((await request(app).get('/api/players/me')).status).toBe(401);

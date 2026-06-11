@@ -73,6 +73,13 @@ export function errorHandler(): ErrorRequestHandler {
       res.status(err.status).json({ error: err.publicMessage });
       return;
     }
+    // Body-parser errors (malformed JSON, oversized payload) are client errors, not 500s.
+    const e = err as { type?: string; status?: number } | null;
+    if (e && (e.type === 'entity.parse.failed' || e.type === 'entity.too.large' || (typeof e.status === 'number' && e.status >= 400 && e.status < 500))) {
+      req.log?.warn('request rejected', { status: e.status ?? 400, code: 'bad request body' });
+      res.status(e.status ?? 400).json({ error: e.type === 'entity.too.large' ? 'Request body too large' : 'Malformed request body' });
+      return;
+    }
     req.log?.error('unhandled error', { error: err instanceof Error ? err.message : 'unknown' });
     res.status(500).json({ error: 'Internal error' });
   };

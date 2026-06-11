@@ -25,6 +25,9 @@ body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: var(--bg);
   color: var(--ink);
+  /* The Fixtures full-bleed breakout uses 100vw, which includes the scrollbar width
+     on Windows — clip the sliver so no horizontal scrollbar appears. */
+  overflow-x: clip;
 }
 a { color: var(--accent); text-decoration: none; }
 .container { max-width: 880px; margin: 0 auto; padding: 16px; }

@@ -28,11 +28,10 @@ describe('formatKickoff timezone', () => {
 });
 
 describe('pointsLabel', () => {
-  it('labels points additively', () => {
-    expect(pointsLabel(12)).toContain('Exact');
-    expect(pointsLabel(12)).toContain('12');
+  it('labels points and marks exact via the flag (not a points heuristic)', () => {
+    expect(pointsLabel(12, true)).toBe('Exact +12');
+    expect(pointsLabel(13, false)).toBe('+13'); // non-exact 13 (5 + 2 + 6) must NOT say Exact
     expect(pointsLabel(5)).toBe('+5');
-    expect(pointsLabel(2)).toBe('+2');
     expect(pointsLabel(0)).toBe('+0');
   });
 });

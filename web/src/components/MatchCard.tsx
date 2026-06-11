@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { effectivePoints, type Prediction } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
@@ -24,6 +24,15 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
   const [away, setAway] = useState<string>(prediction ? String(prediction.away) : '');
+  // Predictions load async — sync the inputs when the saved prediction arrives or changes
+  // (keyed on updatedAt so we don't clobber in-progress typing on unrelated re-renders).
+  useEffect(() => {
+    if (prediction) {
+      setHome(String(prediction.home));
+      setAway(String(prediction.away));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prediction?.updatedAt]);
   const [scorerOpen, setScorerOpen] = useState(false);
   const [scorerQ, setScorerQ] = useState('');
   const scorerQuery = fold(scorerQ.trim());

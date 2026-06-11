@@ -21,6 +21,7 @@ const ALIAS: Record<string, string> = {
   ivorycoast: 'cotedivoire', cotedivoire: 'cotedivoire',
   drcongo: 'congodr', congodr: 'congodr', democraticrepublicofthecongo: 'congodr',
   czechrepublic: 'czechia', czechia: 'czechia',
+  capeverdeislands: 'capeverde', caboverde: 'capeverde',
   turkiye: 'turkey', turkey: 'turkey',
   bosniaherzegovina: 'bosnia', bosniaandherzegovina: 'bosnia',
 };

@@ -18,10 +18,9 @@ export function isLive(status: Match['status']): boolean {
   return status === 'IN_PLAY' || status === 'PAUSED';
 }
 
-export function pointsLabel(points: number): string {
-  if (points >= 12) return `Exact +${points}`;
-  if (points > 0) return `+${points}`;
-  return '+0';
+export function pointsLabel(points: number, exact?: boolean): string {
+  const n = points > 0 ? `+${points}` : '+0';
+  return exact ? `Exact ${n}` : n;
 }
 
 /** Format a kickoff time in the given IANA timezone (defaults to the device's), showing the zone. */

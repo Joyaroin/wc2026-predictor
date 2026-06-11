@@ -30,7 +30,7 @@ export function MatchDetailPage() {
             {view.data.predictions.map((p) => (
               <tr key={p.playerId}>
                 <td>{p.name}</td>
-                <td>{p.home}–{p.away}</td>
+                <td>{p.home != null && p.away != null ? `${p.home}–${p.away}` : '🔒 hidden'}</td>
                 <td>{view.data?.actual ? pointsLabel(p.points) : '—'}</td>
               </tr>
             ))}
