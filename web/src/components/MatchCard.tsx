@@ -28,8 +28,8 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const [scorerQ, setScorerQ] = useState('');
   const scorerQuery = fold(scorerQ.trim());
   const scorerMatches = scorerQuery.length < 1
-    ? squad.slice(0, 20)
-    : squad.filter((p) => fold(p.name).includes(scorerQuery)).slice(0, 20);
+    ? squad // all players from both teams (home squad first, then away)
+    : squad.filter((p) => fold(p.name).includes(scorerQuery));
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
