@@ -38,6 +38,7 @@ export function Nav() {
                 <NavLink to="/global" data-testid="nav-global">Global leaderboard</NavLink>
                 <NavLink to="/awards" data-testid="nav-awards">Awards</NavLink>
                 <NavLink to="/settings" data-testid="nav-settings">Account</NavLink>
+                <NavLink to="/help" data-testid="nav-help">Help & rules</NavLink>
                 <button onClick={logout} data-testid="logout-button">Log out</button>
               </div>
             </>

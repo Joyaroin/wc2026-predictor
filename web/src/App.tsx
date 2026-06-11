@@ -9,6 +9,7 @@ import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
 import { AwardsPage } from './pages/AwardsPage';
+import { HelpPage } from './pages/HelpPage';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/me" element={<RequireAuth><MyBreakdownPage /></RequireAuth>} />
           <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+          <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
