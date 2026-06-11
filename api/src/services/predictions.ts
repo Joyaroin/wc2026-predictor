@@ -16,6 +16,7 @@ export interface PredictionInput {
 
 export interface PredictionService {
   upsert(callerId: string, matchId: string, input: PredictionInput): Promise<Prediction>;
+  remove(callerId: string, matchId: string): Promise<void>;
   getMine(callerId: string): Promise<Prediction[]>;
   getMatchPredictions(callerId: string, groupId: string, matchId: string): Promise<MatchPredictionsView>;
   setJoker(callerId: string, matchId: string, joker: boolean): Promise<Prediction>;
@@ -59,6 +60,13 @@ export function createPredictionService(
       };
       await predictions.put(prediction);
       return prediction;
+    },
+
+    async remove(callerId, matchId) {
+      const match = await matchService.get(matchId);
+      if (!match) throw new NotFoundError('Match not found');
+      if (matchService.isLocked(match)) throw new LockedError();
+      await predictions.delete(callerId, matchId); // idempotent
     },
 
     getMine(callerId) {

@@ -1,4 +1,5 @@
 // Golden Boot / "Player of the Tournament": predict the top scorer; auto-scored from ESPN goals.
+import { awardsLocked } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { GoldenBootRepo, StatsRepo, GoldenBootPick, TopScorer } from '../repos/types';
 import type { MatchService } from './matches';
@@ -79,8 +80,7 @@ export function createGoldenBootService(
 
     async setPick(callerId, scorerId, scorerName) {
       if (!scorerId.trim() || !scorerName.trim()) throw new ValidationError('Pick a player');
-      const start = await tournamentStart();
-      if (start && clock.now().getTime() >= start.getTime()) throw new LockedError();
+      if (awardsLocked(clock.now())) throw new LockedError();
 
       const now = clock.now().toISOString();
       const existing = await goldenBoot.get(callerId);
@@ -97,12 +97,8 @@ export function createGoldenBootService(
     },
 
     async getStatus(callerId) {
-      const [pick, leader, start] = await Promise.all([
-        goldenBoot.get(callerId),
-        stats.getLeader(),
-        tournamentStart(),
-      ]);
-      const locked = start != null && clock.now().getTime() >= start.getTime();
+      const [pick, leader] = await Promise.all([goldenBoot.get(callerId), stats.getLeader()]);
+      const locked = awardsLocked(clock.now());
       return {
         pick: pick ? { scorerId: pick.scorerId, scorerName: pick.scorerName, points: pick.points } : null,
         leader,

@@ -47,6 +47,7 @@ export interface MatchRepo {
 
 export interface PredictionRepo {
   put(prediction: Prediction): Promise<void>;
+  delete(playerId: string, matchId: string): Promise<void>;
   get(playerId: string, matchId: string): Promise<Prediction | null>;
   listByPlayer(playerId: string): Promise<Prediction[]>;
   listByMatch(matchId: string): Promise<Prediction[]>;

@@ -38,6 +38,10 @@ export function FixturesPage() {
     mutationFn: ({ matchId, on }: { matchId: string; on: boolean }) => api.setJoker(matchId, on),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
   });
+  const clear = useMutation({
+    mutationFn: (matchId: string) => api.deletePrediction(matchId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['my-predictions'] }),
+  });
   const firstTeam = useMutation({
     mutationFn: ({ matchId, home, away, side }: { matchId: string; home: number; away: number; side: 'HOME' | 'AWAY' | null }) =>
       api.upsertPrediction(matchId, { home, away, firstTeam: side }),
@@ -108,9 +112,10 @@ export function FixturesPage() {
                       key={m.id}
                       match={m}
                       prediction={predByMatch.get(m.id)}
-                      saving={save.isPending || joker.isPending || firstTeam.isPending || firstScorer.isPending}
+                      saving={save.isPending || joker.isPending || firstTeam.isPending || firstScorer.isPending || clear.isPending}
                       squad={[...(squadByTeam.get(canonTeam(m.homeTeam)) ?? []), ...(squadByTeam.get(canonTeam(m.awayTeam)) ?? [])]}
                       onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
+                      onClear={(matchId) => clear.mutate(matchId)}
                       onJoker={(matchId, on) => joker.mutate({ matchId, on })}
                       onFirstTeam={(matchId, side) => {
                         const p = predByMatch.get(matchId);

@@ -26,6 +26,23 @@ describe('prediction flow (US-4.x)', () => {
     expect(mine.body).toHaveLength(1);
   });
 
+  it('deletes a prediction before kickoff; rejects deletion after lock', async () => {
+    const t = makeTestApp({ now: new Date('2026-06-15T10:00:00.000Z') });
+    await t.repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: KICKOFF }));
+    const token = await loginToken(t.app, 'Sam', '1234');
+
+    await request(t.app).put('/api/predictions/m1').set('Authorization', `Bearer ${token}`).send({ home: 2, away: 1 });
+    const del = await request(t.app).delete('/api/predictions/m1').set('Authorization', `Bearer ${token}`);
+    expect(del.status).toBe(200);
+    const mine = await request(t.app).get('/api/predictions/me').set('Authorization', `Bearer ${token}`);
+    expect(mine.body).toHaveLength(0);
+
+    const late = makeTestApp({ now: new Date('2026-06-15T19:00:00.000Z') });
+    await late.repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: KICKOFF }));
+    const t2 = await loginToken(late.app, 'Sam', '1234');
+    expect((await request(late.app).delete('/api/predictions/m1').set('Authorization', `Bearer ${t2}`)).status).toBe(409);
+  });
+
   it('rejects a prediction after kickoff (locked)', async () => {
     const t = makeTestApp({ now: new Date('2026-06-15T19:00:00.000Z') }); // after kickoff
     await t.repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: KICKOFF }));

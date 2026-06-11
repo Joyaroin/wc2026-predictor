@@ -4,3 +4,4 @@ export * from './schemas';
 export * from './dates';
 export * from './darkHorse';
 export * from './sections';
+export * from './awards';

@@ -21,7 +21,7 @@ export function TournamentWinnerAward() {
   return (
     <section className="card award">
       <h2>🏆 Tournament Winner</h2>
-      <p className="muted fine">Pick the champion before kick-off. Correct = <b>+10</b> bonus points.</p>
+      <p className="muted fine">Pick the champion before 13 June. Correct = <b>+10</b> bonus points.</p>
       {q.isLoading && <p className="muted">Loading…</p>}
       {s && (
         <>
@@ -47,7 +47,7 @@ export function TournamentWinnerAward() {
           <button className="odds-btn" onClick={() => setModal(true)} data-testid="tw-open">
             {s.locked ? '📊 View teams' : '🏆 Pick the champion'}
           </button>
-          {s.locked && <p className="muted fine">🔒 Locked — the tournament has started.</p>}
+          {s.locked && <p className="muted fine">🔒 Locked (closed 13 June).</p>}
           {modal && (
             <ProbabilitiesModal
               teams={s.teams}

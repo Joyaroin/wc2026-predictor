@@ -9,7 +9,7 @@ export function HelpPage() {
         <summary>🚀 Getting started</summary>
         <ul>
           <li>Sign in with just a <b>name and a 4-digit PIN</b> — no email needed. Use the same name + PIN on any device to pick up where you left off.</li>
-          <li>Predict scores in <b>Fixtures</b>, make your pre-tournament picks in <b>⋮ → Awards</b>, and compete with friends in <b>Groups</b>.</li>
+          <li>Predict scores in <b>Fixtures</b>, make your pre-tournament picks in <b>Awards</b>, and compete with friends in <b>Groups</b>.</li>
           <li>You can change your PIN, timezone, and the app's <b>theme</b> (including country looks) in <b>⋮ → Account</b>.</li>
         </ul>
       </details>
@@ -19,7 +19,7 @@ export function HelpPage() {
         <ul>
           <li>Open <b>Fixtures</b>, find the match, type a scoreline in the two boxes and hit <b>Save</b>.</li>
           <li>After saving you can also pick the <b>first team to score</b> (tap a flag) and the <b>first player to score</b> (Select → search either squad).</li>
-          <li>You can edit everything until <b>kickoff</b> — then the match locks. Other people's picks stay hidden until a match locks.</li>
+          <li>You can edit everything until <b>kickoff</b> — then the match locks. Clearing both score boxes and hitting <b>Clear</b> removes a saved prediction. Other people's picks stay hidden until a match locks.</li>
           <li>Matches are grouped into <b>Matchweeks 1–3</b> and one section per knockout round.</li>
         </ul>
       </details>
@@ -55,8 +55,8 @@ export function HelpPage() {
       </details>
 
       <details className="help-sec">
-        <summary>🏆 Awards (pick before kickoff!)</summary>
-        <p>All award picks lock when the tournament's first match kicks off — get them in early. Find them in <b>⋮ → Awards</b>.</p>
+        <summary>🏆 Awards (pick before 13 June!)</summary>
+        <p>All award picks lock on <b>13 June</b> — get them in early. Find them in the <b>Awards</b> tab.</p>
         <ul>
           <li><b>⭐ Player of the Tournament (+25)</b> — predict the tournament's best player.</li>
           <li><b>🥇 Golden Boot (+15)</b> — predict the top scorer. The live leader updates during the tournament.</li>

@@ -1,5 +1,5 @@
 // Tournament Winner award: pick the champion before kick-off; +10 if they win the cup.
-import { teamWinProbability, type Match } from '@wc2026/shared';
+import { teamWinProbability, awardsLocked, type Match } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { TournamentWinnerRepo, TournamentWinnerPick } from '../repos/types';
 import type { MatchService } from './matches';
@@ -52,8 +52,7 @@ export function createTournamentWinnerService(
     return new Date(Math.min(...matches.map((m) => Date.parse(m.kickoff))));
   }
   async function isLocked(): Promise<boolean> {
-    const start = await tournamentStart();
-    return start != null && clock.now().getTime() >= start.getTime();
+    return awardsLocked(clock.now());
   }
 
   return {

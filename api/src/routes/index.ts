@@ -81,6 +81,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/predictions/me', auth, wrap((req) => services.predictions.getMine(caller(req))));
   r.put('/predictions/:matchId', auth, validateBody(predictionInputSchema), wrap((req) => services.predictions.upsert(caller(req), param(req, 'matchId'), req.body)));
   r.put('/predictions/:matchId/joker', auth, validateBody(jokerSchema), wrap((req) => services.predictions.setJoker(caller(req), param(req, 'matchId'), req.body.joker)));
+  r.delete('/predictions/:matchId', auth, wrapVoid((req) => services.predictions.remove(caller(req), param(req, 'matchId'))));
 
   // --- Knockout bracket (advancement picks) ---
   r.get('/bracket/me', auth, wrap((req) => services.bracket.getMine(caller(req))));

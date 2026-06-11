@@ -131,6 +131,9 @@ export function createMemoryRepositories(): Repositories {
     async put(prediction) {
       predictions.set(predKey(prediction.playerId, prediction.matchId), prediction);
     },
+    async delete(playerId, matchId) {
+      predictions.delete(predKey(playerId, matchId));
+    },
     async get(playerId, matchId) {
       return predictions.get(predKey(playerId, matchId)) ?? null;
     },

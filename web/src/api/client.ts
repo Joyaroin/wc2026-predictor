@@ -105,6 +105,8 @@ export const api = {
   ) => req<Prediction>(`/predictions/${matchId}`, { method: 'PUT', body }),
   setJoker: (matchId: string, joker: boolean) =>
     req<Prediction>(`/predictions/${matchId}/joker`, { method: 'PUT', body: { joker } }),
+  deletePrediction: (matchId: string) =>
+    req<{ ok: boolean }>(`/predictions/${matchId}`, { method: 'DELETE' }),
   globalLeaderboard: () => req<GlobalLeaderboardView>('/leaderboard/global'),
   myBracket: () => req<BracketPick[]>('/bracket/me'),
   setBracketPick: (matchId: string, side: BracketSide) =>

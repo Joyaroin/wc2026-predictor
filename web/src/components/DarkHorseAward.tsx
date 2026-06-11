@@ -50,7 +50,7 @@ export function DarkHorseAward() {
           <button className="odds-btn" onClick={() => setModal(true)} data-testid="dh-open-odds">
             📊 View odds{s.locked ? '' : ' & pick'}
           </button>
-          {s.locked && <p className="muted fine">🔒 Locked — the tournament has started.</p>}
+          {s.locked && <p className="muted fine">🔒 Locked (closed 13 June).</p>}
           {modal && (
             <ProbabilitiesModal
               teams={s.teams}

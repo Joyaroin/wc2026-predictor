@@ -27,13 +27,13 @@ export function GoldenBootPage() {
   return (
     <section className="card award">
       <h2>🥇 Golden Boot</h2>
-      <p className="muted fine">Predict the <b>top scorer</b> of the tournament before kick-off. Correct pick = <b>+15</b> bonus points.</p>
+      <p className="muted fine">Predict the <b>top scorer</b> of the tournament before 13 June. Correct pick = <b>+15</b> bonus points.</p>
 
       <div className="gb-row"><span className="muted">Your pick: </span><strong>{myPick ? myPick.scorerName : '— none yet —'}</strong>{myPick && myPick.points > 0 && <span className="points"> +{myPick.points}</span>}</div>
       <div className="gb-row"><span className="muted">Current top scorer: </span><strong>{leader ? `${leader.scorerName} (${leader.goals})` : 'TBD'}</strong></div>
 
       {locked ? (
-        <p className="muted fine">🔒 Picks are locked — the tournament has started.</p>
+        <p className="muted fine">🔒 Picks are locked (closed 13 June).</p>
       ) : (
         <div>
           <input

@@ -285,6 +285,11 @@ export function createDynamoRepositories(config: Config): Repositories {
     async put(prediction: Prediction) {
       await doc.send(new PutCommand({ TableName: Table, Item: predictionToItem(prediction) }));
     },
+    async delete(playerId, matchId) {
+      await doc.send(
+        new DeleteCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: keys.predSk(matchId) } }),
+      );
+    },
     async get(playerId, matchId) {
       const r = await doc.send(
         new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: keys.predSk(matchId) } }),

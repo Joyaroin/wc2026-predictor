@@ -6,6 +6,7 @@ import {
   darkHorseScore,
   teamWinProbability,
   type Match,
+awardsLocked,
 } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { DarkHorseRepo, DarkHorsePick } from '../repos/types';
@@ -100,8 +101,7 @@ export function createDarkHorseService(
   }
 
   async function isLocked(): Promise<boolean> {
-    const start = await tournamentStart();
-    return start != null && clock.now().getTime() >= start.getTime();
+    return awardsLocked(clock.now());
   }
 
   return {

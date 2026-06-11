@@ -19,6 +19,7 @@ interface Props {
   match: MatchView;
   prediction: Prediction | undefined;
   onSave: (matchId: string, home: number, away: number) => void;
+  onClear: (matchId: string) => void;
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
@@ -26,7 +27,7 @@ interface Props {
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onFirstScorer, squad, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirstTeam, onFirstScorer, squad, saving }: Props) {
   const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
@@ -49,6 +50,8 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
+  // Both boxes cleared on a saved prediction → Save removes it.
+  const canClear = editable && !!prediction && home === '' && away === '';
   const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)} pts` : '- pts';
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
@@ -276,11 +279,12 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
           {editable && (
             <button
               className="btn-save"
-              disabled={!canSave || saving}
-              onClick={() => onSave(match.id, Number(home), Number(away))}
+              disabled={(!canSave && !canClear) || saving}
+              title={canClear ? 'Remove this prediction' : undefined}
+              onClick={() => (canClear ? onClear(match.id) : onSave(match.id, Number(home), Number(away)))}
               data-testid={`pred-save-${match.id}`}
             >
-              Save
+              {canClear ? 'Clear' : 'Save'}
             </button>
           )}
         </div>

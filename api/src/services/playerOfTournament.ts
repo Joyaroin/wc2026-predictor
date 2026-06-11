@@ -1,5 +1,6 @@
 // Player of the Tournament award: pick a footballer; +25 if they win. The official winner has no
 // free data source, so an admin sets it (gated by ADMIN_TOKEN) at the end of the tournament.
+import { awardsLocked } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { PottRepo, StatsRepo, PottPick, Winner } from '../repos/types';
 import type { MatchService } from './matches';
@@ -28,10 +29,7 @@ export function createPottService(
   adminToken: string,
 ): PottService {
   async function isLocked(): Promise<boolean> {
-    const matches = await matchService.list();
-    if (matches.length === 0) return false;
-    const start = Math.min(...matches.map((m) => Date.parse(m.kickoff)));
-    return clock.now().getTime() >= start;
+    return awardsLocked(clock.now());
   }
 
   return {

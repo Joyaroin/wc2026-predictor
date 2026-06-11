@@ -24,7 +24,7 @@ export function PlayerOfTournamentAward() {
   return (
     <section className="card award">
       <h2>⭐ Player of the Tournament</h2>
-      <p className="muted fine">Predict the tournament's best player before kick-off. Correct = <b>+25</b> bonus points.</p>
+      <p className="muted fine">Predict the tournament's best player before 13 June. Correct = <b>+25</b> bonus points.</p>
       {s && (
         <>
           <div className="gb-row">
@@ -37,7 +37,7 @@ export function PlayerOfTournamentAward() {
             <strong>{s.winner ? s.winner.name : 'TBD'}</strong>
           </div>
           {s.locked ? (
-            <p className="muted fine">🔒 Picks are locked — the tournament has started.</p>
+            <p className="muted fine">🔒 Picks are locked (closed 13 June).</p>
           ) : (
             <div>
               <input
