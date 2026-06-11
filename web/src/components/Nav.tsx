@@ -10,16 +10,15 @@ export function Nav() {
 
   return (
     <nav className="nav">
-      <NavLink to="/fixtures" className="brand" data-testid="nav-brand">
+      <NavLink viewTransition to="/fixtures" className="brand" data-testid="nav-brand">
         <img src="/logo.jpg" alt="" className="brand-logo" />
         <span className="brand-name">WC Predictions <b>2026</b></span>
       </NavLink>
 
       <div className="nav-links">
-        <NavLink to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
-        <NavLink to="/standings" data-testid="nav-standings">Standings</NavLink>
-        <NavLink to="/awards" data-testid="nav-awards">Awards</NavLink>
-        <NavLink to="/groups" data-testid="nav-groups">Groups</NavLink>
+        <NavLink viewTransition to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
+        <NavLink viewTransition to="/awards" data-testid="nav-awards">Awards</NavLink>
+        <NavLink viewTransition to="/groups" data-testid="nav-groups">Groups</NavLink>
       </div>
 
       <div className="nav-user">
@@ -38,11 +37,12 @@ export function Nav() {
             <>
               <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
               <div className="menu-dropdown" onClick={() => setMenuOpen(false)} data-testid="nav-dropdown">
-                <NavLink to="/me" data-testid="nav-me">My Points</NavLink>
-                <NavLink to="/global" data-testid="nav-global">Global leaderboard</NavLink>
-                <NavLink to="/settings" data-testid="nav-settings">Account</NavLink>
-                <NavLink to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>
-                <NavLink to="/help" data-testid="nav-help">Help & rules</NavLink>
+                <NavLink viewTransition to="/standings" data-testid="nav-standings">Standings</NavLink>
+                <NavLink viewTransition to="/me" data-testid="nav-me">My Points</NavLink>
+                <NavLink viewTransition to="/global" data-testid="nav-global">Global leaderboard</NavLink>
+                <NavLink viewTransition to="/settings" data-testid="nav-settings">Account</NavLink>
+                <NavLink viewTransition to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>
+                <NavLink viewTransition to="/help" data-testid="nav-help">Help & rules</NavLink>
                 <button onClick={logout} data-testid="logout-button">Log out</button>
               </div>
             </>

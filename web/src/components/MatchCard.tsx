@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   effectivePoints,
   scoreBreakdown,
@@ -15,6 +15,28 @@ import { Flag } from './Flag';
 import { fold } from '../lib/search';
 import { canonTeam } from '../lib/teams';
 import { Confetti } from './Confetti';
+
+/** Eases a number up from 0 when it first appears — points feel earned, not printed. */
+function useCountUp(target: number, active: boolean): number {
+  const [v, setV] = useState(active ? 0 : target);
+  useEffect(() => {
+    if (!active || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setV(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const dur = 750;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / dur);
+      setV(Math.round(target * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, active]);
+  return v;
+}
 
 interface Props {
   match: MatchView;
@@ -53,7 +75,12 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const canSave = editable && home !== '' && away !== '';
   // Both boxes cleared on a saved prediction → Save removes it.
   const canClear = editable && !!prediction && home === '' && away === '';
-  const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)} pts` : '- pts';
+  const scored = state === 'Played' && !!prediction;
+  const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : 0, scored);
+  const ptsText = scored ? `+${shownPts} pts` : '- pts';
+  // Unsaved edits → gently pulse the Save button so the next step is obvious.
+  const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
+  const awayRef = useRef<HTMLInputElement>(null);
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
@@ -111,7 +138,16 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         min={0}
         max={30}
         value={value}
-        onChange={(e) => set(e.target.value)}
+        ref={side === 'away' ? awayRef : undefined}
+        onChange={(e) => {
+          set(e.target.value);
+          // Typing the home score flows straight into the away box.
+          if (side === 'home' && e.target.value !== '') awayRef.current?.focus();
+        }}
+        onFocus={(e) => e.target.select()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && canSave) onSave(match.id, Number(home), Number(away));
+        }}
         data-testid={`pred-${side}-${match.id}`}
         aria-label={`${side === 'home' ? match.homeTeam : match.awayTeam} score`}
       />
@@ -293,7 +329,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         <div className="mc-foot-right">
           {editable && (
             <button
-              className="btn-save"
+              className={`btn-save${dirty ? ' attention' : ''}`}
               disabled={(!canSave && !canClear) || saving}
               title={canClear ? 'Remove this prediction' : undefined}
               onClick={() => (canClear ? onClear(match.id) : onSave(match.id, Number(home), Number(away)))}

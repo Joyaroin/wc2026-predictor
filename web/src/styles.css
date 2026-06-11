@@ -487,3 +487,32 @@ button.danger { background: var(--danger); color: #2a0a0a; }
 @media (prefers-reduced-motion: no-preference) {
   .timeline-entry { animation: fadeUp 0.45s ease backwards; }
 }
+
+/* ============ Fluidity ============ */
+/* Saved toast */
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 60; background: var(--card); border: 1px solid var(--accent); color: var(--ink); padding: 9px 18px; border-radius: 999px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: toastIn 0.25s cubic-bezier(0.2, 1.4, 0.4, 1); } }
+@keyframes toastIn { from { transform: translate(-50%, 14px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+/* Accordion sections glide open/closed */
+.collapse { display: grid; grid-template-rows: 0fr; }
+.collapse.open { grid-template-rows: 1fr; }
+.collapse-inner { overflow: hidden; min-height: 0; visibility: hidden; }
+.collapse.open .collapse-inner { visibility: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .collapse { transition: grid-template-rows 0.35s cubic-bezier(0.3, 0.9, 0.3, 1); }
+  .collapse-inner { transition: visibility 0s linear 0.35s; }
+  .collapse.open .collapse-inner { transition: visibility 0s; }
+}
+
+/* Unsaved edits → Save gently breathes */
+@media (prefers-reduced-motion: no-preference) {
+  .btn-save.attention { animation: breathe 1.6s ease-in-out infinite; }
+}
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent); } }
+
+/* Soft page cross-fades (View Transitions API) */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation-duration: 0.16s; }
+  ::view-transition-new(root) { animation-duration: 0.22s; }
+}
