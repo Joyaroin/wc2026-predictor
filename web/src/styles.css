@@ -22,7 +22,9 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
   background: var(--bg);
   color: var(--ink);
   /* The Fixtures full-bleed breakout uses 100vw, which includes the scrollbar width
@@ -200,6 +202,8 @@ tr.me { background: var(--on-bg); }
 .menu-dropdown a.active { color: var(--accent); }
 
 .awards { display: grid; gap: 16px; }
+.awards-deadline { background: var(--on-bg); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; }
+.awards-deadline.locked { border-color: var(--line); color: var(--muted); }
 .award h2 { margin-top: 0; }
 .odds-btn { margin-top: 8px; }
 

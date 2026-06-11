@@ -1,7 +1,7 @@
 import type { Match } from './types';
 
-/** When all Awards picks (Golden Boot, Tournament Winner, Dark Horse, Player of the Tournament) lock. */
-export const AWARDS_LOCK_ISO = '2026-06-13T00:00:00Z';
+/** When all Awards picks lock: June 13, 2:00 PM Eastern (Canada) = 18:00 UTC. */
+export const AWARDS_LOCK_ISO = '2026-06-13T18:00:00Z';
 
 export function awardsLocked(now: Date): boolean {
   return now.getTime() >= Date.parse(AWARDS_LOCK_ISO);

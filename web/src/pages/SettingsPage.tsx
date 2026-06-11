@@ -6,8 +6,11 @@ import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
 import { Flag } from '../components/Flag';
 
 export function SettingsPage() {
-  const { player } = usePlayer();
+  const { player, updateName } = usePlayer();
   const { tzPref, timeZone, setTzPref, theme, setTheme } = usePrefs();
+  const [newName, setNewName] = useState('');
+  const [nameMsg, setNameMsg] = useState<string | null>(null);
+  const [nameErr, setNameErr] = useState<string | null>(null);
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -15,6 +18,20 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4);
+
+  const rename = useMutation({
+    mutationFn: () => api.rename(newName.trim()),
+    onSuccess: (res) => {
+      updateName(res.name);
+      setNameMsg(`You're now "${res.name}".`);
+      setNameErr(null);
+      setNewName('');
+    },
+    onError: (e) => {
+      setNameMsg(null);
+      setNameErr(e instanceof ApiError && e.status === 409 ? 'That name is already taken.' : 'Could not change name.');
+    },
+  });
 
   const changePin = useMutation({
     mutationFn: () => api.changePin(currentPin, newPin),
@@ -46,6 +63,26 @@ export function SettingsPage() {
     <div className="settings">
       <h2>Account settings</h2>
       <p className="muted">Signed in as <strong>{player?.name}</strong></p>
+
+      <div className="card">
+        <h3>Display name</h3>
+        <p className="muted fine">Change the name shown on leaderboards. You'll keep all your predictions and points — log in with the new name (same PIN) from now on.</p>
+        <div className="row">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={player?.name}
+            maxLength={30}
+            data-testid="rename-input"
+          />
+          <button disabled={newName.trim().length < 2 || rename.isPending} onClick={() => rename.mutate()} data-testid="rename-save">
+            Change
+          </button>
+        </div>
+        {nameMsg && <p className="muted fine">✅ {nameMsg}</p>}
+        {nameErr && <p className="error fine">{nameErr}</p>}
+      </div>
 
       <div className="card">
         <h3>Theme</h3>

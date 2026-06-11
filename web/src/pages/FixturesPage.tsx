@@ -10,9 +10,11 @@ export function FixturesPage() {
   const matches = useQuery({
     queryKey: ['matches'],
     queryFn: api.matches,
+    // Always poll so the page flips to LIVE at kickoff without a manual refresh;
+    // poll faster while a match is actually in play.
     refetchInterval: (query) => {
       const data = query.state.data as MatchView[] | undefined;
-      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 60_000 : false;
+      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 30_000 : 60_000;
     },
   });
   const predictions = useQuery({ queryKey: ['my-predictions'], queryFn: api.myPredictions });

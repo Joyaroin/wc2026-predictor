@@ -47,7 +47,7 @@ export function TournamentWinnerAward() {
           <button className="odds-btn" onClick={() => setModal(true)} data-testid="tw-open">
             {s.locked ? '📊 View teams' : '🏆 Pick the champion'}
           </button>
-          {s.locked && <p className="muted fine">🔒 Locked (closed 13 June).</p>}
+          {s.locked && <p className="muted fine">🔒 Picks closed June 13, 2 PM ET.</p>}
           {modal && (
             <ProbabilitiesModal
               teams={s.teams}

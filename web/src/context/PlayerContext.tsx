@@ -10,6 +10,8 @@ interface PlayerContextValue {
   player: PlayerSession | null;
   login: (name: string, pin: string) => Promise<void>;
   logout: () => void;
+  /** Update the displayed name after a successful rename. */
+  updateName: (name: string) => void;
 }
 
 const STORAGE_KEY = 'wc2026.player';
@@ -46,7 +48,16 @@ export function PlayerProvider({ children }: { children: ReactNode }): ReactNode
     setPlayer(null);
   };
 
-  return <Ctx.Provider value={{ player, login, logout }}>{children}</Ctx.Provider>;
+  const updateName = (name: string): void => {
+    setPlayer((p) => {
+      if (!p) return p;
+      const session = { ...p, name };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      return session;
+    });
+  };
+
+  return <Ctx.Provider value={{ player, login, logout, updateName }}>{children}</Ctx.Provider>;
 }
 
 export function usePlayer(): PlayerContextValue {

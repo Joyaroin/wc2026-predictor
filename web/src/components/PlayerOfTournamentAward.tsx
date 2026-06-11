@@ -37,7 +37,7 @@ export function PlayerOfTournamentAward() {
             <strong>{s.winner ? s.winner.name : 'TBD'}</strong>
           </div>
           {s.locked ? (
-            <p className="muted fine">🔒 Picks are locked (closed 13 June).</p>
+            <p className="muted fine">🔒 Picks closed June 13, 2 PM ET.</p>
           ) : (
             <div>
               <input

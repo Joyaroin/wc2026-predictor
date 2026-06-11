@@ -33,7 +33,7 @@ export function GoldenBootPage() {
       <div className="gb-row"><span className="muted">Current top scorer: </span><strong>{leader ? `${leader.scorerName} (${leader.goals})` : 'TBD'}</strong></div>
 
       {locked ? (
-        <p className="muted fine">🔒 Picks are locked (closed 13 June).</p>
+        <p className="muted fine">🔒 Picks closed June 13, 2 PM ET.</p>
       ) : (
         <div>
           <input
