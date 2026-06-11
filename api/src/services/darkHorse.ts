@@ -6,7 +6,8 @@ import {
   darkHorseScore,
   teamWinProbability,
   type Match,
-awardsLocked,
+  awardsLocked,
+  tournamentFinished,
 } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { DarkHorseRepo, DarkHorsePick } from '../repos/types';
@@ -124,7 +125,7 @@ export function createDarkHorseService(
           score: me?.score ?? darkHorseScore(pick.teamCode, weight),
           stage: WEIGHT_STAGE[weight] ?? 'Group stage',
           placement: me?.placement ?? 0,
-          points: me?.points ?? 0,
+          points: pick.points, // stored value — only set once the tournament ends
         };
       }
       return { teams, pick: pickView, totalPicks: picks.length, locked };
@@ -153,10 +154,12 @@ export function createDarkHorseService(
     async refresh() {
       const [matches, picks] = await Promise.all([matchService.list(), darkHorse.scanAll()]);
       if (picks.length === 0) return;
+      // Placements are a live preview; placement points only pay out once the tournament is over.
+      const finished = tournamentFinished(matches);
       const standings = computeStandings(matches, picks);
       const now = clock.now().toISOString();
       for (const pick of picks) {
-        const pts = standings.get(pick.playerId)?.points ?? 0;
+        const pts = finished ? (standings.get(pick.playerId)?.points ?? 0) : 0;
         if (pts !== pick.points) await darkHorse.put({ ...pick, points: pts, updatedAt: now });
       }
     },

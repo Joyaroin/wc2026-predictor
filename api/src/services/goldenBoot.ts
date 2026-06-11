@@ -1,5 +1,5 @@
 // Golden Boot / "Player of the Tournament": predict the top scorer; auto-scored from ESPN goals.
-import { awardsLocked } from '@wc2026/shared';
+import { awardsLocked, tournamentFinished } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { GoldenBootRepo, StatsRepo, GoldenBootPick, TopScorer } from '../repos/types';
 import type { MatchService } from './matches';
@@ -123,11 +123,13 @@ export function createGoldenBootService(
         if (tally.length > 0) {
           const leader = tally[0]!;
           await stats.setLeader({ scorerId: leader.scorerId, scorerName: leader.scorerName, goals: leader.goals });
+          // The live leader is display-only; points pay out once the tournament is over.
+          const finished = tournamentFinished(await matchService.list());
           for (const pick of await goldenBoot.scanAll()) {
-            const pts = pick.scorerId === leader.scorerId ? GOLDEN_BOOT_BONUS : 0;
+            const pts = finished && pick.scorerId === leader.scorerId ? GOLDEN_BOOT_BONUS : 0;
             if (pts !== pick.points) await goldenBoot.put({ ...pick, points: pts, updatedAt: now.toISOString() });
           }
-          logger.info('golden boot leader updated', { scorer: leader.scorerName, goals: leader.goals });
+          logger.info('golden boot leader updated', { scorer: leader.scorerName, goals: leader.goals, finished });
         }
       } catch (err) {
         logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' });

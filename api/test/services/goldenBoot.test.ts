@@ -36,7 +36,7 @@ describe('espn goal parsing', () => {
 });
 
 describe('golden boot refresh', () => {
-  it('sets the leader and awards the bonus to matching picks', async () => {
+  it('sets the leader; bonus pays only once the tournament is over', async () => {
     const repos = createMemoryRepositories();
     const now = '2026-06-20T00:00:00.000Z';
     await repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: '2026-06-11T16:00:00.000Z' }));
@@ -75,7 +75,16 @@ describe('golden boot refresh', () => {
     );
     await svc.refresh();
 
+    // Mid-tournament: leader is tracked but NO points yet.
     expect((await repos.stats.getLeader())?.scorerName).toBe('Ronaldo'); // 2 goals leads
+    expect((await repos.goldenBoot.get('sam'))?.points).toBe(0);
+
+    // Final decided → bonus pays out (force a fresh run past the throttle).
+    await repos.matches.upsert(
+      sampleMatch({ id: 'fin', stage: 'FINAL', status: 'FINISHED', homeScore: 1, awayScore: 0, winner: 'HOME', kickoff: '2026-07-19T18:00:00.000Z' }),
+    );
+    await repos.stats.setLastEspnRun('2026-06-19T00:00:00.000Z');
+    await svc.refresh();
     expect((await repos.goldenBoot.get('sam'))?.points).toBe(15); // picked the leader
     expect((await repos.goldenBoot.get('mia'))?.points).toBe(0);
   });

@@ -46,6 +46,13 @@ describe('dark horse award', () => {
     await request(t.app).put('/api/dark-horse').set(auth(sam.token)).send({ teamCode: 'HAI', teamName: 'Haiti' }); // 0.1 × final(1) = 0.1 → 1st
     await request(t.app).put('/api/dark-horse').set(auth(mia.token)).send({ teamCode: 'QAT', teamName: 'Qatar' }); // 0.3 × group(5000) = 1500 → 3rd
     await request(t.app).put('/api/dark-horse').set(auth(bob.token)).send({ teamCode: 'FRA', teamName: 'France' }); // 18.6 × final(1) = 18.6 → 2nd
+
+    // Mid-tournament: no points yet (final undecided).
+    await t.services.darkHorse.refresh();
+    expect((await t.repos.darkHorse.get(sam.playerId))?.points).toBe(0);
+
+    // Final decided → placements pay out.
+    await t.repos.matches.upsert(sampleMatch({ id: 'f1', stage: 'FINAL', status: 'FINISHED', homeScore: 1, awayScore: 0, winner: 'HOME', kickoff: '2026-07-19T18:00:00.000Z', homeTeam: 'Haiti', homeCode: 'HAI', awayTeam: 'France', awayCode: 'FRA' }));
     await t.services.darkHorse.refresh();
 
     expect((await t.repos.darkHorse.get(sam.playerId))?.points).toBe(20);

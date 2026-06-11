@@ -56,7 +56,7 @@ export function HelpPage() {
 
       <details className="help-sec">
         <summary>🏆 Awards (pick before 13 June!)</summary>
-        <p>All award picks lock on <b>13 June</b> — get them in early. Find them in the <b>Awards</b> tab.</p>
+        <p>All award picks lock on <b>13 June</b> — get them in early. Find them in the <b>Awards</b> tab. Award points are added to the leaderboards <b>when the tournament ends</b>; until then the Awards tab shows live standings as a preview.</p>
         <ul>
           <li><b>⭐ Player of the Tournament (+25)</b> — predict the tournament's best player.</li>
           <li><b>🥇 Golden Boot (+15)</b> — predict the top scorer. The live leader updates during the tournament.</li>

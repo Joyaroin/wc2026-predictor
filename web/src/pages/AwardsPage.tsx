@@ -7,6 +7,7 @@ import { PlayerOfTournamentAward } from '../components/PlayerOfTournamentAward';
 export function AwardsPage() {
   return (
     <div className="awards">
+      <p className="muted fine">🏁 Award points are added to the leaderboards when the tournament ends — until then you'll see live standings as a preview.</p>
       <PlayerOfTournamentAward />
       <GoldenBootPage />
       <TournamentWinnerAward />
