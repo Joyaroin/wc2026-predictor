@@ -9,7 +9,10 @@ import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
 import { AwardsPage } from './pages/AwardsPage';
+import { StandingsPage } from './pages/StandingsPage';
 import { HelpPage } from './pages/HelpPage';
+import { UpdatesPage } from './pages/UpdatesPage';
+import { LiveTicker } from './components/LiveTicker';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -24,11 +27,13 @@ export default function App() {
   return (
     <div className="app">
       {player && <Nav />}
+      {player && <LiveTicker />}
       <main className="container">
         <Routes>
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />
           <Route path="/fixtures" element={<RequireAuth><FixturesPage /></RequireAuth>} />
           <Route path="/awards" element={<RequireAuth><AwardsPage /></RequireAuth>} />
+          <Route path="/standings" element={<RequireAuth><StandingsPage /></RequireAuth>} />
           {/* legacy paths → awards */}
           <Route path="/golden-boot" element={<Navigate to="/awards" replace />} />
           <Route path="/bracket" element={<Navigate to="/awards" replace />} />
@@ -39,6 +44,7 @@ export default function App() {
           <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
           <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
+          <Route path="/updates" element={<RequireAuth><UpdatesPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

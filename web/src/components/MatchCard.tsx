@@ -14,6 +14,7 @@ import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
 import { canonTeam } from '../lib/teams';
+import { Confetti } from './Confetti';
 
 interface Props {
   match: MatchView;
@@ -68,6 +69,19 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const pickedTeamCode = prediction?.firstTeam === 'HOME' ? match.homeCode : match.awayCode;
   const pickedTeamName = prediction?.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam;
 
+  // Celebrate an exact scoreline once per match (remembered per device).
+  const [confetti, setConfetti] = useState(false);
+  const exact = !!bd?.exact;
+  useEffect(() => {
+    if (!exact) return;
+    const key = `wc2026.confetti.${match.id}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    setConfetti(true);
+    const t = setTimeout(() => setConfetti(false), 3400);
+    return () => clearTimeout(t);
+  }, [exact, match.id]);
+
   let rcptIdx = 0;
   const rcptRow = (label: ReactNode, ok: boolean | undefined, pts: number) => (
     <div className="rcpt-row" style={{ animationDelay: `${rcptIdx++ * 70}ms` }}>
@@ -109,6 +123,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
 
   return (
     <div className={`match-card ${prediction?.joker ? 'joker-on' : ''}`} data-testid={`match-${match.id}`}>
+      {confetti && <Confetti />}
       <div className="mc-header">
         <span className="mc-round">{stageLabel(match.stage, match.groupName)}</span>
         <StatusBadge state={state} />

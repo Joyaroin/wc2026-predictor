@@ -1,0 +1,58 @@
+// What's-new feed — newest first. Add an entry whenever a release is promoted to production.
+export interface UpdateEntry {
+  id: string; // bump to mark the feed "unread" (yyyy-mm-dd or yyyy-mm-dd.n)
+  date: string;
+  emoji: string;
+  title: string;
+  points: string[];
+}
+
+export const UPDATES: UpdateEntry[] = [
+  {
+    id: '2026-06-11.2',
+    date: 'June 11, 2026',
+    emoji: '🎉',
+    title: 'Matchday-one polish',
+    points: [
+      'Post-match points receipts — every rule ticked ✓/✗ on finished cards, with a little flair',
+      'Awards get their own tab and close June 13, 2 PM (Toronto)',
+      'Award points now land when the tournament ends — leaderboards stay suspenseful',
+      'Clear a prediction by emptying both boxes and hitting Clear',
+      'Country themes 🇧🇷🇦🇷🇫🇷 + light mode in Account, and a new logo',
+    ],
+  },
+  {
+    id: '2026-06-10',
+    date: 'June 10, 2026',
+    emoji: '⚽',
+    title: 'Smarter scoring',
+    points: [
+      'Additive points (max 20): outcome, goal difference, exact score, each team\'s goals',
+      'New bonuses: first team to score (+2) and first player to score (+6)',
+      'One Joker per match week / knockout round — doubles that match',
+      'Fixtures organized into match weeks and rounds, with flags everywhere',
+      'Help & rules guide in the menu',
+    ],
+  },
+  {
+    id: '2026-06-08',
+    date: 'June 8, 2026',
+    emoji: '🚀',
+    title: 'Kickoff',
+    points: [
+      'Predict every match of the 2026 World Cup',
+      'Groups with invite codes, group + global leaderboards',
+      'Live scores and automatic scoring',
+    ],
+  },
+];
+
+export const LATEST_UPDATE_ID = UPDATES[0]?.id ?? '';
+const SEEN_KEY = 'wc2026.updates.seen';
+
+export function hasUnseenUpdates(): boolean {
+  return localStorage.getItem(SEEN_KEY) !== LATEST_UPDATE_ID;
+}
+export function markUpdatesSeen(): void {
+  localStorage.setItem(SEEN_KEY, LATEST_UPDATE_ID);
+}

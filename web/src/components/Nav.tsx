@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext';
+import { hasUnseenUpdates } from '../updates';
 
 export function Nav() {
   const { player, logout } = usePlayer();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unseen, setUnseen] = useState(hasUnseenUpdates());
 
   return (
     <nav className="nav">
@@ -15,6 +17,7 @@ export function Nav() {
 
       <div className="nav-links">
         <NavLink to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
+        <NavLink to="/standings" data-testid="nav-standings">Standings</NavLink>
         <NavLink to="/awards" data-testid="nav-awards">Awards</NavLink>
         <NavLink to="/groups" data-testid="nav-groups">Groups</NavLink>
       </div>
@@ -24,12 +27,12 @@ export function Nav() {
         <div className="menu">
           <button
             className="menu-btn"
-            onClick={() => setMenuOpen((o) => !o)}
+            onClick={() => { setMenuOpen((o) => !o); setUnseen(hasUnseenUpdates()); }}
             aria-label="More"
             aria-expanded={menuOpen}
             data-testid="nav-menu"
           >
-            ⋮
+            ⋮{unseen && <span className="menu-dot" aria-label="new updates" />}
           </button>
           {menuOpen && (
             <>
@@ -38,6 +41,7 @@ export function Nav() {
                 <NavLink to="/me" data-testid="nav-me">My Points</NavLink>
                 <NavLink to="/global" data-testid="nav-global">Global leaderboard</NavLink>
                 <NavLink to="/settings" data-testid="nav-settings">Account</NavLink>
+                <NavLink to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>
                 <NavLink to="/help" data-testid="nav-help">Help & rules</NavLink>
                 <button onClick={logout} data-testid="logout-button">Log out</button>
               </div>
