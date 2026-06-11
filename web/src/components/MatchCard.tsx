@@ -6,6 +6,7 @@ import { matchState, formatKickoff, stageLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
+import { canonTeam } from '../lib/teams';
 
 interface Props {
   match: MatchView;
@@ -14,7 +15,7 @@ interface Props {
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
-  squad: { id: string; name: string; position: string }[];
+  squad: { id: string; name: string; position: string; team: string }[];
   saving: boolean;
 }
 
@@ -33,7 +34,9 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
   const ptsText = state === 'Played' && prediction ? `+${effectivePoints(prediction)} pts` : '- pts';
-  const selectedPos = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId)?.position : undefined;
+  const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
+  // Which of the two teams a squad player belongs to → its flag code.
+  const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
 
   const teamSide = (code: string | null, name: string, side: 'home' | 'away') => (
     <div className={`mc-team ${side}`}>
@@ -129,7 +132,10 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
               data-testid={`scorer-toggle-${match.id}`}
             >
               {prediction?.firstScorerName ? (
-                <>{prediction.firstScorerName}{selectedPos ? <span className="pos"> · {selectedPos}</span> : null}</>
+                <>
+                  {selected ? <Flag code={codeForTeam(selected.team)} name={selected.team} /> : null}
+                  {prediction.firstScorerName}{selected?.position ? <span className="pos"> · {selected.position}</span> : null}
+                </>
               ) : (
                 'Select'
               )}
@@ -152,6 +158,7 @@ export function MatchCard({ match, prediction, onSave, onJoker, onFirstTeam, onF
                             onClick={() => { onFirstScorer(match.id, p.id, p.name); setScorerOpen(false); }}
                             data-testid={`scorer-${match.id}-${p.id}`}
                           >
+                            <Flag code={codeForTeam(p.team)} name={p.team} />
                             {p.name}{p.position ? <span className="pos"> · {p.position}</span> : null}
                           </button>
                         </li>

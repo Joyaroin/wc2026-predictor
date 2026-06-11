@@ -116,7 +116,7 @@ input.mc-box:focus { outline: none; border-color: var(--accent); }
 .firstteam { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; line-height: 0; }
 .firstteam.on { border-color: var(--accent); background: #12233b; }
 .firstteam:disabled { opacity: 0.45; }
-.select-btn { align-self: center; background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 16px; color: var(--ink); font: inherit; font-weight: 600; }
+.select-btn { align-self: center; display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 16px; color: var(--ink); font: inherit; font-weight: 600; }
 .select-btn.on { border-color: var(--accent); color: var(--accent); }
 .select-btn:disabled { opacity: 0.45; }
 .pos { color: var(--muted); font-weight: 600; font-size: 0.85em; }
@@ -146,7 +146,7 @@ input.mc-box:focus { outline: none; border-color: var(--accent); }
 .scorer-pick { width: 100%; margin-top: 4px; }
 .scorer-pick input { width: 100%; box-sizing: border-box; }
 .scorer-pick ul { list-style: none; padding: 0; margin: 4px 0 0; max-height: 160px; overflow-y: auto; display: grid; gap: 2px; }
-.scorer-pick li button { width: 100%; text-align: left; background: transparent; border: none; color: var(--ink); padding: 5px 8px; border-radius: 6px; font: inherit; }
+.scorer-pick li button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border: none; color: var(--ink); padding: 5px 8px; border-radius: 6px; font: inherit; }
 .scorer-pick li button:hover { background: #16203a; }
 .scorer-pick li button.on { color: var(--accent); }
 

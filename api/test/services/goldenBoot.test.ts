@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createGoldenBootService } from '../../src/services/goldenBoot';
 import { createMatchService } from '../../src/services/matches';
 import { createMemoryRepositories } from '../../src/repos/memory';
-import { extractGoals, tallyTopScorers, type EspnClient } from '../../src/integration/espnClient';
+import { goalsFromCompetition, tallyTopScorers, type EspnClient } from '../../src/integration/espnClient';
 import type { Logger } from '../../src/lib/logger';
 import { sampleMatch } from '../support/testApp';
 
@@ -10,18 +10,27 @@ const noopLogger = { info() {}, warn() {}, error() {}, debug() {} } as unknown a
 const fixedClock = (iso: string) => ({ now: () => new Date(iso) });
 
 describe('espn goal parsing', () => {
-  it('extractGoals picks goals (incl. penalties), ignores cards/disallowed', () => {
-    const summary = {
-      keyEvents: [
-        { type: { text: 'Goal' }, athletesInvolved: [{ id: 7, displayName: 'Ronaldo' }] },
-        { type: { text: 'Goal - Penalty' }, athletesInvolved: [{ id: 7, displayName: 'Ronaldo' }] },
-        { type: { text: 'Goal disallowed' }, athletesInvolved: [{ id: 7, displayName: 'Ronaldo' }] },
-        { type: { text: 'Yellow Card' }, athletesInvolved: [{ id: 5, displayName: 'Pepe' }] },
+  it('reads scorers from competition.details with sides; excludes shootout + own goals from the tally', () => {
+    const comp = {
+      competitors: [
+        { homeAway: 'home', team: { id: 1, displayName: 'Portugal' } },
+        { homeAway: 'away', team: { id: 2, displayName: 'Spain' } },
+      ],
+      details: [
+        { scoringPlay: true, team: { id: 1 }, athletesInvolved: [{ id: 7, displayName: 'Ronaldo' }] },
+        { scoringPlay: true, team: { id: 1 }, athletesInvolved: [{ id: 7, displayName: 'Ronaldo' }], penaltyKick: true },
+        { scoringPlay: false, team: { id: 2 }, athletesInvolved: [{ id: 5, displayName: 'X' }] }, // not a goal
+        { scoringPlay: true, team: { id: 2 }, athletesInvolved: [{ id: 9, displayName: 'Morata' }], shootout: true }, // shootout
+        { scoringPlay: true, team: { id: 2 }, athletesInvolved: [{ id: 5, displayName: 'Pepe' }], ownGoal: true }, // own goal
       ],
     };
-    const goals = extractGoals(summary);
-    expect(goals).toHaveLength(2);
-    const tally = tallyTopScorers([{ eventId: 'e', date: '', goals }]);
+    const { homeName, awayName, goals } = goalsFromCompetition(comp);
+    expect([homeName, awayName]).toEqual(['Portugal', 'Spain']);
+    expect(goals[0]).toMatchObject({ side: 'HOME', scorerId: '7' }); // first goal = Ronaldo, home
+
+    const real = goals.filter((g) => !g.shootout && !g.ownGoal);
+    expect(real).toHaveLength(2); // 2 Ronaldo goals; shootout + own goal excluded
+    const tally = tallyTopScorers([{ eventId: 'e', date: '', goals: real.map((g) => ({ scorerId: g.scorerId, scorerName: g.scorerName })) }]);
     expect(tally[0]).toMatchObject({ scorerId: '7', scorerName: 'Ronaldo', goals: 2 });
   });
 });

@@ -35,26 +35,41 @@ const get = <T>(o: unknown, ...path: (string | number)[]): T | undefined => {
   return cur as T | undefined;
 };
 
-/** Extract goal scorers from an ESPN match summary (keyEvents / scoringPlays, best-effort). */
-export function extractGoals(summary: Json): { scorerId: string; scorerName: string }[] {
-  const out: { scorerId: string; scorerName: string }[] = [];
-  const isGoal = (text: string): boolean => /goal/i.test(text) && !/disallow|no goal|var/i.test(text);
-  const fromArray = (arr: unknown): void => {
-    for (const ev of (arr as Json[]) ?? []) {
-      const text = get<string>(ev, 'type', 'text') ?? get<string>(ev, 'text') ?? '';
-      if (!isGoal(text)) continue;
-      const ath =
-        get<Json[]>(ev, 'athletesInvolved') ?? get<Json[]>(ev, 'participants') ?? [];
-      const a = ath[0];
-      const id = a ? (get<string | number>(a, 'id') ?? get<string | number>(a, 'athlete', 'id')) : undefined;
-      const name =
-        (a && (get<string>(a, 'displayName') ?? get<string>(a, 'athlete', 'displayName'))) ?? 'Unknown';
-      if (id != null) out.push({ scorerId: String(id), scorerName: name });
-    }
-  };
-  fromArray(get(summary, 'keyEvents'));
-  if (out.length === 0) fromArray(get(summary, 'scoringPlays'));
-  return out;
+export interface CompetitionGoal {
+  scorerId: string;
+  scorerName: string;
+  side: 'HOME' | 'AWAY';
+  shootout: boolean;
+  ownGoal: boolean;
+}
+
+/**
+ * Goal scorers from a scoreboard event's `competition` — the reliable source that includes
+ * `athletesInvolved` (the `/summary` keyEvents do not). Each goal has its side + shootout/own-goal flags.
+ */
+export function goalsFromCompetition(comp: Json): { homeName: string; awayName: string; goals: CompetitionGoal[] } {
+  const sideById = new Map<string, 'HOME' | 'AWAY'>();
+  let homeName = '';
+  let awayName = '';
+  for (const c of get<Json[]>(comp, 'competitors') ?? []) {
+    const side = get<string>(c, 'homeAway') === 'home' ? 'HOME' : 'AWAY';
+    const id = String(get<string | number>(c, 'team', 'id') ?? get<string | number>(c, 'id') ?? '');
+    const name = get<string>(c, 'team', 'displayName') ?? '';
+    if (id) sideById.set(id, side);
+    if (side === 'HOME') homeName = name;
+    else awayName = name;
+  }
+  const goals: CompetitionGoal[] = [];
+  for (const d of get<Json[]>(comp, 'details') ?? []) {
+    if (get<boolean>(d, 'scoringPlay') !== true) continue;
+    const side = sideById.get(String(get<string | number>(d, 'team', 'id') ?? ''));
+    const ath = (get<Json[]>(d, 'athletesInvolved') ?? [])[0];
+    const scorerId = ath ? String(get<string | number>(ath, 'id') ?? '') : '';
+    const scorerName = (ath && get<string>(ath, 'displayName')) ?? 'Unknown';
+    if (!side || !scorerId) continue;
+    goals.push({ scorerId, scorerName, side, shootout: get<boolean>(d, 'shootout') === true, ownGoal: get<boolean>(d, 'ownGoal') === true });
+  }
+  return { homeName, awayName, goals };
 }
 
 export interface MatchFirstGoal {
@@ -120,27 +135,9 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
           if (state !== 'post') continue; // finished only
           const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
           if (!comp) continue;
-          const sideById = new Map<string, 'HOME' | 'AWAY'>();
-          let homeName = '';
-          let awayName = '';
-          for (const c of get<Json[]>(comp, 'competitors') ?? []) {
-            const side = get<string>(c, 'homeAway') === 'home' ? 'HOME' : 'AWAY';
-            const id = String(get<string | number>(c, 'team', 'id') ?? get<string | number>(c, 'id') ?? '');
-            const name = get<string>(c, 'team', 'displayName') ?? '';
-            if (id) sideById.set(id, side);
-            if (side === 'HOME') homeName = name;
-            else awayName = name;
-          }
-          const goal = (get<Json[]>(comp, 'details') ?? []).find((d) => get<boolean>(d, 'scoringPlay') === true);
-          let first: MatchFirstGoal['first'] = null;
-          if (goal) {
-            const teamId = String(get<string | number>(goal, 'team', 'id') ?? '');
-            const ath = (get<Json[]>(goal, 'athletesInvolved') ?? [])[0];
-            const scorerId = ath ? String(get<string | number>(ath, 'id') ?? '') : '';
-            const scorerName = (ath && get<string>(ath, 'displayName')) ?? 'Unknown';
-            const side = sideById.get(teamId);
-            if (side && scorerId) first = { side, scorerId, scorerName };
-          }
+          const { homeName, awayName, goals } = goalsFromCompetition(comp);
+          const fg = goals.find((g) => !g.shootout); // first goal in normal/extra time (not a shootout pen)
+          const first = fg ? { side: fg.side, scorerId: fg.scorerId, scorerName: fg.scorerName } : null;
           result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first });
         }
       }
@@ -161,12 +158,13 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
           const id = String(get<string | number>(e, 'id') ?? '');
           const state = get<string>(e, 'status', 'type', 'state'); // 'post' = finished
           if (!id || state !== 'post' || skipEventIds.has(id)) continue;
-          try {
-            const summary = await json(`${BASE}/summary?event=${id}`);
-            result.push({ eventId: id, date: get<string>(e, 'date') ?? date, goals: extractGoals(summary) });
-          } catch (err) {
-            logger.warn('espn summary failed', { eventId: id, error: err instanceof Error ? err.message : 'unknown' });
-          }
+          const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
+          if (!comp) continue;
+          // Real goals only — exclude penalty-shootout goals and own goals (don't count for the Golden Boot).
+          const goals = goalsFromCompetition(comp).goals
+            .filter((g) => !g.shootout && !g.ownGoal)
+            .map((g) => ({ scorerId: g.scorerId, scorerName: g.scorerName }));
+          result.push({ eventId: id, date: get<string>(e, 'date') ?? date, goals });
         }
       }
       return result;
