@@ -2,11 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
-import { usePrefs, AUTO, listTimeZones } from '../context/PrefsContext';
+import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
+import { Flag } from '../components/Flag';
 
 export function SettingsPage() {
   const { player } = usePlayer();
-  const { tzPref, timeZone, setTzPref } = usePrefs();
+  const { tzPref, timeZone, setTzPref, theme, setTheme } = usePrefs();
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -45,6 +46,25 @@ export function SettingsPage() {
     <div className="settings">
       <h2>Account settings</h2>
       <p className="muted">Signed in as <strong>{player?.name}</strong></p>
+
+      <div className="card">
+        <h3>Theme</h3>
+        <p className="muted fine">Pick a look — the default dark, light, or one inspired by a World Cup nation.</p>
+        <div className="theme-grid">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={theme === t.id ? 'theme-chip on' : 'theme-chip'}
+              onClick={() => setTheme(t.id)}
+              data-testid={`theme-${t.id}`}
+            >
+              {t.flag ? <Flag code={t.flag} name={t.label} /> : <span aria-hidden>{t.id === 'light' ? '☀️' : '🌙'}</span>}
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="card">
         <h3>Timezone</h3>

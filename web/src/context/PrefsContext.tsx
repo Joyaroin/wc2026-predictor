@@ -1,7 +1,28 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 const STORAGE_KEY = 'wc2026.tz';
+const THEME_KEY = 'wc2026.theme';
 export const AUTO = 'auto';
+export const DEFAULT_THEME = 'default';
+
+/** Available themes: default (dark), light, plus country palettes keyed by FIFA code. */
+export const THEMES: { id: string; label: string; flag?: string }[] = [
+  { id: 'default', label: 'Default (dark)' },
+  { id: 'light', label: 'Light' },
+  { id: 'BRA', label: 'Brazil', flag: 'BRA' },
+  { id: 'ARG', label: 'Argentina', flag: 'ARG' },
+  { id: 'FRA', label: 'France', flag: 'FRA' },
+  { id: 'ENG', label: 'England', flag: 'ENG' },
+  { id: 'GER', label: 'Germany', flag: 'GER' },
+  { id: 'ESP', label: 'Spain', flag: 'ESP' },
+  { id: 'POR', label: 'Portugal', flag: 'POR' },
+  { id: 'NED', label: 'Netherlands', flag: 'NED' },
+  { id: 'MEX', label: 'Mexico', flag: 'MEX' },
+  { id: 'USA', label: 'USA', flag: 'USA' },
+  { id: 'IRN', label: 'Iran', flag: 'IRN' },
+  { id: 'EGY', label: 'Egypt', flag: 'EGY' },
+  { id: 'IRQ', label: 'Iraq', flag: 'IRQ' },
+];
 
 function detectedZone(): string {
   try {
@@ -17,18 +38,34 @@ interface PrefsValue {
   /** The stored preference: `auto` or an IANA zone. */
   tzPref: string;
   setTzPref: (value: string) => void;
+  /** Active theme id (see THEMES). */
+  theme: string;
+  setTheme: (id: string) => void;
 }
 
 const Ctx = createContext<PrefsValue | null>(null);
 
 export function PrefsProvider({ children }: { children: ReactNode }): ReactNode {
   const [tzPref, setStored] = useState<string>(() => localStorage.getItem(STORAGE_KEY) ?? AUTO);
+  const [theme, setThemeState] = useState<string>(() => localStorage.getItem(THEME_KEY) ?? DEFAULT_THEME);
   const timeZone = tzPref === AUTO ? detectedZone() : tzPref;
+
   const setTzPref = (value: string): void => {
     localStorage.setItem(STORAGE_KEY, value);
     setStored(value);
   };
-  return <Ctx.Provider value={{ timeZone, tzPref, setTzPref }}>{children}</Ctx.Provider>;
+  const setTheme = (id: string): void => {
+    localStorage.setItem(THEME_KEY, id);
+    setThemeState(id);
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === DEFAULT_THEME) delete root.dataset.theme;
+    else root.dataset.theme = theme;
+  }, [theme]);
+
+  return <Ctx.Provider value={{ timeZone, tzPref, setTzPref, theme, setTheme }}>{children}</Ctx.Provider>;
 }
 
 export function usePrefs(): PrefsValue {
