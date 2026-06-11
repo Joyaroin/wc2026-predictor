@@ -3,8 +3,8 @@ environment: dev
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: {repository: wc2026-api, tag: 1ae140a23aaaf93bfc5ce734368522cf91556e85}
-  web: {repository: wc2026-web, tag: 1ae140a23aaaf93bfc5ce734368522cf91556e85}
+  api: {repository: wc2026-api, tag: 02665e303a1fdc05b2813b9f0cbcdc76940e4794}
+  web: {repository: wc2026-web, tag: 02665e303a1fdc05b2813b9f0cbcdc76940e4794}
 api:
   replicas: 1
   env:
