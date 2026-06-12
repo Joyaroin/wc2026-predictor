@@ -223,6 +223,25 @@ tr.me { background: var(--on-bg); }
 .odds-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
 .odds-pct { flex: none; width: 44px; text-align: right; color: var(--muted); font-size: 0.85rem; }
 
+/* Onboarding tour (driver.js) — dark theme */
+.driver-popover.wc-tour { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); max-width: 320px; }
+.driver-popover.wc-tour .driver-popover-title { color: var(--ink); font-size: 1.05rem; font-weight: 800; }
+.driver-popover.wc-tour .driver-popover-description { color: var(--muted); line-height: 1.45; }
+.driver-popover.wc-tour .driver-popover-description b { color: var(--ink); }
+.driver-popover.wc-tour .driver-popover-progress-text { color: var(--muted); font-size: 0.78rem; }
+.driver-popover.wc-tour .driver-popover-close-btn { color: var(--muted); }
+.driver-popover.wc-tour .driver-popover-close-btn:hover { color: var(--ink); }
+.driver-popover.wc-tour .driver-popover-navigation-btns button {
+  background: var(--accent); color: #04221a; text-shadow: none; border: none; border-radius: 8px; font-weight: 700; padding: 6px 14px;
+}
+.driver-popover.wc-tour .driver-popover-navigation-btns button.driver-popover-prev-btn {
+  background: transparent; color: var(--muted); border: 1px solid var(--line);
+}
+.driver-popover.wc-tour .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: var(--card); }
+.driver-popover.wc-tour .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--card); }
+.driver-popover.wc-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--card); }
+.driver-popover.wc-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--card); }
+
 /* Feedback */
 .fb-field { display: block; margin-bottom: 12px; }
 .fb-field textarea, .fb-field input { width: 100%; box-sizing: border-box; margin-top: 4px; resize: vertical; font: inherit; }

@@ -14,6 +14,7 @@ import { HelpPage } from './pages/HelpPage';
 import { UpdatesPage } from './pages/UpdatesPage';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { LiveTicker } from './components/LiveTicker';
+import { OnboardingTour } from './components/OnboardingTour';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -29,6 +30,7 @@ export default function App() {
     <div className="app">
       {player && <Nav />}
       {player && <LiveTicker />}
+      {player && <OnboardingTour />}
       <main className="container">
         <Routes>
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />
