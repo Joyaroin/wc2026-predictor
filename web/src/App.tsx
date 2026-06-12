@@ -12,6 +12,7 @@ import { AwardsPage } from './pages/AwardsPage';
 import { StandingsPage } from './pages/StandingsPage';
 import { HelpPage } from './pages/HelpPage';
 import { UpdatesPage } from './pages/UpdatesPage';
+import { FeedbackPage } from './pages/FeedbackPage';
 import { LiveTicker } from './components/LiveTicker';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
           <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
           <Route path="/updates" element={<RequireAuth><UpdatesPage /></RequireAuth>} />
+          <Route path="/feedback" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

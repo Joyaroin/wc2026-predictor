@@ -223,6 +223,14 @@ tr.me { background: var(--on-bg); }
 .odds-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
 .odds-pct { flex: none; width: 44px; text-align: right; color: var(--muted); font-size: 0.85rem; }
 
+/* Feedback */
+.fb-field { display: block; margin-bottom: 12px; }
+.fb-field textarea, .fb-field input { width: 100%; box-sizing: border-box; margin-top: 4px; resize: vertical; font: inherit; }
+.feedback-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 10px; }
+.feedback-list li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.fb-meta { font-size: 0.85rem; margin-bottom: 4px; }
+.fb-msg { white-space: pre-wrap; }
+
 .gb-row { margin: 4px 0; }
 .gb-results { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; max-height: 360px; overflow-y: auto; }
 .gb-results .pick { width: 100%; text-align: left; }

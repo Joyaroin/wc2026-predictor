@@ -27,6 +27,7 @@ export const testConfig: Config = {
   sessionTtlDays: 30,
   persistence: 'memory',
   adminToken: 'test-admin-token',
+  adminPlayer: 'adham',
 };
 
 export interface TestApp {

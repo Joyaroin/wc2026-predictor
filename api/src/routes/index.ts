@@ -37,6 +37,7 @@ const jokerSchema = z.object({ joker: z.boolean() });
 const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
 const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
 const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
+const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -99,6 +100,14 @@ export function buildRouter(services: Services, config: Config): Router {
   r.put('/player-of-tournament', auth, validateBody(pottSchema), wrap((req) => services.pott.setPick(caller(req), req.body.winnerId, req.body.winnerName)));
   // Admin-only (X-Admin-Token header): set the official Player of the Tournament winner.
   r.post('/admin/player-of-tournament', validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
+
+  // --- Feedback / bug reports ---
+  r.post('/feedback', auth, validateBody(feedbackSchema), wrapVoid((req) => services.feedback.submit(caller(req), req.body.message, req.body.page)));
+  r.get('/feedback/admin/me', auth, wrap(async (req) => ({ isAdmin: await services.feedback.isAdmin(caller(req)) })));
+  // Owner/admin (logged-in as the admin account) reads submitted feedback.
+  r.get('/feedback/admin', auth, wrap((req) => services.feedback.adminList(caller(req))));
+  // Fallback: read via X-Admin-Token header.
+  r.get('/admin/feedback', wrap((req) => services.feedback.listByToken(req.header('x-admin-token'))));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

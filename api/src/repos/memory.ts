@@ -17,6 +17,8 @@ import type {
   TournamentWinnerPick,
   PottRepo,
   PottPick,
+  FeedbackRepo,
+  FeedbackItem,
   StatsRepo,
   TopScorer,
   Winner,
@@ -218,6 +220,16 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const feedbackItems: FeedbackItem[] = [];
+  const feedbackRepo: FeedbackRepo = {
+    async add(item) {
+      feedbackItems.push(item);
+    },
+    async listAll() {
+      return [...feedbackItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+  };
+
   let leader: TopScorer | null = null;
   let lastEspnRun: string | null = null;
   let pottWinner: Winner | null = null;
@@ -253,6 +265,7 @@ export function createMemoryRepositories(): Repositories {
     darkHorse: darkHorseRepo,
     tournamentWinner: tournamentWinnerRepo,
     pott: pottRepo,
+    feedback: feedbackRepo,
     stats: statsRepo,
   };
 }

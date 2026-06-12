@@ -9,6 +9,16 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-12.2',
+    date: 'June 12, 2026',
+    emoji: '🐞',
+    title: 'Found a bug? Tell me',
+    points: [
+      'New Feedback tab in the ⋮ menu — report bugs or suggest ideas in a few taps',
+      'Add an optional "where" so I know which page or match you mean',
+    ],
+  },
+  {
     id: '2026-06-12',
     date: 'June 12, 2026',
     emoji: '🔴',

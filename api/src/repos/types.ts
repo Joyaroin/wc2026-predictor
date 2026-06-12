@@ -148,6 +148,22 @@ export interface Winner {
   name: string;
 }
 
+/** A user-submitted bug report / feedback note. */
+export interface FeedbackItem {
+  id: string;
+  playerId: string;
+  playerName: string;
+  message: string;
+  page?: string | null; // optional context (which page/feature)
+  createdAt: string;
+}
+
+export interface FeedbackRepo {
+  add(item: FeedbackItem): Promise<void>;
+  /** All feedback, newest first. */
+  listAll(): Promise<FeedbackItem[]>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -159,5 +175,6 @@ export interface Repositories {
   darkHorse: DarkHorseRepo;
   tournamentWinner: TournamentWinnerRepo;
   pott: PottRepo;
+  feedback: FeedbackRepo;
   stats: StatsRepo;
 }

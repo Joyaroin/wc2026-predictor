@@ -54,17 +54,27 @@ export class ApiError extends Error {
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
+export interface FeedbackItem {
+  id: string;
+  playerId: string;
+  playerName: string;
+  message: string;
+  page?: string | null;
+  createdAt: string;
+}
+
 let authToken: string | null = null;
 export function setAuthToken(token: string | null): void {
   authToken = token;
 }
 
-async function req<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+async function req<T>(path: string, opts: { method?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
   const res = await fetch(`${BASE}/api${path}`, {
     method: opts.method ?? 'GET',
     headers: {
       'Content-Type': 'application/json',
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      ...(opts.headers ?? {}),
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
@@ -98,6 +108,12 @@ export const api = {
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
+  submitFeedback: (message: string, page?: string) =>
+    req<{ ok: true }>('/feedback', { method: 'POST', body: { message, page } }),
+  feedbackAdminMe: () => req<{ isAdmin: boolean }>('/feedback/admin/me'),
+  feedbackAdmin: () => req<FeedbackItem[]>('/feedback/admin'),
+  adminFeedback: (token: string) =>
+    req<FeedbackItem[]>('/admin/feedback', { headers: { 'X-Admin-Token': token } }),
   myPredictions: () => req<Prediction[]>('/predictions/me'),
   upsertPrediction: (
     matchId: string,

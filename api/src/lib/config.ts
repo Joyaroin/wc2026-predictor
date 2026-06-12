@@ -11,6 +11,8 @@ export interface Config {
   persistence: 'dynamo' | 'memory';
   /** Token gating admin actions (e.g. setting Player of the Tournament). Empty = admin disabled. */
   adminToken: string;
+  /** Player name (lower-cased) treated as the owner/admin — sees the feedback inbox when logged in. */
+  adminPlayer: string;
 }
 
 export class ConfigError extends Error {}
@@ -38,5 +40,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     sessionTtlDays: Number(env.SESSION_TTL_DAYS ?? '30'),
     persistence,
     adminToken: (env.ADMIN_TOKEN ?? '').trim(),
+    adminPlayer: (env.ADMIN_PLAYER ?? 'adham').trim().toLowerCase(),
   };
 }

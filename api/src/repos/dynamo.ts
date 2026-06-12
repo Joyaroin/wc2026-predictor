@@ -28,6 +28,7 @@ import type {
   TournamentWinnerPick,
   PottRepo,
   PottPick,
+  FeedbackRepo,
   StatsRepo,
 } from './types';
 import {
@@ -470,6 +471,32 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  const feedback: FeedbackRepo = {
+    async add(item) {
+      await doc.send(
+        new PutCommand({ TableName: Table, Item: { PK: 'FEEDBACK', SK: `${item.createdAt}#${item.id}`, ...item } }),
+      );
+    },
+    async listAll() {
+      const r = await doc.send(
+        new QueryCommand({
+          TableName: Table,
+          KeyConditionExpression: 'PK = :pk',
+          ExpressionAttributeValues: { ':pk': 'FEEDBACK' },
+          ScanIndexForward: false, // newest first
+        }),
+      );
+      return (r.Items ?? []).map((i) => ({
+        id: i.id as string,
+        playerId: i.playerId as string,
+        playerName: i.playerName as string,
+        message: i.message as string,
+        page: (i.page ?? null) as string | null,
+        createdAt: i.createdAt as string,
+      }));
+    },
+  };
+
   const stats: StatsRepo = {
     async getLeader() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
@@ -495,5 +522,5 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, stats };
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats };
 }
