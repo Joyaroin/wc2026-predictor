@@ -42,11 +42,11 @@ export function darkHorsePoints(stage: Stage, code: string | null | undefined): 
 // further multiplies by a smaller number → the LOWEST score is the biggest underdog that went furthest.
 export const STAGE_WEIGHT: Record<Stage, number> = {
   GROUP_STAGE: 5000, // never reached the knockouts → always worst (any knockout team beats them)
-  LAST_32: 16,
-  LAST_16: 8,
-  QUARTER_FINALS: 4,
-  SEMI_FINALS: 2,
-  THIRD_PLACE: 2, // reached the semis (lost it)
+  LAST_32: 30,
+  LAST_16: 14,
+  QUARTER_FINALS: 6,
+  SEMI_FINALS: 2, // lost the semi → 4th place (unless they win the 3rd-place match, below)
+  THIRD_PLACE: 1.5, // WINNER of the third-place match only (the loser keeps the semi weight)
   FINAL: 1, // reached the final → lightest (best)
 };
 

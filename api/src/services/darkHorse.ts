@@ -32,19 +32,35 @@ export interface DarkHorseService {
   refresh(): Promise<void>;
 }
 
-const WEIGHT_STAGE: Record<number, string> = { 1: 'Final', 2: 'Semi-final', 4: 'Quarter-final', 8: 'Round of 16', 16: 'Round of 32', 32: 'Group stage' };
+const WEIGHT_STAGE: Record<number, string> = {
+  1: 'Final',
+  1.5: 'Third place (won)',
+  2: 'Semi-final',
+  6: 'Quarter-final',
+  14: 'Round of 16',
+  30: 'Round of 32',
+  5000: 'Group stage',
+};
 
 /** The deepest (lightest-weight) stage each team has reached, by FIFA code. */
 function deepestWeightByCode(matches: Match[]): Map<string, number> {
   const out = new Map<string, number>();
+  const apply = (code: string | null | undefined, w: number) => {
+    if (!code) return;
+    const key = code.toUpperCase();
+    const cur = out.get(key);
+    if (cur === undefined || w < cur) out.set(key, w);
+  };
   for (const m of matches) {
     const w = STAGE_WEIGHT[m.stage];
-    for (const code of [m.homeCode, m.awayCode]) {
-      if (!code) continue;
-      const key = code.toUpperCase();
-      const cur = out.get(key);
-      if (cur === undefined || w < cur) out.set(key, w);
+    if (m.stage === 'THIRD_PLACE') {
+      // Only the WINNER of the third-place match earns the lighter weight; the loser (4th) keeps the semi weight.
+      if (m.winner === 'HOME') apply(m.homeCode, w);
+      else if (m.winner === 'AWAY') apply(m.awayCode, w);
+      continue;
     }
+    apply(m.homeCode, w);
+    apply(m.awayCode, w);
   }
   return out;
 }
