@@ -85,6 +85,7 @@ export function matchFromItem(item: Item): Match {
     awayCode: (item.awayCode ?? null) as string | null,
     kickoff: item.kickoff as string,
     status: item.status as Match['status'],
+    minute: (item.minute ?? null) as number | null,
     homeScore: (item.homeScore ?? null) as number | null,
     awayScore: (item.awayScore ?? null) as number | null,
     winner: (item.winner ?? null) as Match['winner'],

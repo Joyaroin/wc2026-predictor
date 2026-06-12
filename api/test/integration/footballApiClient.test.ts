@@ -30,6 +30,7 @@ describe('mapToDomain', () => {
       awayCode: 'ARG',
       kickoff: '2026-06-15T18:00:00Z',
       status: 'FINISHED',
+      minute: null,
       homeScore: 2,
       awayScore: 1,
       winner: null,
@@ -48,6 +49,22 @@ describe('mapToDomain', () => {
       score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 1 } },
     };
     expect(mapToDomain(pm).winner).toBe('HOME');
+  });
+
+  it('maps the live minute when the provider sends one', () => {
+    const pm: ProviderMatch = {
+      id: 13,
+      stage: 'GROUP_STAGE',
+      utcDate: '2026-06-15T18:00:00Z',
+      status: 'IN_PLAY',
+      minute: 37,
+      homeTeam: { name: 'Brazil' },
+      awayTeam: { name: 'Argentina' },
+      score: { fullTime: { home: 1, away: 0 } },
+    };
+    const m = mapToDomain(pm);
+    expect(m.status).toBe('IN_PLAY');
+    expect(m.minute).toBe(37);
   });
 
   it('marks undetermined knockout teams as placeholder', () => {

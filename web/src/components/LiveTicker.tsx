@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, type MatchView } from '../api/client';
 import { Flag } from './Flag';
+import { liveMinute } from '../lib/format';
 
 /** Broadcast-style strip under the nav while matches are in play; tap to jump to Fixtures. */
 export function LiveTicker() {
@@ -25,6 +26,7 @@ export function LiveTicker() {
             <Flag code={m.homeCode} name={m.homeTeam} /> {m.homeCode}
             <b> {m.homeScore ?? 0}–{m.awayScore ?? 0} </b>
             {m.awayCode} <Flag code={m.awayCode} name={m.awayTeam} />
+            {liveMinute(m) && <span className="ticker-min">{liveMinute(m)}</span>}
           </span>
         ))}
       </span>

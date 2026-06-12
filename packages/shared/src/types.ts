@@ -59,6 +59,8 @@ export interface Match {
   awayCode: string | null;
   kickoff: string; // ISO 8601 UTC — authoritative lock time
   status: MatchStatus;
+  /** Current match minute from the provider while live; null when unknown or not in play. */
+  minute?: number | null;
   homeScore: number | null; // full-time goals, null until played
   awayScore: number | null;
   /** Who advanced/won (knockouts) — includes penalty-shootout outcomes. Null until decided. */

@@ -13,10 +13,14 @@ export interface SyncReport {
   errors: string[];
 }
 
+const SCORABLE: ReadonlySet<Match['status']> = new Set(['IN_PLAY', 'PAUSED', 'FINISHED']);
+
+// Rescore on live score changes too, so prediction points and leaderboards move during a match
+// (scoreMatch is idempotent — the final pass at FINISHED settles the points).
 function resultChanged(prev: Match | null, next: Match): boolean {
-  if (next.status !== 'FINISHED' || next.homeScore === null || next.awayScore === null) return false;
+  if (!SCORABLE.has(next.status) || next.homeScore === null || next.awayScore === null) return false;
   if (!prev) return true;
-  return prev.status !== 'FINISHED' || prev.homeScore !== next.homeScore || prev.awayScore !== next.awayScore;
+  return prev.status !== next.status || prev.homeScore !== next.homeScore || prev.awayScore !== next.awayScore;
 }
 
 export interface SyncService {

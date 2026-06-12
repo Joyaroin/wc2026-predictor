@@ -9,7 +9,7 @@ import {
 } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, formatKickoff, stageLabel } from '../lib/format';
+import { matchState, formatKickoff, stageLabel, liveMinute } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
@@ -75,9 +75,6 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const canSave = editable && home !== '' && away !== '';
   // Both boxes cleared on a saved prediction → Save removes it.
   const canClear = editable && !!prediction && home === '' && away === '';
-  const scored = state === 'Played' && !!prediction;
-  const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : 0, scored);
-  const ptsText = scored ? `+${shownPts} pts` : '- pts';
   // Unsaved edits → gently pulse the Save button so the next step is obvious.
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
@@ -85,9 +82,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
 
-  // Post-match receipt: per-rule breakdown computed against the final score.
+  // Score receipt: per-rule breakdown against the final score — or the live score while in play.
+  const live = state === 'Live' && match.homeScore != null && match.awayScore != null;
   const finished = state === 'Played' && match.homeScore != null && match.awayScore != null;
-  const bd = finished && prediction
+  const minuteLabel = state === 'Live' ? liveMinute(match) : null;
+  const bd = (finished || live) && prediction
     ? scoreBreakdown({ home: prediction.home, away: prediction.away }, { home: match.homeScore!, away: match.awayScore! })
     : null;
   const firstGoalKnown = match.firstGoalTeam != null;
@@ -96,9 +95,20 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const pickedTeamCode = prediction?.firstTeam === 'HOME' ? match.homeCode : match.awayCode;
   const pickedTeamName = prediction?.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam;
 
-  // Celebrate an exact scoreline once per match (remembered per device).
+  // Points bubble: persisted points once played; provisional "as it stands" points while live.
+  const scored = state === 'Played' && !!prediction;
+  const livePts = live && prediction && bd
+    ? effectivePoints({
+        points: bd.points + (firstTeamHit ? FIRST_TEAM_POINTS : 0) + (firstScorerHit ? FIRST_PLAYER_POINTS : 0),
+        joker: prediction.joker,
+      })
+    : null;
+  const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : livePts ?? 0, scored || livePts !== null);
+  const ptsText = scored || livePts !== null ? `+${shownPts} pts` : '- pts';
+
+  // Celebrate an exact scoreline once per match (remembered per device) — only at full time.
   const [confetti, setConfetti] = useState(false);
-  const exact = !!bd?.exact;
+  const exact = finished && !!bd?.exact;
   useEffect(() => {
     if (!exact) return;
     const key = `wc2026.confetti.${match.id}`;
@@ -180,7 +190,9 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
 
         {state === 'Live' && (
           <div className="mc-result live" data-testid={`live-${match.id}`}>
-            <span className="live-dot">●</span> LIVE <strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
+            <span className="live-dot">●</span> LIVE
+            {minuteLabel && <span className="mc-min" data-testid={`minute-${match.id}`}> {minuteLabel}</span>}
+            {' '}<strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
           </div>
         )}
         {state === 'Played' && (
@@ -192,6 +204,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           bd ? (
             <div className="mc-receipt" data-testid={`receipt-${match.id}`}>
               <div className="mc-divider" />
+              {live && (
+                <div className="rcpt-live muted fine" data-testid={`live-pts-note-${match.id}`}>
+                  <span className="live-dot">●</span> Live points as it stands — settled at full time
+                </div>
+              )}
               {rcptRow('Result', bd.outcome, SCORE_POINTS.outcome)}
               {rcptRow('Goal difference', bd.goalDiff, SCORE_POINTS.goalDiff)}
               {rcptRow('Exact score', bd.exact, SCORE_POINTS.exact)}
@@ -325,7 +342,13 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             <span className="joker-static">★ Joker</span>
           ) : null}
         </div>
-        <span className={`pts-bubble ${ptsText === '–' ? 'empty' : ''}`} title="Points" data-testid={`pts-${match.id}`}>{ptsText}</span>
+        <span
+          className={`pts-bubble ${livePts !== null ? 'live' : ''} ${ptsText === '–' ? 'empty' : ''}`}
+          title={livePts !== null ? 'Live points if the score stays like this' : 'Points'}
+          data-testid={`pts-${match.id}`}
+        >
+          {ptsText}
+        </span>
         <div className="mc-foot-right">
           {editable && (
             <button

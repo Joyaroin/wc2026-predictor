@@ -47,6 +47,7 @@ const arbMatch = fc.record({
   status: fc.constantFrom('SCHEDULED', 'TIMED', 'IN_PLAY', 'PAUSED', 'FINISHED') as fc.Arbitrary<
     'SCHEDULED' | 'TIMED' | 'IN_PLAY' | 'PAUSED' | 'FINISHED'
   >,
+  minute: fc.option(fc.integer({ min: 0, max: 130 }), { nil: null }),
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
   winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW') as fc.Arbitrary<'HOME' | 'AWAY' | 'DRAW'>, { nil: null }),

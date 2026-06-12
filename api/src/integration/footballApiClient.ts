@@ -15,6 +15,7 @@ export interface ProviderMatch {
   matchday?: number | null;
   utcDate: string;
   status?: string;
+  minute?: number | null;
   homeTeam?: ProviderTeam;
   awayTeam?: ProviderTeam;
   score?: { winner?: string | null; fullTime?: { home: number | null; away: number | null } };
@@ -59,6 +60,7 @@ export function mapToDomain(pm: ProviderMatch): Match {
     awayCode: pm.awayTeam?.tla ?? null,
     kickoff: pm.utcDate,
     status: (pm.status && STATUSES[pm.status]) || 'SCHEDULED',
+    minute: typeof pm.minute === 'number' ? pm.minute : null,
     homeScore: pm.score?.fullTime?.home ?? null,
     awayScore: pm.score?.fullTime?.away ?? null,
     winner: (pm.score?.winner && WINNER[pm.score.winner]) || null,
