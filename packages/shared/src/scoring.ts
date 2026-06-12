@@ -1,6 +1,6 @@
 // Pure scoring engine. No I/O, no clock, no randomness (BR-5).
 // See aidlc-docs/construction/shared/functional-design/business-logic-model.md
-import type { Score, Outcome, Points, StandingAgg } from './types';
+import type { Score, Outcome, Points, StandingAgg, BracketSide } from './types';
 
 /** Classify a scoreline's outcome. */
 export function outcomeOf(s: Score): Outcome {
@@ -52,6 +52,35 @@ export function scoreBreakdown(prediction: Score, actual: Score): ScoreBreakdown
 
 export function computePoints(prediction: Score, actual: Score): Points {
   return scoreBreakdown(prediction, actual).points;
+}
+
+export interface FirstGoalFacts {
+  firstGoalTeam?: BracketSide | 'NONE' | null;
+  firstScorerId?: string | null;
+}
+export interface FirstGoalPrediction {
+  home: number;
+  away: number;
+  firstTeam?: BracketSide | null;
+  firstScorerId?: string | null;
+}
+
+/**
+ * First-team-to-score (+2) and first-player-to-score (+6) points.
+ * A goalless game has no first scorer, so a correctly-predicted 0-0 earns BOTH bonuses
+ * (you called "nobody scores"). For 0-0 this is derived from the score itself — no ESPN needed.
+ */
+export function firstGoalPoints(pred: FirstGoalPrediction, actual: Score, facts: FirstGoalFacts): { firstTeam: number; firstPlayer: number } {
+  if (actual.home === 0 && actual.away === 0) {
+    const calledIt = pred.home === 0 && pred.away === 0;
+    return { firstTeam: calledIt ? FIRST_TEAM_POINTS : 0, firstPlayer: calledIt ? FIRST_PLAYER_POINTS : 0 };
+  }
+  const firstTeam =
+    pred.firstTeam && facts.firstGoalTeam && facts.firstGoalTeam !== 'NONE' && pred.firstTeam === facts.firstGoalTeam
+      ? FIRST_TEAM_POINTS
+      : 0;
+  const firstPlayer = pred.firstScorerId && facts.firstScorerId && pred.firstScorerId === facts.firstScorerId ? FIRST_PLAYER_POINTS : 0;
+  return { firstTeam, firstPlayer };
 }
 
 /** Points after applying the Joker multiplier (doubles when joker is set). */

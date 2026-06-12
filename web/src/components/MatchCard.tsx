@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   effectivePoints,
   scoreBreakdown,
+  firstGoalPoints,
   SCORE_POINTS,
   FIRST_TEAM_POINTS,
   FIRST_PLAYER_POINTS,
@@ -89,19 +90,22 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const bd = (finished || live) && prediction
     ? scoreBreakdown({ home: prediction.home, away: prediction.away }, { home: match.homeScore!, away: match.awayScore! })
     : null;
-  const firstGoalKnown = match.firstGoalTeam != null;
-  const firstTeamHit = !!prediction?.firstTeam && match.firstGoalTeam === prediction.firstTeam;
-  const firstScorerHit = !!prediction?.firstScorerId && match.firstScorerId === prediction.firstScorerId;
+  const actualScore = (finished || live) && match.homeScore != null && match.awayScore != null ? { home: match.homeScore, away: match.awayScore } : null;
+  const goalless = !!actualScore && actualScore.home === 0 && actualScore.away === 0;
+  const fg = actualScore && prediction
+    ? firstGoalPoints(prediction, actualScore, { firstGoalTeam: match.firstGoalTeam, firstScorerId: match.firstScorerId })
+    : null;
+  // 0-0 is determinable from the score itself (no ESPN ingestion needed).
+  const firstGoalKnown = match.firstGoalTeam != null || goalless;
+  const firstTeamHit = !!fg && fg.firstTeam > 0;
+  const firstScorerHit = !!fg && fg.firstPlayer > 0;
   const pickedTeamCode = prediction?.firstTeam === 'HOME' ? match.homeCode : match.awayCode;
   const pickedTeamName = prediction?.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam;
 
   // Points bubble: persisted points once played; provisional "as it stands" points while live.
   const scored = state === 'Played' && !!prediction;
   const livePts = live && prediction && bd
-    ? effectivePoints({
-        points: bd.points + (firstTeamHit ? FIRST_TEAM_POINTS : 0) + (firstScorerHit ? FIRST_PLAYER_POINTS : 0),
-        joker: prediction.joker,
-      })
+    ? effectivePoints({ points: bd.points + (fg ? fg.firstTeam + fg.firstPlayer : 0), joker: prediction.joker })
     : null;
   const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : livePts ?? 0, scored || livePts !== null);
   const ptsText = scored || livePts !== null ? `+${shownPts} pts` : '- pts';
@@ -214,13 +218,13 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               {rcptRow('Exact score', bd.exact, SCORE_POINTS.exact)}
               {rcptRow(`${match.homeCode ?? 'Home'} goals`, bd.home, SCORE_POINTS.home)}
               {rcptRow(`${match.awayCode ?? 'Away'} goals`, bd.away, SCORE_POINTS.away)}
-              {prediction.firstTeam && rcptRow(
-                <>1st to score: <Flag code={pickedTeamCode} name={pickedTeamName} /></>,
+              {(prediction.firstTeam || (goalless && firstTeamHit)) && rcptRow(
+                goalless ? <>1st to score: <em>none (0-0)</em></> : <>1st to score: <Flag code={pickedTeamCode} name={pickedTeamName} /></>,
                 firstGoalKnown ? firstTeamHit : undefined,
                 FIRST_TEAM_POINTS,
               )}
-              {prediction.firstScorerId && rcptRow(
-                <>1st scorer: {prediction.firstScorerName}</>,
+              {(prediction.firstScorerId || (goalless && firstScorerHit)) && rcptRow(
+                goalless ? <>1st scorer: <em>none (0-0)</em></> : <>1st scorer: {prediction.firstScorerName}</>,
                 firstGoalKnown ? firstScorerHit : undefined,
                 FIRST_PLAYER_POINTS,
               )}

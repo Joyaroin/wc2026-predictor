@@ -40,6 +40,7 @@ export function HelpPage() {
         </table>
         <ul>
           <li>A perfect prediction = <b>20 points</b>.</li>
+          <li>Predict an exact <b>0–0</b> and it ends 0–0 → you also nailed "nobody scores", so the first-team and first-player bonuses count too → the full <b>20</b>.</li>
           <li>Even a wrong result can score: predict 1–1 and it ends 5–1 → you nailed the away team's goals → <b>+2</b>.</li>
           <li>The first goalscorer counts goals in normal/extra time (own goals and penalty shootouts don't count).</li>
         </ul>
