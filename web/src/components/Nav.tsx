@@ -43,7 +43,7 @@ export function Nav() {
                 <NavLink viewTransition to="/settings" data-testid="nav-settings">Account</NavLink>
                 <NavLink viewTransition to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>
                 <NavLink viewTransition to="/help" data-testid="nav-help">Help & rules</NavLink>
-                <NavLink viewTransition to="/feedback" data-testid="nav-feedback">🐞 Feedback</NavLink>
+                <NavLink viewTransition to="/feedback" data-testid="nav-feedback">Feedback</NavLink>
                 <button onClick={logout} data-testid="logout-button">Log out</button>
               </div>
             </>
