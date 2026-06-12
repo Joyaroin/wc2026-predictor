@@ -79,6 +79,9 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Unsaved edits → gently pulse the Save button so the next step is obvious.
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
+  // Debounced auto-advance home → away, so two-digit scores (10–30) can still be typed.
+  const advanceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(advanceRef.current), []);
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
@@ -116,8 +119,14 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   useEffect(() => {
     if (!exact) return;
     const key = `wc2026.confetti.${match.id}`;
-    if (localStorage.getItem(key)) return;
-    localStorage.setItem(key, '1');
+    let seen = false;
+    try {
+      seen = !!localStorage.getItem(key);
+      if (!seen) localStorage.setItem(key, '1');
+    } catch {
+      /* storage unavailable (private mode etc.) — celebrate once for this mount */
+    }
+    if (seen) return;
     setConfetti(true);
     const t = setTimeout(() => setConfetti(false), 3400);
     return () => clearTimeout(t);
@@ -154,13 +163,20 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         value={value}
         ref={side === 'away' ? awayRef : undefined}
         onChange={(e) => {
-          set(e.target.value);
-          // Typing the home score flows straight into the away box.
-          if (side === 'home' && e.target.value !== '') awayRef.current?.focus();
+          const v = e.target.value;
+          set(v);
+          // Flow into the away box, but debounce so a quick "12"/"30" stays in home.
+          if (side === 'home') {
+            clearTimeout(advanceRef.current);
+            if (v !== '') advanceRef.current = setTimeout(() => awayRef.current?.focus(), 300);
+          }
         }}
         onFocus={(e) => e.target.select()}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && canSave) onSave(match.id, Number(home), Number(away));
+          if (e.key === 'Enter' && canSave) {
+            clearTimeout(advanceRef.current);
+            onSave(match.id, Number(home), Number(away));
+          }
         }}
         data-testid={`pred-${side}-${match.id}`}
         aria-label={`${side === 'home' ? match.homeTeam : match.awayTeam} score`}

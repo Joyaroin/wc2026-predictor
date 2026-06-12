@@ -50,9 +50,16 @@ export function FixturesPage() {
   const sectionById = useMemo(() => computeSections(matches.data ?? []), [matches.data]);
 
   const common = {
-    onError: (_e: unknown, _v: unknown, ctx: { prev?: Prediction[] } | undefined) => {
+    onError: (e: unknown, _v: unknown, ctx: { prev?: Prediction[] } | undefined) => {
       if (ctx?.prev) qc.setQueryData([...PREDS], ctx.prev);
-      setToast('⚠️ Could not save — the match may have started');
+      const status = (e as { status?: number } | null)?.status;
+      setToast(
+        status === 409
+          ? '🔒 Too late — the match has started'
+          : status === 400
+            ? '⚠️ Score must be a whole number 0–30'
+            : '⚠️ Could not save — please try again',
+      );
     },
     onSuccess: () => setToast('Saved ✓'),
     onSettled: () => void qc.invalidateQueries({ queryKey: [...PREDS] }),
