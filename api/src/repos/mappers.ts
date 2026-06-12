@@ -24,6 +24,7 @@ export function playerToItem(p: PlayerRecord): Item {
     name: p.name,
     nameKey: p.nameKey,
     pinHash: p.pinHash,
+    tourSeenAt: p.tourSeenAt ?? null,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -34,6 +35,7 @@ export function playerFromItem(item: Item): PlayerRecord {
     name: item.name as string,
     nameKey: item.nameKey as string,
     pinHash: item.pinHash as string,
+    tourSeenAt: (item.tourSeenAt ?? null) as string | null,
     createdAt: item.createdAt as string,
     updatedAt: item.updatedAt as string,
   };

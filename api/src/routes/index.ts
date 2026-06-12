@@ -64,6 +64,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/players/me', auth, wrap((req) => services.players.getMe(caller(req))));
   r.post('/players/me/name', auth, validateBody(renameSchema), wrap((req) => services.players.rename(caller(req), req.body.name)));
   r.post('/players/me/pin', auth, loginLimiter, validateBody(changePinSchema), wrapVoid((req) => services.players.changePin(caller(req), req.body.currentPin, req.body.newPin)));
+  r.post('/players/me/tour-seen', auth, wrapVoid((req) => services.players.markTourSeen(caller(req))));
 
   // --- Groups ---
   r.post('/groups', auth, validateBody(createGroupSchema), wrap((req) => services.groups.create(caller(req), req.body.name)));

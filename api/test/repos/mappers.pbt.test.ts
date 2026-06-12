@@ -80,6 +80,7 @@ const arbPlayer = fc.record({
   name: fc.string({ minLength: 1, maxLength: 30 }),
   nameKey: fc.string({ minLength: 1, maxLength: 30 }),
   pinHash: fc.string({ minLength: 1, maxLength: 200 }),
+  tourSeenAt: fc.option(arbIso, { nil: null }),
   createdAt: arbIso,
   updatedAt: arbIso,
 });

@@ -4,10 +4,12 @@ export interface AuthResult {
   playerId: string;
   name: string;
   token: string;
+  tourSeen: boolean;
 }
 export interface PublicPlayer {
   id: string;
   name: string;
+  tourSeen?: boolean;
 }
 export interface GroupSummary {
   id: string;
@@ -95,6 +97,7 @@ export const api = {
   login: (name: string, pin: string) => req<AuthResult>('/auth/login', { method: 'POST', body: { name, pin } }),
   me: () => req<PublicPlayer>('/players/me'),
   rename: (name: string) => req<PublicPlayer>('/players/me/name', { method: 'POST', body: { name } }),
+  markTourSeen: () => req<{ ok: true }>('/players/me/tour-seen', { method: 'POST' }),
   listGroups: () => req<GroupSummary[]>('/groups'),
   createGroup: (name: string) => req<Group>('/groups', { method: 'POST', body: { name } }),
   joinGroup: (inviteCode: string) => req<Group>('/groups/join', { method: 'POST', body: { inviteCode } }),

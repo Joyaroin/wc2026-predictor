@@ -6,6 +6,7 @@ export interface PlayerRecord {
   name: string;
   nameKey: string; // lower(trim(name)) — uniqueness key
   pinHash: string;
+  tourSeenAt?: string | null; // when the onboarding tour was completed/skipped (null = not yet)
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +20,8 @@ export interface PlayerRepo {
   rename(id: string, name: string, nameKey: string): Promise<boolean>;
   /** Replace the stored PIN hash. */
   updatePin(id: string, pinHash: string): Promise<void>;
+  /** Mark the onboarding tour as seen. */
+  setTourSeen(id: string, iso: string): Promise<void>;
   /** All players (used for the global leaderboard). */
   listAll(): Promise<PlayerRecord[]>;
 }

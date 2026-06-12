@@ -4,10 +4,12 @@ export interface AuthResult {
   playerId: string;
   name: string;
   token: string;
+  tourSeen: boolean; // has the onboarding tour been completed/skipped
 }
 export interface PublicPlayer {
   id: string;
   name: string;
+  tourSeen?: boolean;
 }
 export interface GroupSummary {
   id: string;

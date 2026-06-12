@@ -8,6 +8,7 @@ export interface PlayerService {
   getMe(callerId: string): Promise<PublicPlayer>;
   rename(callerId: string, name: string): Promise<PublicPlayer>;
   changePin(callerId: string, currentPin: string, newPin: string): Promise<void>;
+  markTourSeen(callerId: string): Promise<void>;
 }
 
 export function createPlayerService(players: PlayerRepo): PlayerService {
@@ -15,7 +16,10 @@ export function createPlayerService(players: PlayerRepo): PlayerService {
     async getMe(callerId) {
       const p = await players.getById(callerId);
       if (!p) throw new NotFoundError('Player not found');
-      return { id: p.id, name: p.name };
+      return { id: p.id, name: p.name, tourSeen: !!p.tourSeenAt };
+    },
+    async markTourSeen(callerId) {
+      await players.setTourSeen(callerId, new Date().toISOString());
     },
     async rename(callerId, name) {
       const ok = await players.rename(callerId, name.trim(), nameKeyOf(name));

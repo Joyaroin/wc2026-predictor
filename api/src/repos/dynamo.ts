@@ -158,6 +158,16 @@ export function createDynamoRepositories(config: Config): Repositories {
         }),
       );
     },
+    async setTourSeen(id, iso) {
+      await doc.send(
+        new UpdateCommand({
+          TableName: Table,
+          Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
+          UpdateExpression: 'SET tourSeenAt = :t',
+          ExpressionAttributeValues: { ':t': iso },
+        }),
+      );
+    },
     async listAll() {
       const items = await scanItems('SK = :sk', { ':sk': 'PROFILE' });
       return items.map((i) => playerFromItem(i));

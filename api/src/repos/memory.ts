@@ -66,6 +66,11 @@ export function createMemoryRepositories(): Repositories {
       if (!existing) return;
       players.set(id, { ...existing, pinHash, updatedAt: new Date().toISOString() });
     },
+    async setTourSeen(id, iso) {
+      const existing = players.get(id);
+      if (!existing) return;
+      players.set(id, { ...existing, tourSeenAt: iso });
+    },
     async listAll() {
       return [...players.values()];
     },

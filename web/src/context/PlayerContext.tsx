@@ -5,6 +5,7 @@ interface PlayerSession {
   playerId: string;
   name: string;
   token: string;
+  tourSeen?: boolean;
 }
 interface PlayerContextValue {
   player: PlayerSession | null;
@@ -12,6 +13,8 @@ interface PlayerContextValue {
   logout: () => void;
   /** Update the displayed name after a successful rename. */
   updateName: (name: string) => void;
+  /** Mark the onboarding tour as seen for this session. */
+  setTourSeen: () => void;
 }
 
 const STORAGE_KEY = 'wc2026.player';
@@ -36,7 +39,7 @@ export function PlayerProvider({ children }: { children: ReactNode }): ReactNode
 
   const login = async (name: string, pin: string): Promise<void> => {
     const res = await api.login(name, pin);
-    const session: PlayerSession = { playerId: res.playerId, name: res.name, token: res.token };
+    const session: PlayerSession = { playerId: res.playerId, name: res.name, token: res.token, tourSeen: res.tourSeen };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     setAuthToken(session.token);
     setPlayer(session);
@@ -57,7 +60,16 @@ export function PlayerProvider({ children }: { children: ReactNode }): ReactNode
     });
   };
 
-  return <Ctx.Provider value={{ player, login, logout, updateName }}>{children}</Ctx.Provider>;
+  const setTourSeen = (): void => {
+    setPlayer((p) => {
+      if (!p || p.tourSeen) return p;
+      const session = { ...p, tourSeen: true };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      return session;
+    });
+  };
+
+  return <Ctx.Provider value={{ player, login, logout, updateName, setTourSeen }}>{children}</Ctx.Provider>;
 }
 
 export function usePlayer(): PlayerContextValue {

@@ -20,6 +20,7 @@ export function createAuthService(players: PlayerRepo, config: Config, clock: Cl
   const issue = (p: PlayerRecord): AuthResult => ({
     playerId: p.id,
     name: p.name,
+    tourSeen: !!p.tourSeenAt,
     token: signSession(p.id, config.sessionSigningSecret, config.sessionTtlDays),
   });
 

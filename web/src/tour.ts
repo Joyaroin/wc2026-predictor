@@ -1,25 +1,7 @@
 // First-login onboarding tour (Intercom-style spotlight) using driver.js.
-// Shown once per player; completing OR skipping marks it seen so it never reappears.
+// "Seen" is persisted per account on the server (see OnboardingTour); this module only runs the UI.
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
-
-const SEEN_PREFIX = 'wc2026.tour.seen.';
-
-export function hasSeenTour(playerId: string): boolean {
-  try {
-    return localStorage.getItem(SEEN_PREFIX + playerId) === '1';
-  } catch {
-    return true; // storage unavailable → don't nag
-  }
-}
-
-export function markTourSeen(playerId: string): void {
-  try {
-    localStorage.setItem(SEEN_PREFIX + playerId, '1');
-  } catch {
-    /* ignore */
-  }
-}
 
 /** Run the 7-step tour. `onDone` fires whether the user finishes or skips. */
 export function runTour(onDone?: () => void): void {
