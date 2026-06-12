@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-12',
+    date: 'June 12, 2026',
+    emoji: '🔴',
+    title: 'Live points, live minutes',
+    points: [
+      'Match cards now show the minute while a match is in play — 37′, HT at the break',
+      'Your points update live with the score: the bubble and the full receipt tick along as goals go in',
+      'Leaderboards move during matches too — everything settles at the final whistle',
+      'The live ticker shows the minute next to every score',
+    ],
+  },
+  {
     id: '2026-06-11.2',
     date: 'June 11, 2026',
     emoji: '🎉',
