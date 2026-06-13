@@ -17,6 +17,7 @@ import { createTournamentWinnerService, type TournamentWinnerService } from './t
 import { createPottService, type PottService } from './playerOfTournament';
 import { createFeedbackService, type FeedbackService } from './feedback';
 import { createEspnFactsService, type EspnFactsService } from './espnFacts';
+import { createMatchStatsService, type MatchStatsService } from './matchStats';
 import { createSyncService, type SyncService } from './sync';
 import { createEspnClient } from '../integration/espnClient';
 
@@ -35,6 +36,7 @@ export interface Services {
   pott: PottService;
   feedback: FeedbackService;
   espnFacts: EspnFactsService;
+  matchStats: MatchStatsService;
   sync: SyncService;
 }
 
@@ -65,6 +67,7 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     pott: createPottService(repos.pott, repos.stats, matches, clock, config.adminToken),
     feedback: createFeedbackService(repos.feedback, repos.players, clock, config.adminToken, config.adminPlayer),
     espnFacts: createEspnFactsService(espn, repos.matches, scoring, clock, logger),
+    matchStats: createMatchStatsService(espn, repos.matches, clock, logger),
     sync: createSyncService(footballApi, repos.matches, scoring, logger),
   };
 }

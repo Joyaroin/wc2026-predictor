@@ -591,3 +591,38 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
   .week .match-grid { padding: 0 10px 10px; }
   .mc-body { padding: 12px; }
 }
+
+/* --- Match stats (expandable, Tier 3) --- */
+.mc-stats-wrap { margin-top: 10px; }
+.mc-stats-toggle {
+  width: 100%; background: transparent; color: var(--muted); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+}
+.mc-stats-toggle:hover { border-color: var(--accent); color: var(--ink); }
+.mc-stats-toggle .chev { transition: transform 0.15s ease; display: inline-block; }
+.mc-stats-toggle .chev.up { transform: rotate(180deg); }
+
+.ms-panel { margin-top: 10px; animation: fadeIn 0.2s ease; }
+.ms-state { text-align: center; padding: 14px 8px; }
+.ms-meta { text-align: center; margin-bottom: 10px; }
+
+.ms-stats { display: flex; flex-direction: column; gap: 9px; }
+.ms-stat-row { display: flex; flex-direction: column; gap: 4px; }
+.ms-stat-vals { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.84rem; }
+.ms-stat-vals .ms-stat-label { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.ms-stat-vals .strong { font-weight: 800; color: var(--ink); }
+.ms-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.ms-bar-home { background: var(--accent); }
+.ms-bar-away { background: var(--muted); opacity: 0.55; }
+
+.ms-lineups { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.ms-lineup-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-weight: 800; font-size: 0.82rem; }
+.ms-lineup-head .ms-team-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-formation { margin-left: auto; color: var(--accent); font-size: 0.72rem; font-weight: 800; }
+.ms-lineup ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.ms-lineup li { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.ms-jersey { flex: none; width: 20px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.72rem; }
+.ms-player { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-pos { margin-left: auto; color: var(--muted); font-size: 0.7rem; }
+@media (max-width: 420px) { .ms-lineups { grid-template-columns: 1fr; } }

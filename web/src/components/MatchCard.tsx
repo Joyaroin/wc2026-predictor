@@ -16,6 +16,7 @@ import { Flag } from './Flag';
 import { fold } from '../lib/search';
 import { canonTeam } from '../lib/teams';
 import { Confetti } from './Confetti';
+import { MatchStatsPanel } from './MatchStatsPanel';
 
 /** Eases a number up from 0 when it first appears — points feel earned, not printed. */
 function useCountUp(target: number, active: boolean): number {
@@ -66,6 +67,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prediction?.updatedAt]);
   const [scorerOpen, setScorerOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [scorerQ, setScorerQ] = useState('');
   const scorerQuery = fold(scorerQ.trim());
   const scorerMatches = scorerQuery.length < 1
@@ -265,6 +267,21 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               </div>
             ) : null
           )
+        )}
+
+        {(state === 'Live' || state === 'Played') && !match.placeholder && (
+          <div className="mc-stats-wrap">
+            <button
+              type="button"
+              className="mc-stats-toggle"
+              onClick={() => setStatsOpen((o) => !o)}
+              aria-expanded={statsOpen}
+              data-testid={`stats-toggle-${match.id}`}
+            >
+              📊 Match stats <span className={`chev ${statsOpen ? 'up' : ''}`} aria-hidden>▾</span>
+            </button>
+            {statsOpen && <MatchStatsPanel match={match} />}
+          </div>
         )}
 
         {editable && (

@@ -6,29 +6,12 @@ import type { MatchRepo } from '../repos/types';
 import type { ScoringService } from './scoring';
 import type { Clock } from '../lib/clock';
 import type { Logger } from '../lib/logger';
+import { canonTeam as canon } from '../integration/teamNames';
 
 export interface EspnFactsService {
   ingest(): Promise<void>;
 }
 
-function normalize(s: string): string {
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
-}
-// Cross-provider name reconciliation (ESPN ↔ football-data) → canonical form.
-const ALIAS: Record<string, string> = {
-  southkorea: 'korea', korearepublic: 'korea',
-  unitedstates: 'usa', us: 'usa',
-  ivorycoast: 'cotedivoire', cotedivoire: 'cotedivoire',
-  drcongo: 'congodr', congodr: 'congodr', democraticrepublicofthecongo: 'congodr',
-  czechrepublic: 'czechia', czechia: 'czechia',
-  capeverdeislands: 'capeverde', caboverde: 'capeverde',
-  turkiye: 'turkey', turkey: 'turkey',
-  bosniaherzegovina: 'bosnia', bosniaandherzegovina: 'bosnia',
-};
-function canon(s: string): string {
-  const n = normalize(s);
-  return ALIAS[n] ?? n;
-}
 
 /** Last `days` UTC dates (inclusive) as YYYYMMDD. */
 function recentDates(now: Date, days: number): string[] {

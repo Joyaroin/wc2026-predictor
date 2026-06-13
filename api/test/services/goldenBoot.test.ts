@@ -50,6 +50,9 @@ describe('golden boot refresh', () => {
       async fetchMatchFirstGoals() {
         return [];
       },
+      async fetchMatchStats() {
+        return null;
+      },
       async fetchFinishedEventGoals() {
         return [
           {

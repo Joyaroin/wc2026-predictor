@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-13',
+    date: 'June 13, 2026',
+    emoji: '📊',
+    title: 'Match stats inside every card',
+    points: [
+      'Tap "Match stats" on any live or finished card to expand the full picture',
+      'Box score: possession, shots & shots on target, corners, fouls, cards, offsides, saves, passing',
+      'Starting line-ups and formations for both teams',
+      'Live matches refresh their stats automatically while you watch',
+    ],
+  },
+  {
     id: '2026-06-12.2',
     date: 'June 12, 2026',
     emoji: '🐞',

@@ -45,6 +45,28 @@ export interface GlobalLeaderboardView {
   me: LeaderboardRow | null;
 }
 
+export interface MatchStatRow {
+  label: string;
+  home: string;
+  away: string;
+}
+export interface LineupPlayer {
+  name: string;
+  position: string | null;
+  jersey: string | null;
+}
+export interface TeamLineup {
+  formation: string | null;
+  starters: LineupPlayer[];
+}
+export interface MatchStats {
+  venue: string | null;
+  status: string | null;
+  stats: MatchStatRow[];
+  home: TeamLineup;
+  away: TeamLineup;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -111,6 +133,7 @@ export const api = {
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
+  matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
   submitFeedback: (message: string, page?: string) =>
     req<{ ok: true }>('/feedback', { method: 'POST', body: { message, page } }),
   feedbackAdminMe: () => req<{ isAdmin: boolean }>('/feedback/admin/me'),

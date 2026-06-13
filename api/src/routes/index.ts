@@ -81,6 +81,7 @@ export function buildRouter(services: Services, config: Config): Router {
 
   // --- Matches & predictions ---
   r.get('/matches', auth, wrap(() => services.matches.list()));
+  r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   r.get('/predictions/me', auth, wrap((req) => services.predictions.getMine(caller(req))));
   r.put('/predictions/:matchId', auth, validateBody(predictionInputSchema), wrap((req) => services.predictions.upsert(caller(req), param(req, 'matchId'), req.body)));
   r.put('/predictions/:matchId/joker', auth, validateBody(jokerSchema), wrap((req) => services.predictions.setJoker(caller(req), param(req, 'matchId'), req.body.joker)));
