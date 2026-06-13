@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { computeSections, SECTION_ORDER, sectionLabel, type Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
+import { useMatchesQuery } from '../api/useMatches';
 import { MatchCard } from '../components/MatchCard';
 import { canonTeam } from '../lib/teams';
 
@@ -23,16 +24,7 @@ export function FixturesPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const matches = useQuery({
-    queryKey: ['matches'],
-    queryFn: api.matches,
-    // Always poll so the page flips to LIVE at kickoff without a manual refresh;
-    // poll faster while a match is actually in play.
-    refetchInterval: (query) => {
-      const data = query.state.data as MatchView[] | undefined;
-      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 30_000 : 60_000;
-    },
-  });
+  const matches = useMatchesQuery();
   const predictions = useQuery({ queryKey: [...PREDS], queryFn: api.myPredictions });
   const pool = useQuery({ queryKey: ['player-pool'], queryFn: api.playerPool, staleTime: 60 * 60 * 1000 });
 

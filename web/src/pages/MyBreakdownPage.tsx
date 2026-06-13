@@ -29,14 +29,25 @@ export function MyBreakdownPage() {
           <tr><th>Match</th><th>My pick</th><th>Result</th><th>Pts</th></tr>
         </thead>
         <tbody>
-          {rows.map(({ pred, match }) => (
-            <tr key={pred.matchId}>
-              <td>{match!.homeTeam} vs {match!.awayTeam}</td>
-              <td>{pred.home}–{pred.away}{pred.joker ? ' ★' : ''}</td>
-              <td>{matchState(match!) === 'Played' ? `${match!.homeScore}–${match!.awayScore}` : '—'}</td>
-              <td>{matchState(match!) === 'Played' ? `${pointsLabel(pred.points, pred.exact)}${pred.joker ? ' ×2' : ''}` : '—'}</td>
-            </tr>
-          ))}
+          {rows.map(({ pred, match }) => {
+            // The headline total sums effectivePoints over ALL predictions, including
+            // live (running) points. Show the score + live points for Live rows too so
+            // the visible rows reconcile with the total (otherwise Live rows showed '—').
+            const state = matchState(match!);
+            const settled = state === 'Played' || state === 'Live';
+            const live = state === 'Live';
+            return (
+              <tr key={pred.matchId}>
+                <td>{match!.homeTeam} vs {match!.awayTeam}</td>
+                <td>{pred.home}–{pred.away}{pred.joker ? ' ★' : ''}</td>
+                <td>
+                  {settled ? `${match!.homeScore}–${match!.awayScore}` : '—'}
+                  {live && <span className="muted fine"> ● live</span>}
+                </td>
+                <td>{settled ? `${pointsLabel(pred.points, pred.exact)}${pred.joker ? ' ×2' : ''}` : '—'}</td>
+              </tr>
+            );
+          })}
           {rows.length === 0 && (
             <tr><td colSpan={4} className="muted">No predictions yet.</td></tr>
           )}

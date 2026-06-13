@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { AWARDS_LOCK_ISO, awardsLocked } from '@wc2026/shared';
+import { api } from '../api/client';
 import { GoldenBootPage } from './GoldenBootPage';
 import { DarkHorseAward } from '../components/DarkHorseAward';
 import { TournamentWinnerAward } from '../components/TournamentWinnerAward';
@@ -8,7 +10,12 @@ import { usePrefs } from '../context/PrefsContext';
 // Awards hub — pre-tournament predictions, locked June 13 at 2 PM ET.
 export function AwardsPage() {
   const { timeZone } = usePrefs();
-  const locked = awardsLocked(new Date());
+  // Drive the banner off the server-authoritative lock flag (shared by all award
+  // queries) rather than the device clock, so the banner can't contradict the
+  // individual awards' locked state on a skewed client. Fall back to the client
+  // clock only until the (cached) query resolves.
+  const lockQuery = useQuery({ queryKey: ['golden-boot'], queryFn: api.goldenBoot, staleTime: 30_000 });
+  const locked = lockQuery.data?.locked ?? awardsLocked(new Date());
   const localDeadline = new Date(AWARDS_LOCK_ISO).toLocaleString(undefined, {
     weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone, timeZoneName: 'short',
   });

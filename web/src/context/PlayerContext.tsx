@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, setAuthToken } from '../api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, setAuthToken, setOnUnauthorized } from '../api/client';
 
 interface PlayerSession {
   playerId: string;
@@ -30,14 +31,30 @@ function loadSession(): PlayerSession | null {
   }
 }
 
+// Install the token synchronously at module load so authenticated queries fired
+// during the first render (e.g. on a hard reload) carry the Authorization header.
+// Without this the token was only set in a useEffect (after paint), causing
+// intermittent 401s on those first requests.
+setAuthToken(loadSession()?.token ?? null);
+
 export function PlayerProvider({ children }: { children: ReactNode }): ReactNode {
-  const [player, setPlayer] = useState<PlayerSession | null>(loadSession);
+  const queryClient = useQueryClient();
+  // Lazy initializer also (re)installs the token synchronously for this component
+  // instance, in addition to the module-scope install above.
+  const [player, setPlayer] = useState<PlayerSession | null>(() => {
+    const session = loadSession();
+    setAuthToken(session?.token ?? null);
+    return session;
+  });
 
   useEffect(() => {
     setAuthToken(player?.token ?? null);
   }, [player]);
 
   const login = async (name: string, pin: string): Promise<void> => {
+    // Drop any data left in the cache from a previous user on this browser
+    // before installing the new session (shared-browser leak guard).
+    queryClient.clear();
     const res = await api.login(name, pin);
     const session: PlayerSession = { playerId: res.playerId, name: res.name, token: res.token, tourSeen: res.tourSeen };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -49,7 +66,18 @@ export function PlayerProvider({ children }: { children: ReactNode }): ReactNode
     localStorage.removeItem(STORAGE_KEY);
     setAuthToken(null);
     setPlayer(null);
+    // Purge cached queries so the next user (or the logged-out landing page)
+    // never sees the previous user's data (staleTime keeps it around otherwise).
+    queryClient.clear();
   };
+
+  // Central 401 handling: an expired/invalid session logs the user out
+  // (PlayerProvider sits above the router, so dropping `player` redirects to landing).
+  useEffect(() => {
+    setOnUnauthorized(() => logout());
+    return () => setOnUnauthorized(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateName = (name: string): void => {
     setPlayer((p) => {

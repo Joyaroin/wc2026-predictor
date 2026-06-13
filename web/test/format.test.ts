@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute } from '../src/lib/format';
+import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute, liveFirstGoalBonus } from '../src/lib/format';
 
 describe('matchState', () => {
   it('Played when finished with a score', () => {
@@ -14,6 +14,38 @@ describe('matchState', () => {
   });
   it('Open before kickoff', () => {
     expect(matchState({ status: 'SCHEDULED', homeScore: null, awayScore: null, locked: false })).toBe('Open');
+  });
+  it('Postponed for POSTPONED/SUSPENDED — not a normal upcoming fixture', () => {
+    expect(matchState({ status: 'POSTPONED', homeScore: null, awayScore: null, locked: true })).toBe('Postponed');
+    expect(matchState({ status: 'SUSPENDED', homeScore: 0, awayScore: 0, locked: true })).toBe('Postponed');
+  });
+  it('Cancelled for CANCELLED', () => {
+    expect(matchState({ status: 'CANCELLED', homeScore: null, awayScore: null, locked: true })).toBe('Cancelled');
+  });
+  it('off-schedule statuses win over the locked flag (do not show as Locked/Open)', () => {
+    expect(matchState({ status: 'POSTPONED', homeScore: null, awayScore: null, locked: false })).toBe('Postponed');
+    expect(matchState({ status: 'CANCELLED', homeScore: null, awayScore: null, locked: false })).toBe('Cancelled');
+  });
+});
+
+describe('liveFirstGoalBonus', () => {
+  const fg = { firstTeam: 2, firstPlayer: 6 };
+
+  it('is 0 when there is no first-goal result', () => {
+    expect(liveFirstGoalBonus(null, { finished: true, goalless: true })).toBe(0);
+    expect(liveFirstGoalBonus(null, { finished: false, goalless: false })).toBe(0);
+  });
+  it('suppresses the goalless auto-bonus while the match is still live (provisional 0-0)', () => {
+    expect(liveFirstGoalBonus(fg, { finished: false, goalless: true })).toBe(0);
+  });
+  it('awards the full bonus for a goalless game once finished', () => {
+    expect(liveFirstGoalBonus(fg, { finished: true, goalless: true })).toBe(8);
+  });
+  it('awards the bonus while live once a goal has been scored (facts are final)', () => {
+    expect(liveFirstGoalBonus(fg, { finished: false, goalless: false })).toBe(8);
+  });
+  it('passes through partial bonuses', () => {
+    expect(liveFirstGoalBonus({ firstTeam: 2, firstPlayer: 0 }, { finished: true, goalless: false })).toBe(2);
   });
 });
 

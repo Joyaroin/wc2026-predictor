@@ -1,6 +1,6 @@
 import type { Match } from '@wc2026/shared';
 
-export type MatchState = 'Played' | 'Live' | 'Locked' | 'Open';
+export type MatchState = 'Played' | 'Live' | 'Postponed' | 'Cancelled' | 'Locked' | 'Open';
 
 export function matchState(m: {
   status: Match['status'];
@@ -10,6 +10,11 @@ export function matchState(m: {
 }): MatchState {
   if (m.status === 'FINISHED' && m.homeScore !== null && m.awayScore !== null) return 'Played';
   if (m.status === 'IN_PLAY' || m.status === 'PAUSED') return 'Live';
+  // Off-schedule statuses must not look like a normal upcoming fixture.
+  // SUSPENDED (interrupted, expected to resume) reads as 'Postponed' to players;
+  // CANCELLED (won't be played) reads as 'Cancelled'.
+  if (m.status === 'POSTPONED' || m.status === 'SUSPENDED') return 'Postponed';
+  if (m.status === 'CANCELLED') return 'Cancelled';
   if (m.locked) return 'Locked';
   return 'Open';
 }
@@ -35,6 +40,27 @@ export function liveMinute(
   if (elapsed <= 60) return '45+′'; // first-half stoppage / around the break
   const second = elapsed - 15;
   return second >= 90 ? '90+′' : `${second}′`;
+}
+
+/**
+ * First-goal bonus to fold into the displayed points.
+ *
+ * `fg` is the result of `firstGoalPoints` (firstTeam + firstPlayer). For a 0-0,
+ * `firstGoalPoints` awards the full bonus because "nobody scores" was called —
+ * but while a match is still LIVE a 0-0 scoreline is provisional, so we must NOT
+ * pay out that goalless auto-bonus yet (it should only count once FINISHED).
+ *
+ * - finished: award the bonus as computed.
+ * - live & actual 0-0: suppress (provisional goalless — could still be a goal).
+ * - live & a goal already scored: award (first-goal facts are known and final).
+ */
+export function liveFirstGoalBonus(
+  fg: { firstTeam: number; firstPlayer: number } | null,
+  opts: { finished: boolean; goalless: boolean },
+): number {
+  if (!fg) return 0;
+  if (!opts.finished && opts.goalless) return 0;
+  return fg.firstTeam + fg.firstPlayer;
 }
 
 export function pointsLabel(points: number, exact?: boolean): string {

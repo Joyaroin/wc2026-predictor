@@ -70,6 +70,16 @@ export function setAuthToken(token: string | null): void {
   authToken = token;
 }
 
+/**
+ * Central 401 hook. Registered by the app (PlayerProvider) so an expired/invalid
+ * session is handled in one place — without it, a stale token leaves the SPA stuck
+ * on authenticated pages that keep failing silently. Invoked once per 401 response.
+ */
+let onUnauthorized: (() => void) | null = null;
+export function setOnUnauthorized(handler: (() => void) | null): void {
+  onUnauthorized = handler;
+}
+
 async function req<T>(path: string, opts: { method?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
   const res = await fetch(`${BASE}/api${path}`, {
     method: opts.method ?? 'GET',
@@ -81,6 +91,8 @@ async function req<T>(path: string, opts: { method?: string; body?: unknown; hea
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
+    // Expired/invalid session — let the app log the user out (redirect to landing).
+    if (res.status === 401) onUnauthorized?.();
     let message = res.statusText;
     try {
       const data = (await res.json()) as { error?: string };

@@ -55,7 +55,8 @@ export function TournamentWinnerAward() {
               locked={s.locked}
               onPick={(t) => pick.mutate(t)}
               onClose={() => setModal(false)}
-              title="🏆 Pick the champion"
+              // Mirror the button: once locked you're only viewing the field, not picking.
+              title={s.locked ? '🏆 Tournament teams' : '🏆 Pick the champion'}
               hint="Tap the team you think will win the whole tournament."
             />
           )}

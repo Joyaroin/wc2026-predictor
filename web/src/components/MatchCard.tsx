@@ -10,7 +10,7 @@ import {
 } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, formatKickoff, stageLabel, liveMinute } from '../lib/format';
+import { matchState, formatKickoff, stageLabel, liveMinute, liveFirstGoalBonus } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
@@ -108,10 +108,12 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Points bubble: persisted points once played; provisional "as it stands" points while live.
   const scored = state === 'Played' && !!prediction;
   const livePts = live && prediction && bd
-    ? effectivePoints({ points: bd.points + (fg ? fg.firstTeam + fg.firstPlayer : 0), joker: prediction.joker })
+    ? effectivePoints({ points: bd.points + liveFirstGoalBonus(fg, { finished, goalless }), joker: prediction.joker })
     : null;
-  const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : livePts ?? 0, scored || livePts !== null);
-  const ptsText = scored || livePts !== null ? `+${shownPts} pts` : '- pts';
+  // True once there are points to show (final or live "as it stands").
+  const hasPts = scored || livePts !== null;
+  const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : livePts ?? 0, hasPts);
+  const ptsText = hasPts ? `+${shownPts} pts` : '– pts';
 
   // Celebrate an exact scoreline once per match (remembered per device) — only at full time.
   const [confetti, setConfetti] = useState(false);
@@ -363,7 +365,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           ) : null}
         </div>
         <span
-          className={`pts-bubble ${livePts !== null ? 'live' : ''} ${ptsText === '–' ? 'empty' : ''}`}
+          className={`pts-bubble ${livePts !== null ? 'live' : ''} ${hasPts ? '' : 'empty'}`}
           title={livePts !== null ? 'Live points if the score stays like this' : 'Points'}
           data-testid={`pts-${match.id}`}
         >

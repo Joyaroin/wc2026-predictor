@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 const STORAGE_KEY = 'wc2026.tz';
 const THEME_KEY = 'wc2026.theme';
@@ -48,7 +48,10 @@ const Ctx = createContext<PrefsValue | null>(null);
 export function PrefsProvider({ children }: { children: ReactNode }): ReactNode {
   const [tzPref, setStored] = useState<string>(() => localStorage.getItem(STORAGE_KEY) ?? AUTO);
   const [theme, setThemeState] = useState<string>(() => localStorage.getItem(THEME_KEY) ?? DEFAULT_THEME);
-  const timeZone = tzPref === AUTO ? detectedZone() : tzPref;
+  // Detect the device zone once — it can't change mid-session and the Intl lookup
+  // is not free, so don't recompute it on every render.
+  const detected = useMemo(detectedZone, []);
+  const timeZone = tzPref === AUTO ? detected : tzPref;
 
   const setTzPref = (value: string): void => {
     localStorage.setItem(STORAGE_KEY, value);
@@ -65,7 +68,13 @@ export function PrefsProvider({ children }: { children: ReactNode }): ReactNode 
     else root.dataset.theme = theme;
   }, [theme]);
 
-  return <Ctx.Provider value={{ timeZone, tzPref, setTzPref, theme, setTheme }}>{children}</Ctx.Provider>;
+  // Memoize the provider value so consumers don't re-render on unrelated parent renders.
+  const value = useMemo(
+    () => ({ timeZone, tzPref, setTzPref, theme, setTheme }),
+    [timeZone, tzPref, theme],
+  );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function usePrefs(): PrefsValue {

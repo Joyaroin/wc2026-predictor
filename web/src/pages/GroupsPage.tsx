@@ -34,15 +34,18 @@ export function GroupsPage() {
     <div className="groups-page">
       <h2>Your groups</h2>
       {groups.isLoading && <p>Loading…</p>}
-      <ul className="group-list">
-        {groups.data?.map((g) => (
-          <li key={g.id} data-testid={`group-${g.id}`}>
-            <Link to={`/groups/${g.id}`}>{g.name}</Link>
-            <span className="muted"> · {g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
-          </li>
-        ))}
-        {groups.data?.length === 0 && <p className="muted">No groups yet — create or join one below.</p>}
-      </ul>
+      {groups.data && groups.data.length > 0 && (
+        <ul className="group-list">
+          {groups.data.map((g) => (
+            <li key={g.id} data-testid={`group-${g.id}`}>
+              <Link to={`/groups/${g.id}`}>{g.name}</Link>
+              <span className="muted"> · {g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* Empty-state copy belongs outside the <ul> (a <p> is not a valid child of <ul>). */}
+      {groups.data?.length === 0 && <p className="muted">No groups yet — create or join one below.</p>}
 
       {error && <p className="error">{error}</p>}
 
