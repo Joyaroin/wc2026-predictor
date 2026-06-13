@@ -23,13 +23,15 @@ export function isLive(status: Match['status']): boolean {
  * estimate from kickoff (assumes a 15-minute half-time break). Null when not live.
  */
 export function liveMinute(
-  m: { status: Match['status']; minute?: number | null; kickoff: string },
+  m: { status: Match['status']; minute?: number | null; kickoff: string; startedAt?: string | null },
   now: number = Date.now(),
 ): string | null {
   if (m.status === 'PAUSED') return 'HT';
   if (m.status !== 'IN_PLAY') return null;
   if (typeof m.minute === 'number') return `${m.minute}′`;
-  const elapsed = Math.floor((now - new Date(m.kickoff).getTime()) / 60_000);
+  // Count from the actual kickoff (when the match went live), not the scheduled time.
+  const start = m.startedAt ? Date.parse(m.startedAt) : new Date(m.kickoff).getTime();
+  const elapsed = Math.floor((now - start) / 60_000);
   if (elapsed < 0) return null;
   if (elapsed <= 45) return `${Math.max(1, elapsed)}′`;
   if (elapsed <= 60) return '45+′'; // first-half stoppage / around the break

@@ -59,6 +59,8 @@ export interface Match {
   awayCode: string | null;
   kickoff: string; // ISO 8601 UTC — authoritative lock time
   status: MatchStatus;
+  /** When the match actually kicked off (first seen IN_PLAY) — drives the live clock. Null until then. */
+  startedAt?: string | null;
   /** Current match minute from the provider while live; null when unknown or not in play. */
   minute?: number | null;
   homeScore: number | null; // full-time goals, null until played

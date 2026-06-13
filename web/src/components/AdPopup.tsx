@@ -21,7 +21,7 @@ const ADS: Ad[] = [
     img: '/dany.png',
     label: 'Follow Dany on Insta 📸',
     coin: '📸',
-    action: { kind: 'link', href: 'https://www.instagram.com/hilya.b176?igsh=MXEwY2hmc2ZhbGJkNQ==' },
+    action: { kind: 'link', href: 'https://www.instagram.com/adha6621/' },
   },
 ];
 

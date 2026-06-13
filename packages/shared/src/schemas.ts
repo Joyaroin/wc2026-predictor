@@ -83,6 +83,7 @@ export const matchSchema = z.object({
   awayCode: z.string().nullable(),
   kickoff: z.string(),
   status: matchStatusSchema,
+  startedAt: z.string().nullable().optional(),
   minute: z.number().int().nullable().optional(),
   homeScore: goalSchema.nullable(),
   awayScore: goalSchema.nullable(),

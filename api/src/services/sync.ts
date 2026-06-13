@@ -50,7 +50,10 @@ export function createSyncService(
       for (const next of fetched) {
         try {
           const prev = await matches.getById(next.id);
-          await matches.upsert(next);
+          // Stamp the real kickoff the first time the match is seen live; keep it thereafter.
+          const live = next.status === 'IN_PLAY' || next.status === 'PAUSED';
+          const startedAt = prev?.startedAt ?? (live ? new Date().toISOString() : null);
+          await matches.upsert({ ...next, startedAt });
           report.upserted++;
           if (resultChanged(prev, next)) {
             report.scored += await scoring.scoreMatch(next.id);
