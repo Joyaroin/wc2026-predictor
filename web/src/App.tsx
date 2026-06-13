@@ -15,7 +15,7 @@ import { UpdatesPage } from './pages/UpdatesPage';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { LiveTicker } from './components/LiveTicker';
 import { OnboardingTour } from './components/OnboardingTour';
-import { DonateTarek } from './components/DonateTarek';
+import { AdPopup } from './components/AdPopup';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -32,7 +32,7 @@ export default function App() {
       {player && <Nav />}
       {player && <LiveTicker />}
       {player && <OnboardingTour />}
-      {player && <DonateTarek />}
+      {player && <AdPopup />}
       <main className="container">
         <Routes>
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />
