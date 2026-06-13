@@ -15,12 +15,13 @@ export const playerNameSchema = z.string().trim().min(1).max(30);
 /** BR-4.3 — group name. */
 export const groupNameSchema = z.string().trim().min(1).max(40);
 
-/** BR-4.4 — invite code: 8 chars base32 excluding ambiguous 0/O/1/I. */
+/** BR-4.4 — invite code: 8 chars, Crockford-style alphabet excluding ambiguous 0/O/1/I
+ * (matches the generator alphabet in `api/src/lib/ids.ts`). */
 export const inviteCodeSchema = z
   .string()
   .trim()
   .transform((s) => s.toUpperCase())
-  .pipe(z.string().regex(/^[A-Z2-9]{8}$/, 'Invalid invite code'));
+  .pipe(z.string().regex(/^[A-HJ-NP-Z2-9]{8}$/, 'Invalid invite code'));
 
 export const stageSchema = z.enum([
   'GROUP_STAGE',
@@ -38,6 +39,9 @@ export const matchStatusSchema = z.enum([
   'IN_PLAY',
   'PAUSED',
   'FINISHED',
+  'POSTPONED',
+  'SUSPENDED',
+  'CANCELLED',
 ]);
 
 export const outcomeSchema = z.enum(['HOME', 'DRAW', 'AWAY']);
@@ -67,6 +71,7 @@ export const predictionSchema = z.object({
   firstScorerName: z.string().nullable().optional(),
   points: pointsSchema,
   exact: z.boolean().optional(),
+  correctOutcome: z.boolean().optional(),
   joker: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),

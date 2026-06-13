@@ -42,6 +42,12 @@ const STATUSES: Record<string, MatchStatus> = {
   IN_PLAY: 'IN_PLAY',
   PAUSED: 'PAUSED',
   FINISHED: 'FINISHED',
+  // AWARDED = result decided administratively (e.g. forfeit); a full-time score exists, so it
+  // must be treated as FINISHED to get scored (otherwise it silently fell through to SCHEDULED).
+  AWARDED: 'FINISHED',
+  POSTPONED: 'POSTPONED',
+  SUSPENDED: 'SUSPENDED',
+  CANCELLED: 'CANCELLED',
 };
 
 export function mapToDomain(pm: ProviderMatch): Match {

@@ -19,7 +19,7 @@ describe('espnFacts.ingest', () => {
     // Exact scoreline (12) + first team HOME + first scorer '7'
     await repos.predictions.put({ playerId: 'sam', matchId: 'm1', home: 2, away: 1, firstTeam: 'HOME', firstScorerId: '7', points: 0, createdAt: now, updatedAt: now });
 
-    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, fixedClock(now));
     const fakeEspn: EspnClient = {
       async fetchPlayerPool() { return []; },
       async fetchFinishedEventGoals() { return []; },

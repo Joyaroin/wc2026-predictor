@@ -15,7 +15,10 @@ export type MatchStatus =
   | 'TIMED'
   | 'IN_PLAY'
   | 'PAUSED'
-  | 'FINISHED';
+  | 'FINISHED'
+  | 'POSTPONED'
+  | 'SUSPENDED'
+  | 'CANCELLED';
 
 export type Outcome = 'HOME' | 'DRAW' | 'AWAY';
 
@@ -99,6 +102,12 @@ export interface Prediction {
   points: Points;
   /** Set at scoring time: the scoreline was exact (used for leaderboard tie-breaks). */
   exact?: boolean;
+  /**
+   * Set at scoring time: the predicted W/D/L outcome matched the actual result.
+   * Distinct from `points >= 2` — a wrong-outcome prediction can still earn 2 points by
+   * matching only the home- or away-goal count, so this boolean is the correct tie-break basis.
+   */
+  correctOutcome?: boolean;
   /** When true, this match is the player's Joker for its matchday — points count double. */
   joker?: boolean;
   createdAt: string;
@@ -110,6 +119,6 @@ export interface StandingAgg {
   playerId: string;
   name: string;
   points: number;
-  exacts: number; // count of predictions scoring 5
-  correctResults: number; // count of predictions scoring >= 2
+  exacts: number; // count of predictions with an exact scoreline (persisted `exact` flag)
+  correctResults: number; // count of predictions with a correct W/D/L outcome (persisted `correctOutcome` flag)
 }

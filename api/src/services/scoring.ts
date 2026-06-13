@@ -2,6 +2,7 @@
 // Scores both score-predictions and knockout bracket (advancement) picks.
 import { scoreBreakdown, firstGoalPoints, darkHorsePoints } from '@wc2026/shared';
 import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
+import type { Clock } from '../lib/clock';
 
 export interface ScoringService {
   scoreMatch(matchId: string): Promise<number>; // returns number of score-predictions scored
@@ -11,13 +12,14 @@ export function createScoringService(
   predictions: PredictionRepo,
   matches: MatchRepo,
   bracket: BracketRepo,
+  clock: Clock,
 ): ScoringService {
   return {
     async scoreMatch(matchId) {
       const match = await matches.getById(matchId);
       if (!match || match.homeScore === null || match.awayScore === null) return 0;
       const actual = { home: match.homeScore, away: match.awayScore };
-      const now = new Date().toISOString();
+      const now = clock.now().toISOString();
 
       // Score-prediction points: scoreline + first-team (+2) + first-player (+6).
       // First-goal facts come from a separate ESPN ingestion; absent until then (no bonus yet).
@@ -28,8 +30,8 @@ export function createScoringService(
         // First-team/first-player bonuses — a correctly-called 0-0 earns both (no first scorer exists).
         const fg = firstGoalPoints(p, actual, { firstGoalTeam: match.firstGoalTeam, firstScorerId: match.firstScorerId });
         const points = bd.points + fg.firstTeam + fg.firstPlayer;
-        if (points !== p.points || bd.exact !== p.exact) {
-          await predictions.put({ ...p, points, exact: bd.exact, updatedAt: now });
+        if (points !== p.points || bd.exact !== p.exact || bd.outcome !== p.correctOutcome) {
+          await predictions.put({ ...p, points, exact: bd.exact, correctOutcome: bd.outcome, updatedAt: now });
         }
         scored++;
       }

@@ -67,6 +67,28 @@ describe('mapToDomain', () => {
     expect(m.minute).toBe(37);
   });
 
+  it('maps an AWARDED (forfeit) result to FINISHED so it gets scored', () => {
+    const pm: ProviderMatch = {
+      id: 77,
+      stage: 'GROUP_STAGE',
+      utcDate: '2026-06-20T18:00:00Z',
+      status: 'AWARDED',
+      homeTeam: { name: 'Brazil' },
+      awayTeam: { name: 'Korea' },
+      score: { winner: 'HOME_TEAM', fullTime: { home: 3, away: 0 } },
+    };
+    const m = mapToDomain(pm);
+    expect(m.status).toBe('FINISHED');
+    expect(m.homeScore).toBe(3);
+    expect(m.winner).toBe('HOME');
+  });
+
+  it('maps POSTPONED/CANCELLED to their own status rather than SCHEDULED', () => {
+    const base = { id: 88, stage: 'GROUP_STAGE', utcDate: '2026-06-20T18:00:00Z', homeTeam: { name: 'A' }, awayTeam: { name: 'B' } };
+    expect(mapToDomain({ ...base, status: 'POSTPONED' }).status).toBe('POSTPONED');
+    expect(mapToDomain({ ...base, status: 'CANCELLED' }).status).toBe('CANCELLED');
+  });
+
   it('marks undetermined knockout teams as placeholder', () => {
     const pm: ProviderMatch = {
       id: 99,

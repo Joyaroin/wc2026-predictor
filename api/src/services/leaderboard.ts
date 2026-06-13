@@ -14,7 +14,9 @@ function aggregate(playerId: string, name: string, preds: Prediction[], extraPoi
     name,
     points: preds.reduce((s, p) => s + effectivePoints(p), 0) + extraPoints,
     exacts: preds.filter((p) => p.exact).length, // exact scoreline
-    correctResults: preds.filter((p) => p.points >= 2).length,
+    // Correct W/D/L outcome — NOT `points >= 2`, since a wrong-outcome prediction can score 2
+    // by matching only the home- or away-goal count. Uses the persisted `correctOutcome` flag.
+    correctResults: preds.filter((p) => p.correctOutcome).length,
   };
 }
 

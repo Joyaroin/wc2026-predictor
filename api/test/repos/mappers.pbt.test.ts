@@ -27,6 +27,7 @@ const arbPrediction = fc.record({
   firstScorerName: fc.option(fc.string({ maxLength: 20 }), { nil: null }),
   points: fc.integer({ min: 0, max: 20 }),
   exact: fc.boolean(),
+  correctOutcome: fc.boolean(),
   joker: fc.boolean(),
   createdAt: arbIso,
   updatedAt: arbIso,

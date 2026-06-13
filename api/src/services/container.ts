@@ -48,7 +48,7 @@ export interface ServiceDeps {
 
 export function createServices({ repos, config, clock, logger, footballApi }: ServiceDeps): Services {
   const matches = createMatchService(repos.matches, clock);
-  const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
+  const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, clock);
   const espn = createEspnClient(logger);
   return {
     auth: createAuthService(repos.players, config, clock),

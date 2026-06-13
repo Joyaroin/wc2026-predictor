@@ -11,7 +11,7 @@ export function outcomeOf(s: Score): Outcome {
 
 /** Additive scoreline breakdown — each component scores independently. */
 export interface ScoreBreakdown {
-  outcome: boolean; // correct win/draw/win
+  outcome: boolean; // correct outcome (home win / draw / away win)
   goalDiff: boolean; // correct goal difference
   exact: boolean; // exact final scoreline
   home: boolean; // correct goals for team 1 (home)
