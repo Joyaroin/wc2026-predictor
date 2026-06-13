@@ -4,7 +4,7 @@ import type { Clock } from '../lib/clock';
 import type { MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { MatchService } from './matches';
 import type { MatchPredictionsView, MatchPredictionRow } from './dtos';
-import { ForbiddenError, LockedError, NotFoundError } from '../lib/errors';
+import { ConflictError, ForbiddenError, LockedError, NotFoundError } from '../lib/errors';
 
 export interface PredictionInput {
   home: number;
@@ -82,14 +82,19 @@ export function createPredictionService(
 
       const now = clock.now().toISOString();
       if (joker) {
-        // Enforce one Joker per Fixtures section (match week / knockout round).
-        const sections = computeSections(await matchService.list());
+        // One Joker per Fixtures section. A Joker on a match that has already kicked off is
+        // committed: it can't be moved off, and it blocks placing a new Joker in that section.
+        const all = await matchService.list();
+        const sections = computeSections(all);
+        const lockedById = new Map(all.map((m) => [m.id, m.locked]));
         const targetSection = sections.get(matchId);
         const mine = await predictions.listByPlayer(callerId);
         for (const p of mine) {
-          if (p.matchId !== matchId && p.joker && sections.get(p.matchId) === targetSection) {
-            await predictions.put({ ...p, joker: false, updatedAt: now });
+          if (p.matchId === matchId || !p.joker || sections.get(p.matchId) !== targetSection) continue;
+          if (lockedById.get(p.matchId)) {
+            throw new ConflictError('Your Joker for this match week is locked on a match that has already started');
           }
+          await predictions.put({ ...p, joker: false, updatedAt: now });
         }
       }
       const updated: Prediction = { ...target, joker, updatedAt: now };

@@ -94,6 +94,11 @@ export function FixturesPage() {
     onSuccess: () => setToast('Prediction removed'),
   });
 
+  const lockedMatchIds = useMemo(
+    () => new Set((matches.data ?? []).filter((m) => m.locked).map((m) => m.id)),
+    [matches.data],
+  );
+
   const joker = useMutation({
     mutationFn: ({ matchId, on }: { matchId: string; on: boolean }) => api.setJoker(matchId, on),
     onMutate: async ({ matchId, on }) => {
@@ -103,7 +108,10 @@ export function FixturesPage() {
       const prev = patchPreds(qc, (old) =>
         old.map((p) => {
           if (p.matchId === matchId) return { ...p, joker: on, updatedAt: now };
-          if (on && p.joker && sectionById.get(p.matchId) === section) return { ...p, joker: false, updatedAt: now };
+          // Move the section's Joker off other OPEN matches only — never a locked (committed) one.
+          if (on && p.joker && sectionById.get(p.matchId) === section && !lockedMatchIds.has(p.matchId)) {
+            return { ...p, joker: false, updatedAt: now };
+          }
           return p;
         }),
       );
@@ -112,6 +120,21 @@ export function FixturesPage() {
     ...common,
     onSuccess: () => setToast('★ Joker set'),
   });
+
+  // Block moving the Joker when this section's Joker is already committed to a kicked-off match.
+  const requestJoker = (matchId: string, on: boolean) => {
+    if (on) {
+      const section = sectionById.get(matchId);
+      const committed = (predictions.data ?? []).some(
+        (p) => p.joker && p.matchId !== matchId && sectionById.get(p.matchId) === section && lockedMatchIds.has(p.matchId),
+      );
+      if (committed) {
+        setToast('🔒 Your Joker is locked on a match that has already started');
+        return;
+      }
+    }
+    joker.mutate({ matchId, on });
+  };
 
   const firstTeam = useMutation({
     mutationFn: ({ matchId, home, away, side }: { matchId: string; home: number; away: number; side: 'HOME' | 'AWAY' | null }) =>
@@ -201,7 +224,7 @@ export function FixturesPage() {
                         squad={[...(squadByTeam.get(canonTeam(m.homeTeam)) ?? []), ...(squadByTeam.get(canonTeam(m.awayTeam)) ?? [])]}
                         onSave={(matchId, home, away) => save.mutate({ matchId, home, away })}
                         onClear={(matchId) => clear.mutate(matchId)}
-                        onJoker={(matchId, on) => joker.mutate({ matchId, on })}
+                        onJoker={(matchId, on) => requestJoker(matchId, on)}
                         onFirstTeam={(matchId, side) => {
                           const p = predByMatch.get(matchId);
                           if (p) firstTeam.mutate({ matchId, home: p.home, away: p.away, side });
