@@ -91,29 +91,18 @@ export interface MatchStatRow {
   home: string;
   away: string;
 }
-export interface LineupPlayer {
-  name: string;
-  position: string | null;
-  jersey: string | null;
-}
-export interface TeamLineup {
-  formation: string | null;
-  starters: LineupPlayer[];
-}
-/** Rich per-match details from ESPN's summary endpoint (best-effort; coverage varies). */
+/** Box-score details from ESPN's summary endpoint (best-effort; coverage varies). */
 export interface MatchStats {
   venue: string | null;
   status: string | null; // ESPN short detail, e.g. "FT", "67'"
   stats: MatchStatRow[];
-  home: TeamLineup;
-  away: TeamLineup;
 }
 
 export interface EspnClient {
   fetchPlayerPool(): Promise<WcPlayer[]>;
   fetchFinishedEventGoals(dates: string[], skipEventIds: Set<string>): Promise<EventGoals[]>;
   fetchMatchFirstGoals(dates: string[]): Promise<MatchFirstGoal[]>;
-  /** Box-score stats + lineups for one match, located by date + team names. Null if not found. */
+  /** Box-score stats for one match, located by date + team names. Null if not found. */
   fetchMatchStats(dates: string[], homeName: string, awayName: string): Promise<MatchStats | null>;
 }
 
@@ -269,29 +258,13 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         if (h != null || a != null) stats.push({ label, home: h ?? '–', away: a ?? '–' });
       }
 
-      // Lineups + formation from the rosters block.
-      const rosters = get<Json[]>(summary, 'rosters') ?? [];
-      const lineupFor = (name: string): TeamLineup => {
-        const r = rosters.find((x) => canonTeam(get<string>(x, 'team', 'displayName') ?? '') === canonTeam(name));
-        const starters: LineupPlayer[] = [];
-        for (const p of get<Json[]>(r ?? {}, 'roster') ?? []) {
-          if (get<boolean>(p, 'starter') !== true) continue;
-          starters.push({
-            name: get<string>(p, 'athlete', 'displayName') ?? 'Unknown',
-            position: get<string>(p, 'position', 'abbreviation') ?? get<string>(p, 'athlete', 'position', 'abbreviation') ?? null,
-            jersey: get<string>(p, 'jersey') ?? get<string>(p, 'athlete', 'jersey') ?? null,
-          });
-        }
-        return { formation: get<string>(r ?? {}, 'formation') ?? null, starters };
-      };
-
       const comp0 = (get<Json[]>(summary, 'header', 'competitions') ?? [])[0];
       const status = get<string>(comp0 ?? {}, 'status', 'type', 'shortDetail') ?? null;
       const venue = get<string>(summary, 'gameInfo', 'venue', 'fullName')
         ?? get<string>(summary, 'gameInfo', 'venue', 'address', 'city')
         ?? null;
 
-      return { venue, status, stats, home: lineupFor(homeName), away: lineupFor(awayName) };
+      return { venue, status, stats };
     },
   };
 }

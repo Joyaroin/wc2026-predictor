@@ -50,21 +50,10 @@ export interface MatchStatRow {
   home: string;
   away: string;
 }
-export interface LineupPlayer {
-  name: string;
-  position: string | null;
-  jersey: string | null;
-}
-export interface TeamLineup {
-  formation: string | null;
-  starters: LineupPlayer[];
-}
 export interface MatchStats {
   venue: string | null;
   status: string | null;
   stats: MatchStatRow[];
-  home: TeamLineup;
-  away: TeamLineup;
 }
 
 export class ApiError extends Error {

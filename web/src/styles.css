@@ -615,14 +615,3 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .ms-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--line); }
 .ms-bar-home { background: var(--accent); }
 .ms-bar-away { background: var(--muted); opacity: 0.55; }
-
-.ms-lineups { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
-.ms-lineup-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-weight: 800; font-size: 0.82rem; }
-.ms-lineup-head .ms-team-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ms-formation { margin-left: auto; color: var(--accent); font-size: 0.72rem; font-weight: 800; }
-.ms-lineup ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
-.ms-lineup li { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
-.ms-jersey { flex: none; width: 20px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.72rem; }
-.ms-player { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ms-pos { margin-left: auto; color: var(--muted); font-size: 0.7rem; }
-@media (max-width: 420px) { .ms-lineups { grid-template-columns: 1fr; } }

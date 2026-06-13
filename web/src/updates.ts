@@ -16,7 +16,6 @@ export const UPDATES: UpdateEntry[] = [
     points: [
       'Tap "Match stats" on any live or finished card to expand the full picture',
       'Box score: possession, shots & shots on target, corners, fouls, cards, offsides, saves, passing',
-      'Starting line-ups and formations for both teams',
       'Live matches refresh their stats automatically while you watch',
     ],
   },

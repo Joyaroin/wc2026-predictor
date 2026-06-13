@@ -46,11 +46,6 @@ describe('espnClient.fetchMatchStats', () => {
     const possession = stats!.stats.find((s) => s.label === 'Possession');
     expect(possession).toEqual({ label: 'Possession', home: '40%', away: '60%' });
     expect(stats!.stats.find((s) => s.label === 'Shots')).toEqual({ label: 'Shots', home: '8', away: '12' });
-    expect(stats!.home.formation).toBe('4-3-3');
-    expect(stats!.home.starters).toEqual([{ name: 'Keeper Q', position: 'G', jersey: '1' }]);
-    expect(stats!.away.formation).toBe('4-4-2');
-    expect(stats!.away.starters).toHaveLength(1); // bench excluded
-    expect(stats!.away.starters[0]!.name).toBe('Striker S');
   });
 
   it('returns null when no event matches', async () => {
