@@ -1,12 +1,12 @@
 // Help & rules — keep in sync with the scoring engine (shared/scoring.ts, darkHorse.ts) and awards.
-import { runTour } from '../tour';
+import { replayTour } from '../tour';
 
 export function HelpPage() {
   return (
     <div className="help">
       <h2>❓ How to play</h2>
       <p className="muted fine">Everything you need to know about predictions, points, and awards.</p>
-      <p><button className="odds-btn" onClick={() => runTour()} data-testid="replay-tour">🎬 Replay the tour</button></p>
+      <p><button className="odds-btn" onClick={() => replayTour()} data-testid="replay-tour">🎬 Replay the tour</button></p>
 
       <details className="help-sec" open>
         <summary>🚀 Getting started</summary>
