@@ -9,6 +9,7 @@ import {
 } from '@wc2026/shared';
 import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
+import { ForbiddenError } from '../lib/errors';
 import {
   requireSession,
   validateBody,
@@ -109,6 +110,11 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/feedback/admin', auth, wrap((req) => services.feedback.adminList(caller(req))));
   // Fallback: read via X-Admin-Token header.
   r.get('/admin/feedback', wrap((req) => services.feedback.listByToken(req.header('x-admin-token'))));
+  // Owner/admin: re-score every finished match (e.g. after a scoring-rule change).
+  r.post('/admin/rescore', auth, wrap(async (req) => {
+    if (!(await services.feedback.isAdmin(caller(req)))) throw new ForbiddenError('Not authorized');
+    return { rescored: await services.scoring.rescoreAll() };
+  }));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

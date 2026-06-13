@@ -20,6 +20,11 @@ describe('computePoints — additive scoreline', () => {
   it('one team exact but WRONG outcome → 2 (predict 1-1, actual 5-1)', () => {
     expect(computePoints({ home: 1, away: 1 }, { home: 5, away: 1 })).toBe(2); // away team's 1
   });
+  it('goal margin counts on the wrong winner → 3 (predict 1-0, actual 0-1)', () => {
+    // Wrong outcome, but the 1-goal margin matches → +3.
+    expect(computePoints({ home: 1, away: 0 }, { home: 0, away: 1 })).toBe(3);
+    expect(scoreBreakdown({ home: 2, away: 1 }, { home: 1, away: 2 })).toMatchObject({ outcome: false, goalDiff: true, points: 3 });
+  });
   it('nothing right → 0', () => {
     expect(computePoints({ home: 0, away: 2 }, { home: 1, away: 0 })).toBe(0);
   });

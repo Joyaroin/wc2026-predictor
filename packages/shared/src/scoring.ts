@@ -12,7 +12,7 @@ export function outcomeOf(s: Score): Outcome {
 /** Additive scoreline breakdown — each component scores independently. */
 export interface ScoreBreakdown {
   outcome: boolean; // correct win/draw/win
-  goalDiff: boolean; // correct goal difference
+  goalDiff: boolean; // correct goal margin (regardless of which team won)
   exact: boolean; // exact final scoreline
   home: boolean; // correct goals for team 1 (home)
   away: boolean; // correct goals for team 2 (away)
@@ -37,7 +37,8 @@ export const FIRST_PLAYER_POINTS = 6;
 /** Additive points for a scoreline prediction vs the actual full-time score. */
 export function scoreBreakdown(prediction: Score, actual: Score): ScoreBreakdown {
   const outcome = outcomeOf(prediction) === outcomeOf(actual);
-  const goalDiff = prediction.home - prediction.away === actual.home - actual.away;
+  // Goal margin counts whether you predicted a win or a loss (|home-away| matches).
+  const goalDiff = Math.abs(prediction.home - prediction.away) === Math.abs(actual.home - actual.away);
   const home = prediction.home === actual.home;
   const away = prediction.away === actual.away;
   const exact = home && away;

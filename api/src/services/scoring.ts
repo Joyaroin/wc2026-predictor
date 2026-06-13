@@ -5,6 +5,8 @@ import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 
 export interface ScoringService {
   scoreMatch(matchId: string): Promise<number>; // returns number of score-predictions scored
+  /** Re-score every match that has a final score (e.g. after a scoring-rule change). */
+  rescoreAll(): Promise<number>;
 }
 
 export function createScoringService(
@@ -12,8 +14,8 @@ export function createScoringService(
   matches: MatchRepo,
   bracket: BracketRepo,
 ): ScoringService {
-  return {
-    async scoreMatch(matchId) {
+  const svc = {
+    async scoreMatch(matchId: string) {
       const match = await matches.getById(matchId);
       if (!match || match.homeScore === null || match.awayScore === null) return 0;
       const actual = { home: match.homeScore, away: match.awayScore };
@@ -46,5 +48,14 @@ export function createScoringService(
 
       return scored;
     },
+
+    async rescoreAll() {
+      let total = 0;
+      for (const m of await matches.listAll()) {
+        if (m.homeScore !== null && m.awayScore !== null) total += await svc.scoreMatch(m.id);
+      }
+      return total;
+    },
   };
+  return svc;
 }

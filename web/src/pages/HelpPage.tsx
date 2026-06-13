@@ -33,7 +33,7 @@ export function HelpPage() {
         <table className="help-table">
           <tbody>
             <tr><td>Correct match outcome (win/draw/win)</td><td>+2</td></tr>
-            <tr><td>Correct goal difference</td><td>+3</td></tr>
+            <tr><td>Correct goal margin (win <i>or</i> loss)</td><td>+3</td></tr>
             <tr><td>Exact final scoreline</td><td>+3</td></tr>
             <tr><td>Correct goals for home team</td><td>+2</td></tr>
             <tr><td>Correct goals for away team</td><td>+2</td></tr>
@@ -45,6 +45,7 @@ export function HelpPage() {
           <li>A perfect prediction = <b>20 points</b>.</li>
           <li>Predict an exact <b>0–0</b> and it ends 0–0 → you also nailed "nobody scores", so the first-team and first-player bonuses count too → the full <b>20</b>.</li>
           <li>Even a wrong result can score: predict 1–1 and it ends 5–1 → you nailed the away team's goals → <b>+2</b>.</li>
+          <li>Goal margin counts whether your team won or lost: predict <b>2–1</b> and it ends <b>1–2</b> → the 1-goal margin still scores <b>+3</b>.</li>
           <li>The first goalscorer counts goals in normal/extra time (own goals and penalty shootouts don't count).</li>
         </ul>
       </details>

@@ -1,7 +1,7 @@
 // Property-based tests for the additive scoring engine.
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { computePoints, outcomeOf, compareStandings, MAX_SCORELINE_POINTS } from '../src/scoring';
+import { computePoints, scoreBreakdown, outcomeOf, compareStandings, MAX_SCORELINE_POINTS } from '../src/scoring';
 import type { Score, StandingAgg } from '../src/types';
 
 const arbGoal = fc.integer({ min: 0, max: 30 });
@@ -37,11 +37,14 @@ describe('computePoints — additive invariants', () => {
     );
   });
 
-  it('SP-3: wrong outcome ⇒ points ∈ {0, 2} (at most one team’s goals can match)', () => {
+  it('SP-3: wrong outcome ⇒ not exact and ≤ 5 (margin +3 and/or one team +2, never outcome)', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
         if (outcomeOf(p) !== outcomeOf(a)) {
-          expect([0, 2]).toContain(computePoints(p, a));
+          const bd = scoreBreakdown(p, a);
+          expect(bd.exact).toBe(false);
+          expect(bd.outcome).toBe(false);
+          expect(bd.points).toBeLessThanOrEqual(5);
         }
       }),
     );
@@ -57,12 +60,11 @@ describe('computePoints — additive invariants', () => {
     );
   });
 
-  it('SP-5: correct goal difference ⇒ outcome also correct and ≥ 5', () => {
+  it('SP-5: correct goal margin (|diff|) ⇒ at least 3 (whether the predicted team won or lost)', () => {
     fc.assert(
       fc.property(arbScore, arbScore, (p, a) => {
-        if (p.home - p.away === a.home - a.away) {
-          expect(outcomeOf(p)).toBe(outcomeOf(a));
-          expect(computePoints(p, a)).toBeGreaterThanOrEqual(5);
+        if (Math.abs(p.home - p.away) === Math.abs(a.home - a.away)) {
+          expect(computePoints(p, a)).toBeGreaterThanOrEqual(3);
         }
       }),
     );
