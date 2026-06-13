@@ -53,7 +53,12 @@ async function main(): Promise<void> {
     await client.send(new DescribeTableCommand({ TableName: config.tableName }));
     console.log(`Table ${config.tableName} already exists.`);
     return;
-  } catch {
+  } catch (err) {
+    // FIX(LOW): only a genuine "table doesn't exist" should fall through to CreateTable.
+    // Previously ANY DescribeTable failure (bad credentials, wrong region/endpoint, network,
+    // throttling) was swallowed as "not found", masking real config errors and attempting a
+    // create that then fails confusingly. Narrow to ResourceNotFoundException; rethrow the rest.
+    if ((err as { name?: string } | null)?.name !== 'ResourceNotFoundException') throw err;
     // not found — create it
   }
   await client.send(new CreateTableCommand(input));

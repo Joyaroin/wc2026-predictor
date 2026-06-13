@@ -9,6 +9,9 @@ import type { Logger } from '../lib/logger';
 
 export const GOLDEN_BOOT_BONUS = 15;
 const POOL_TTL_MS = 6 * 60 * 60 * 1000;
+// Negative-cache window: after an empty/failed ESPN fan-out, wait this long before refetching so
+// repeated requests don't each re-issue ~49 sequential roster calls while the pool is unavailable.
+const POOL_NEGATIVE_TTL_MS = 60 * 1000;
 const ESPN_THROTTLE_MS = 15 * 60 * 1000;
 
 // Custom joke entries added to the player pool (just for fun).
@@ -65,16 +68,18 @@ export function createGoldenBootService(
 
   return {
     async getPlayerPool() {
-      if (pool.length > 0 && Date.now() - poolAt < POOL_TTL_MS) return [...FUN_PLAYERS, ...pool];
+      // A populated pool is cached for POOL_TTL_MS; an empty/failed fetch is negative-cached for the
+      // shorter POOL_NEGATIVE_TTL_MS. Either way poolAt is recorded so we don't re-fan-out every request.
+      const ttl = pool.length > 0 ? POOL_TTL_MS : POOL_NEGATIVE_TTL_MS;
+      if (poolAt > 0 && Date.now() - poolAt < ttl) return [...FUN_PLAYERS, ...pool];
       try {
         const fetched = await espn.fetchPlayerPool();
-        if (fetched.length > 0) {
-          pool = fetched;
-          poolAt = Date.now();
-        }
+        if (fetched.length > 0) pool = fetched;
       } catch (err) {
         logger.warn('golden boot pool fetch failed', { error: err instanceof Error ? err.message : 'unknown' });
       }
+      // Record the attempt time even on empty/error so the negative-cache cooldown applies.
+      poolAt = Date.now();
       return [...FUN_PLAYERS, ...pool];
     },
 
@@ -121,15 +126,19 @@ export function createGoldenBootService(
         const events = await espn.fetchFinishedEventGoals(datesBetween(start, now), new Set());
         const tally = tallyTopScorers(events);
         if (tally.length > 0) {
-          const leader = tally[0]!;
+          // tally is sorted by goals desc — element 0 holds the max; on a TIE several scorers share it.
+          const maxGoals = tally[0]!.goals;
+          const winners = new Set(tally.filter((t) => t.goals === maxGoals).map((t) => t.scorerId));
+          const leader = tally[0]!; // display leader (alphabetically-first among the tied top scorers)
           await stats.setLeader({ scorerId: leader.scorerId, scorerName: leader.scorerName, goals: leader.goals });
           // The live leader is display-only; points pay out once the tournament is over.
+          // On a shared Golden Boot (a tie at the top), EVERY picker of a tied top scorer is paid.
           const finished = tournamentFinished(await matchService.list());
           for (const pick of await goldenBoot.scanAll()) {
-            const pts = finished && pick.scorerId === leader.scorerId ? GOLDEN_BOOT_BONUS : 0;
+            const pts = finished && winners.has(pick.scorerId) ? GOLDEN_BOOT_BONUS : 0;
             if (pts !== pick.points) await goldenBoot.put({ ...pick, points: pts, updatedAt: now.toISOString() });
           }
-          logger.info('golden boot leader updated', { scorer: leader.scorerName, goals: leader.goals, finished });
+          logger.info('golden boot leader updated', { scorer: leader.scorerName, goals: leader.goals, tiedWinners: winners.size, finished });
         }
       } catch (err) {
         logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' });

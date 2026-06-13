@@ -3,7 +3,7 @@ import type { Config } from '../lib/config';
 import type { Clock } from '../lib/clock';
 import type { PlayerRepo, PlayerRecord } from '../repos/types';
 import type { AuthResult } from './dtos';
-import { AuthError } from '../lib/errors';
+import { AuthError, ConflictError } from '../lib/errors';
 import { hashPin, verifyPin } from '../lib/pin';
 import { signSession } from '../lib/token';
 import { newId } from '../lib/ids';
@@ -29,8 +29,13 @@ export function createAuthService(players: PlayerRepo, config: Config, clock: Cl
       const nameKey = nameKeyOf(name);
       const existing = await players.getByNameKey(nameKey);
       if (existing) {
-        if (!verifyPin(pin, existing.pinHash)) throw new AuthError();
+        if (!(await verifyPin(pin, existing.pinHash))) throw new AuthError();
         return issue(existing);
+      }
+      // A configured admin name must never be claimable via self-signup (HIGH). Only enforced
+      // when an admin name is configured (empty disables name-based admin entirely).
+      if (config.adminPlayer && nameKey === config.adminPlayer) {
+        throw new ConflictError('Name is reserved');
       }
       // Sign-up: create with this name+PIN. Handle race where another request created it first.
       const now = clock.now().toISOString();
@@ -38,7 +43,7 @@ export function createAuthService(players: PlayerRepo, config: Config, clock: Cl
         id: newId(),
         name: name.trim(),
         nameKey,
-        pinHash: hashPin(pin),
+        pinHash: await hashPin(pin),
         createdAt: now,
         updatedAt: now,
       };
@@ -46,7 +51,7 @@ export function createAuthService(players: PlayerRepo, config: Config, clock: Cl
       if (created) return issue(rec);
 
       const raced = await players.getByNameKey(nameKey);
-      if (!raced || !verifyPin(pin, raced.pinHash)) throw new AuthError();
+      if (!raced || !(await verifyPin(pin, raced.pinHash))) throw new AuthError();
       return issue(raced);
     },
   };

@@ -34,4 +34,15 @@ describe('player of the tournament award', () => {
     await t.repos.matches.upsert(sampleMatch({ id: 'g1', kickoff: '2026-06-11T16:00:00.000Z' }));
     expect((await request(t.app).put('/api/player-of-tournament').set(auth(sam.token)).send({ winnerId: '7', winnerName: 'Ronaldo' })).status).toBe(409);
   });
+
+  it('setWinner uses a constant-time compare: rejects wrong/empty tokens, accepts the exact token', async () => {
+    const t = makeTestApp({ now: new Date('2026-07-20T00:00:00.000Z') });
+    // Wrong token and missing/empty token are both forbidden.
+    await expect(t.services.pott.setWinner('wrong-token', '7', 'Ronaldo')).rejects.toThrow(/Admin token required/);
+    await expect(t.services.pott.setWinner(undefined, '7', 'Ronaldo')).rejects.toThrow(/Admin token required/);
+    await expect(t.services.pott.setWinner('', '7', 'Ronaldo')).rejects.toThrow(/Admin token required/);
+    // The exact configured token is accepted.
+    const winner = await t.services.pott.setWinner('test-admin-token', '7', 'Ronaldo');
+    expect(winner).toMatchObject({ id: '7', name: 'Ronaldo' });
+  });
 });

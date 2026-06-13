@@ -4,6 +4,7 @@ import { newId } from '../lib/ids';
 import type { Clock } from '../lib/clock';
 import type { FeedbackRepo, FeedbackItem, PlayerRepo } from '../repos/types';
 import { ForbiddenError, ValidationError } from '../lib/errors';
+import { secureEquals } from '../lib/secureCompare';
 
 export const MAX_FEEDBACK_LEN = 2000;
 
@@ -53,7 +54,9 @@ export function createFeedbackService(
     },
 
     async listByToken(token) {
-      if (!adminToken || token !== adminToken) throw new ForbiddenError('Admin token required');
+      // Constant-time comparison so the admin token can't be recovered via a timing oracle.
+      // secureEquals returns false for an empty configured token (admin disabled).
+      if (!secureEquals(token ?? '', adminToken)) throw new ForbiddenError('Admin token required');
       return feedback.listAll();
     },
   };

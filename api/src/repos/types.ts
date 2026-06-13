@@ -40,6 +40,12 @@ export interface MembershipRepo {
   listGroups(playerId: string): Promise<string[]>;
   remove(groupId: string, playerId: string): Promise<void>;
   removeAll(groupId: string): Promise<void>;
+  /**
+   * When the player joined the group (ISO), or null if not a member.
+   * Optional: not used by services today; exposed so the persisted `joinedAt` is observable
+   * (e.g. in tests) and so both repo backends store/return it consistently.
+   */
+  getJoinedAt?(groupId: string, playerId: string): Promise<string | null>;
 }
 
 export interface MatchRepo {

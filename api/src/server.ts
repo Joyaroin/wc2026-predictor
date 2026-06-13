@@ -7,7 +7,7 @@ import type { Services } from './services/container';
 import { buildRouter } from './routes/index';
 import {
   requestContext,
-  globalLimiter,
+  createRateLimiters,
   notFoundHandler,
   errorHandler,
 } from './middleware/index';
@@ -18,14 +18,16 @@ export function buildApp(services: Services, config: Config, logger: Logger): Ex
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
+  const limiters = createRateLimiters();
+
   app.use(helmet()); // SECURITY-04
   app.use(cors({ origin: config.allowedOrigin })); // SECURITY-08 (strict allowlist)
   app.use(requestContext(logger)); // SECURITY-03
   app.use(express.json({ limit: '16kb' })); // SECURITY-05 (body size limit)
-  app.use(globalLimiter); // SECURITY-11
+  app.use(limiters.global); // SECURITY-11
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
-  app.use('/api', buildRouter(services, config));
+  app.use('/api', buildRouter(services, config, limiters));
 
   app.use(notFoundHandler());
   app.use(errorHandler()); // SECURITY-09/15

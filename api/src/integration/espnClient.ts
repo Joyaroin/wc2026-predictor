@@ -3,6 +3,8 @@
 import type { Logger } from '../lib/logger';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world';
+// Per-request timeout so a hung ESPN response cannot stall sync indefinitely (mirrors footballApiClient).
+const ESPN_TIMEOUT_MS = 8000;
 
 export interface WcPlayer {
   id: string;
@@ -88,7 +90,20 @@ export interface EspnClient {
 
 export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch): EspnClient {
   async function json(url: string): Promise<Json> {
-    const res = await fetchImpl(url);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ESPN_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetchImpl(url, { signal: ctrl.signal });
+    } catch (err) {
+      // Surface a clear timeout rather than the opaque raw AbortError.
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error(`ESPN request timed out after ${ESPN_TIMEOUT_MS}ms for ${url}`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) throw new Error(`ESPN ${res.status} for ${url}`);
     return (await res.json()) as Json;
   }
@@ -136,7 +151,10 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
           const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
           if (!comp) continue;
           const { homeName, awayName, goals } = goalsFromCompetition(comp);
-          const fg = goals.find((g) => !g.shootout); // first goal in normal/extra time (not a shootout pen)
+          // First *real* goal: skip shootout pens AND own goals. An own goal must not be attributed
+          // to the conceding side (ESPN tags it on the team that benefits, i.e. the scorer's opponent),
+          // so counting it here would record the wrong first-goal team + a bogus scorer.
+          const fg = goals.find((g) => !g.shootout && !g.ownGoal);
           const first = fg ? { side: fg.side, scorerId: fg.scorerId, scorerName: fg.scorerName } : null;
           result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first });
         }

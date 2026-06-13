@@ -121,4 +121,27 @@ describe('createFootballApiClient', () => {
     expect(matches).toHaveLength(1);
     expect(matches[0]?.homeTeam).toBe('A');
   });
+
+  it('wraps a request-timeout AbortError in a clear message', async () => {
+    const abortFetch = (async () => {
+      const e = new Error('The operation was aborted');
+      e.name = 'AbortError';
+      throw e;
+    }) as unknown as typeof fetch;
+    const client = createFootballApiClient(testConfig, noopLogger, abortFetch);
+    await expect(client.fetchCompetitionMatches()).rejects.toThrow(/timed out after 8000ms/);
+  });
+
+  it('retries on a 5xx then succeeds, without sleeping after the final attempt', async () => {
+    let calls = 0;
+    const flakyFetch = (async () => {
+      calls++;
+      if (calls < 2) return new Response('err', { status: 503 });
+      return new Response(JSON.stringify({ matches: [] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const client = createFootballApiClient(testConfig, noopLogger, flakyFetch);
+    const matches = await client.fetchCompetitionMatches();
+    expect(matches).toEqual([]);
+    expect(calls).toBe(2);
+  });
 });

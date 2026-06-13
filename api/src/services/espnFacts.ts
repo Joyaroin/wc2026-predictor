@@ -30,14 +30,27 @@ function canon(s: string): string {
   return ALIAS[n] ?? n;
 }
 
+/** A single UTC date (from an ISO instant) as YYYYMMDD. */
+function utcDay(d: Date): string {
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 /** Last `days` UTC dates (inclusive) as YYYYMMDD. */
 function recentDates(now: Date, days: number): string[] {
   const out: string[] = [];
   for (let i = days; i >= 0; i--) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
-    out.push(`${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`);
+    out.push(utcDay(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i))));
   }
   return out;
+}
+
+// Cap on extra back-fill dates fetched per run, so a long outage can't fan out an unbounded
+// number of ESPN scoreboard calls in a single ingest.
+const MAX_BACKFILL_DATES = 40;
+
+/** A finished match that has a score but no recorded first-goal team — its facts were missed. */
+function needsFirstGoal(m: Match): boolean {
+  return m.status === 'FINISHED' && m.homeScore !== null && m.awayScore !== null && (m.firstGoalTeam ?? null) === null;
 }
 
 function teamsMatch(m: Match, f: MatchFirstGoal): boolean {
@@ -60,9 +73,21 @@ export function createEspnFactsService(
       const start = Math.min(...all.map((m) => Date.parse(m.kickoff)));
       if (now.getTime() < start) return; // tournament hasn't started
 
+      // Always sweep the last 3 days (cheap), AND back-fill any FINISHED-with-score match that still
+      // lacks a firstGoalTeam — a longer cron outage would otherwise permanently lose those facts
+      // (their dates fall outside the recent window). Dedupe and cap the total dates fetched.
+      const recent = recentDates(now, 2);
+      const dates = new Set(recent);
+      const cap = recent.length + MAX_BACKFILL_DATES;
+      const backfill = all.filter(needsFirstGoal).map((m) => utcDay(new Date(Date.parse(m.kickoff)))).sort();
+      for (const day of new Set(backfill)) {
+        if (dates.size >= cap) break;
+        dates.add(day);
+      }
+
       let facts: MatchFirstGoal[];
       try {
-        facts = await espn.fetchMatchFirstGoals(recentDates(now, 2)); // recent finished matches only (cheap)
+        facts = await espn.fetchMatchFirstGoals([...dates]);
       } catch (err) {
         logger.warn('espn facts fetch failed', { error: err instanceof Error ? err.message : 'unknown' });
         return;

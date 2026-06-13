@@ -45,27 +45,55 @@ export function createLeaderboardService(
     }
   }
 
+  // Short-TTL cache for the global view. getGlobal does ~7 full-table scans per call with no
+  // per-caller variation in the ranked aggregate (it is global), so an authenticated caller could
+  // hammer the endpoint to amplify scan load (cheap DoS). We cache the computed ranked list for a
+  // few seconds and derive each caller's own `me` row from it, so every caller still sees their own
+  // rank. Invalidate-by-TTL is sufficient — stale-by-seconds is acceptable for a leaderboard.
+  const GLOBAL_CACHE_TTL_MS = 30_000;
+  let globalCache: { at: number; ranked: LeaderboardRow[] } | null = null;
+
   return {
     async getLeaderboard(callerId, groupId) {
       await assertMember(callerId, groupId);
       const memberIds = await memberships.listMembers(groupId);
-      const aggs: StandingAgg[] = [];
-      for (const id of memberIds) {
-        const player = await players.getById(id);
-        if (!player) continue;
-        const extra =
-          sumPoints(await bracket.listByPlayer(id)) +
-          ((await goldenBoot.get(id))?.points ?? 0) +
-          ((await darkHorse.get(id))?.points ?? 0) +
-          ((await tournamentWinner.get(id))?.points ?? 0) +
-          ((await pott.get(id))?.points ?? 0);
-        aggs.push(aggregate(id, player.name, await predictions.listByPlayer(id), extra));
-      }
+      // Parallelize across members (was N+1 sequential awaits per member). Within each member the
+      // independent award/get calls also run together. Ordering is irrelevant pre-sort —
+      // compareStandings below establishes the final order.
+      const aggs = (
+        await Promise.all(
+          memberIds.map(async (id) => {
+            const [player, brackets, gb, dh, tw, po, preds] = await Promise.all([
+              players.getById(id),
+              bracket.listByPlayer(id),
+              goldenBoot.get(id),
+              darkHorse.get(id),
+              tournamentWinner.get(id),
+              pott.get(id),
+              predictions.listByPlayer(id),
+            ]);
+            if (!player) return null;
+            const extra =
+              sumPoints(brackets) +
+              (gb?.points ?? 0) +
+              (dh?.points ?? 0) +
+              (tw?.points ?? 0) +
+              (po?.points ?? 0);
+            return aggregate(id, player.name, preds, extra);
+          }),
+        )
+      ).filter((a): a is StandingAgg => a !== null);
       aggs.sort(compareStandings);
       return aggs.map((a, i) => ({ rank: i + 1, ...a }));
     },
 
     async getGlobal(callerId) {
+      // Serve the ranked aggregate from cache when fresh; only `me` is computed per-caller.
+      const cached = globalCache;
+      if (cached && clock.now().getTime() - cached.at < GLOBAL_CACHE_TTL_MS) {
+        const me = cached.ranked.find((r) => r.playerId === callerId) ?? null;
+        return { total: cached.ranked.length, top: cached.ranked.slice(0, GLOBAL_TOP), me };
+      }
       // Aggregate every player's predictions in one pass (scan), then rank.
       const allPlayers = await players.listAll();
       const nameById = new Map(allPlayers.map((p) => [p.id, p.name]));
@@ -96,6 +124,7 @@ export function createLeaderboardService(
       );
       aggs.sort(compareStandings);
       const ranked: LeaderboardRow[] = aggs.map((a, i) => ({ rank: i + 1, ...a }));
+      globalCache = { at: clock.now().getTime(), ranked };
       const me = ranked.find((r) => r.playerId === callerId) ?? null;
       return { total: ranked.length, top: ranked.slice(0, GLOBAL_TOP), me };
     },

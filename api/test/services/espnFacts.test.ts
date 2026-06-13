@@ -39,4 +39,55 @@ describe('espnFacts.ingest', () => {
     expect((await repos.predictions.get('sam', 'm1'))?.points).toBe(20);
     expect((await repos.predictions.get('sam', 'm1'))?.exact).toBe(true);
   });
+
+  it('back-fills FINISHED matches still missing firstGoalTeam even outside the recent window', async () => {
+    const repos = createMemoryRepositories();
+    // Old finished match (kicked off 30 days before "now") with a score but NO first-goal fact yet —
+    // its date is far outside the recent 3-day sweep, so only the back-fill path can recover it.
+    await repos.matches.upsert(
+      sampleMatch({ id: 'old', status: 'FINISHED', homeScore: 1, awayScore: 0, homeTeam: 'Brazil', homeCode: 'BRA', awayTeam: 'Korea', awayCode: 'KOR', kickoff: '2026-06-15T18:00:00.000Z' }),
+    );
+    const now = new Date('2026-07-15T00:00:00.000Z'); // ~30 days later
+
+    const requestedDates: string[][] = [];
+    const fakeEspn: EspnClient = {
+      async fetchPlayerPool() { return []; },
+      async fetchFinishedEventGoals() { return []; },
+      async fetchMatchFirstGoals(dates) {
+        requestedDates.push(dates);
+        return [{ date: '2026-06-15T18:00:00.000Z', homeName: 'Brazil', awayName: 'South Korea', first: { side: 'HOME', scorerId: '7', scorerName: 'Neymar' } }];
+      },
+    };
+
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, fixedClock(now.toISOString()));
+    const facts = createEspnFactsService(fakeEspn, repos.matches, scoring, fixedClock(now.toISOString()), noopLogger);
+    await facts.ingest();
+
+    // The old match's date was fetched despite being outside the recent window.
+    expect(requestedDates[0]).toContain('20260615');
+    const m = await repos.matches.getById('old');
+    expect(m?.firstGoalTeam).toBe('HOME');
+    expect(m?.firstScorerId).toBe('7');
+  });
+
+  it('does not back-fill a match that already has a firstGoalTeam', async () => {
+    const repos = createMemoryRepositories();
+    await repos.matches.upsert(
+      sampleMatch({ id: 'done', status: 'FINISHED', homeScore: 1, awayScore: 0, firstGoalTeam: 'HOME', homeTeam: 'Brazil', homeCode: 'BRA', awayTeam: 'Korea', awayCode: 'KOR', kickoff: '2026-06-15T18:00:00.000Z' }),
+    );
+    const now = new Date('2026-07-15T00:00:00.000Z');
+
+    const requestedDates: string[][] = [];
+    const fakeEspn: EspnClient = {
+      async fetchPlayerPool() { return []; },
+      async fetchFinishedEventGoals() { return []; },
+      async fetchMatchFirstGoals(dates) { requestedDates.push(dates); return []; },
+    };
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, fixedClock(now.toISOString()));
+    const facts = createEspnFactsService(fakeEspn, repos.matches, scoring, fixedClock(now.toISOString()), noopLogger);
+    await facts.ingest();
+
+    // Only the recent 3-day window is fetched; the already-resolved old date is NOT added.
+    expect(requestedDates[0]).not.toContain('20260615');
+  });
 });

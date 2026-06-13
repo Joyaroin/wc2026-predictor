@@ -5,6 +5,7 @@ import type { Clock } from '../lib/clock';
 import type { PottRepo, StatsRepo, PottPick, Winner } from '../repos/types';
 import type { MatchService } from './matches';
 import { ForbiddenError, LockedError, ValidationError } from '../lib/errors';
+import { secureEquals } from '../lib/secureCompare';
 
 export const POTT_BONUS = 25;
 
@@ -61,7 +62,9 @@ export function createPottService(
     },
 
     async setWinner(token, winnerId, winnerName) {
-      if (!adminToken || token !== adminToken) throw new ForbiddenError('Admin token required');
+      // Constant-time compare so the admin token can't be recovered via a timing oracle.
+      // secureEquals also returns false for an unset secret or an undefined token.
+      if (!secureEquals(token ?? '', adminToken)) throw new ForbiddenError('Admin token required');
       if (!winnerId.trim() || !winnerName.trim()) throw new ValidationError('winnerId and winnerName required');
 
       const winner: Winner = { id: winnerId.trim(), name: winnerName.trim() };

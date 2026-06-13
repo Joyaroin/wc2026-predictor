@@ -11,7 +11,12 @@ export interface MatchService {
 
 export function createMatchService(matches: MatchRepo, clock: Clock): MatchService {
   function isLocked(match: Match): boolean {
-    return clock.now().getTime() >= new Date(match.kickoff).getTime();
+    // Fail CLOSED on a malformed/unparseable kickoff: Date.parse() returns NaN, and any
+    // comparison with NaN is false — so the old `now >= NaN` would leave the match OPEN
+    // forever, letting predictions slip in. Treat an invalid kickoff as already locked.
+    const kickoffMs = Date.parse(match.kickoff);
+    if (Number.isNaN(kickoffMs)) return true;
+    return clock.now().getTime() >= kickoffMs;
   }
   return {
     isLocked,

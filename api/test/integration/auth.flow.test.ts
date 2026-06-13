@@ -44,4 +44,10 @@ describe('auth flow (US-1.1/1.2)', () => {
     expect(me.status).toBe(200);
     expect(me.body.name).toBe('Mia');
   });
+
+  it('refuses to register the configured admin name via signup (case-insensitive)', async () => {
+    const { app } = makeTestApp(); // testConfig.adminPlayer === 'adham'
+    expect((await request(app).post('/api/auth/login').send({ name: 'Adham', pin: '1234' })).status).toBe(409);
+    expect((await request(app).post('/api/auth/login').send({ name: 'ADHAM', pin: '1234' })).status).toBe(409);
+  });
 });

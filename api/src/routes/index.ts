@@ -11,9 +11,9 @@ import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
 import {
   requireSession,
+  requireAdminToken,
   validateBody,
-  loginLimiter,
-  joinLimiter,
+  type RateLimiters,
 } from '../middleware/index';
 
 const wrapVoid =
@@ -53,22 +53,24 @@ const param = (req: Request, key: string): string => {
   return typeof v === 'string' ? v : '';
 };
 
-export function buildRouter(services: Services, config: Config): Router {
+export function buildRouter(services: Services, config: Config, limiters: RateLimiters): Router {
   const r = Router();
   const auth = requireSession(config);
+  // Admin routes: strict rate limit + constant-time token check BEFORE body validation.
+  const admin: RequestHandler[] = [limiters.admin, requireAdminToken(config)];
 
   // --- Auth (public, rate-limited) ---
-  r.post('/auth/login', loginLimiter, validateBody(loginSchema), wrap((req) => services.auth.login(req.body.name, req.body.pin)));
+  r.post('/auth/login', limiters.login, validateBody(loginSchema), wrap((req) => services.auth.login(req.body.name, req.body.pin)));
 
   // --- Players ---
   r.get('/players/me', auth, wrap((req) => services.players.getMe(caller(req))));
   r.post('/players/me/name', auth, validateBody(renameSchema), wrap((req) => services.players.rename(caller(req), req.body.name)));
-  r.post('/players/me/pin', auth, loginLimiter, validateBody(changePinSchema), wrapVoid((req) => services.players.changePin(caller(req), req.body.currentPin, req.body.newPin)));
+  r.post('/players/me/pin', auth, limiters.login, validateBody(changePinSchema), wrapVoid((req) => services.players.changePin(caller(req), req.body.currentPin, req.body.newPin)));
   r.post('/players/me/tour-seen', auth, wrapVoid((req) => services.players.markTourSeen(caller(req))));
 
   // --- Groups ---
   r.post('/groups', auth, validateBody(createGroupSchema), wrap((req) => services.groups.create(caller(req), req.body.name)));
-  r.post('/groups/join', auth, joinLimiter, validateBody(joinSchema), wrap((req) => services.groups.join(caller(req), req.body.inviteCode)));
+  r.post('/groups/join', auth, limiters.join, validateBody(joinSchema), wrap((req) => services.groups.join(caller(req), req.body.inviteCode)));
   r.get('/groups', auth, wrap((req) => services.groups.listForPlayer(caller(req))));
   r.get('/groups/:id', auth, wrap((req) => services.groups.get(caller(req), param(req, 'id'))));
   r.delete('/groups/:id', auth, wrapVoid((req) => services.groups.remove(caller(req), param(req, 'id'))));
@@ -100,7 +102,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/player-of-tournament', auth, wrap((req) => services.pott.getStatus(caller(req))));
   r.put('/player-of-tournament', auth, validateBody(pottSchema), wrap((req) => services.pott.setPick(caller(req), req.body.winnerId, req.body.winnerName)));
   // Admin-only (X-Admin-Token header): set the official Player of the Tournament winner.
-  r.post('/admin/player-of-tournament', validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
+  r.post('/admin/player-of-tournament', ...admin, validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
 
   // --- Feedback / bug reports ---
   r.post('/feedback', auth, validateBody(feedbackSchema), wrapVoid((req) => services.feedback.submit(caller(req), req.body.message, req.body.page)));
@@ -108,7 +110,7 @@ export function buildRouter(services: Services, config: Config): Router {
   // Owner/admin (logged-in as the admin account) reads submitted feedback.
   r.get('/feedback/admin', auth, wrap((req) => services.feedback.adminList(caller(req))));
   // Fallback: read via X-Admin-Token header.
-  r.get('/admin/feedback', wrap((req) => services.feedback.listByToken(req.header('x-admin-token'))));
+  r.get('/admin/feedback', ...admin, wrap((req) => services.feedback.listByToken(req.header('x-admin-token'))));
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));

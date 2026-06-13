@@ -46,11 +46,6 @@ export function createTournamentWinnerService(
       .sort((a, b) => b.prob - a.prob || a.name.localeCompare(b.name));
   }
 
-  async function tournamentStart(): Promise<Date | null> {
-    const matches = await matchService.list();
-    if (matches.length === 0) return null;
-    return new Date(Math.min(...matches.map((m) => Date.parse(m.kickoff))));
-  }
   async function isLocked(): Promise<boolean> {
     return awardsLocked(clock.now());
   }

@@ -29,7 +29,9 @@ export function createMemoryRepositories(): Repositories {
   const nameIndex = new Map<string, string>(); // nameKey -> playerId
   const groups = new Map<string, Group>();
   const codeIndex = new Map<string, string>(); // inviteCode -> groupId
-  const members = new Map<string, Set<string>>(); // groupId -> playerIds
+  // groupId -> (playerId -> joinedAt). Stores joinedAt to match the dynamo repo / MembershipRepo
+  // interface, which both persist it — a plain Set<playerId> silently dropped it (FIX LOW).
+  const members = new Map<string, Map<string, string>>();
   const matches = new Map<string, Match>();
   const predictions = new Map<string, Prediction>(); // `${playerId}|${matchId}`
   const bracketPicks = new Map<string, BracketPick>(); // `${playerId}|${matchId}`
@@ -96,21 +98,24 @@ export function createMemoryRepositories(): Repositories {
   };
 
   const membershipRepo: MembershipRepo = {
-    async add(groupId, playerId) {
-      const set = members.get(groupId) ?? new Set<string>();
-      set.add(playerId);
-      members.set(groupId, set);
+    async add(groupId, playerId, joinedAt) {
+      const map = members.get(groupId) ?? new Map<string, string>();
+      map.set(playerId, joinedAt); // retain joinedAt (matches the dynamo repo)
+      members.set(groupId, map);
     },
     async isMember(groupId, playerId) {
       return members.get(groupId)?.has(playerId) ?? false;
     },
+    async getJoinedAt(groupId, playerId) {
+      return members.get(groupId)?.get(playerId) ?? null;
+    },
     async listMembers(groupId) {
-      return [...(members.get(groupId) ?? [])];
+      return [...(members.get(groupId)?.keys() ?? [])];
     },
     async listGroups(playerId) {
       const result: string[] = [];
-      for (const [groupId, set] of members) {
-        if (set.has(playerId)) result.push(groupId);
+      for (const [groupId, map] of members) {
+        if (map.has(playerId)) result.push(groupId);
       }
       return result;
     },

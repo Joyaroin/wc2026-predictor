@@ -31,6 +31,41 @@ describe('change PIN (US-1.x / SECURITY-12)', () => {
       .send({ currentPin: '0000', newPin: '5678' });
     expect(res.status).toBe(401);
   });
+
+  it('rejects a PIN change when the new PIN equals the current PIN', async () => {
+    const { app } = makeTestApp();
+    const sam = await login(app, 'Sam', '1234');
+    const res = await request(app)
+      .post('/api/players/me/pin')
+      .set('Authorization', `Bearer ${sam.body.token}`)
+      .send({ currentPin: '1234', newPin: '1234' });
+    expect(res.status).toBe(400);
+    // The original PIN must still work (no mutation occurred).
+    expect((await login(app, 'Sam', '1234')).status).toBe(200);
+  });
+});
+
+describe('rename casing-only persists (repo divergence FIX)', () => {
+  it('persists a casing-only rename (same nameKey, different display name)', async () => {
+    const { app } = makeTestApp();
+    const sam = await login(app, 'Sam', '1234'); // creates player 'Sam' (nameKey 'sam')
+    const token = sam.body.token as string;
+
+    // 'Sam' -> 'sam' keeps the nameKey ('sam') but changes the display name.
+    const res = await request(app)
+      .post('/api/players/me/name')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'sam' });
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('sam');
+
+    // The persisted display name reflects the new casing.
+    const me = await request(app).get('/api/players/me').set('Authorization', `Bearer ${token}`);
+    expect(me.body.name).toBe('sam');
+
+    // The original credentials still work (login is case-insensitive on the nameKey).
+    expect((await login(app, 'Sam', '1234')).status).toBe(200);
+  });
 });
 
 describe('delete / leave group (US-2.x)', () => {

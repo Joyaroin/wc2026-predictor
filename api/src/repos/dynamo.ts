@@ -9,9 +9,11 @@ import {
   DeleteCommand,
   UpdateCommand,
   ScanCommand,
+  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { Group, Match, Prediction } from '@wc2026/shared';
 import type { Config } from '../lib/config';
+import { NotFoundError } from '../lib/errors';
 import type {
   Repositories,
   PlayerRepo,
@@ -115,8 +117,29 @@ export function createDynamoRepositories(config: Config): Repositories {
     async rename(id, name, nameKey) {
       const current = await this.getById(id);
       if (!current) return false;
-      if (current.nameKey === nameKey) return true;
+      // FIX(LOW): casing/whitespace-only rename (e.g. 'bob' -> 'Bob') keeps the same nameKey,
+      // so there is no lock to move — but the display name still changed and must be persisted.
+      // Previously this returned early WITHOUT updating the profile, diverging from the memory
+      // repo (which does persist it). Update the name/updatedAt directly; no lock transaction needed.
+      if (current.nameKey === nameKey) {
+        if (current.name === name) return true; // genuine no-op
+        await doc.send(
+          new UpdateCommand({
+            TableName: Table,
+            Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
+            UpdateExpression: 'SET #n = :n, updatedAt = :u',
+            ExpressionAttributeNames: { '#n': 'name' },
+            ExpressionAttributeValues: { ':n': name, ':u': new Date().toISOString() },
+          }),
+        );
+        return true;
+      }
       try {
+        // FIX(MED): do the old name-lock delete INSIDE the same TransactWriteItems so the whole
+        // rename (acquire new lock + update profile + release old lock) is atomic. Previously the
+        // old lock was deleted by a SEPARATE non-transactional DeleteCommand AFTER the commit; if
+        // that delete threw a non-ConditionalCheckFailed error the already-committed rename was
+        // reported as a failure, leaving an orphaned name-lock that nobody could ever reclaim.
         await doc.send(
           new TransactWriteCommand({
             TransactItems: [
@@ -136,11 +159,14 @@ export function createDynamoRepositories(config: Config): Repositories {
                   ExpressionAttributeValues: { ':n': name, ':nk': nameKey, ':u': new Date().toISOString() },
                 },
               },
+              {
+                Delete: {
+                  TableName: Table,
+                  Key: { PK: keys.nameLockPk(current.nameKey), SK: 'LOCK' },
+                },
+              },
             ],
           }),
-        );
-        await doc.send(
-          new DeleteCommand({ TableName: Table, Key: { PK: keys.nameLockPk(current.nameKey), SK: 'LOCK' } }),
         );
         return true;
       } catch (err) {
@@ -149,24 +175,41 @@ export function createDynamoRepositories(config: Config): Repositories {
       }
     },
     async updatePin(id, pinHash) {
-      await doc.send(
-        new UpdateCommand({
-          TableName: Table,
-          Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
-          UpdateExpression: 'SET pinHash = :p, updatedAt = :u',
-          ExpressionAttributeValues: { ':p': pinHash, ':u': new Date().toISOString() },
-        }),
-      );
+      // FIX(LOW): an UpdateCommand with no ConditionExpression is an UPSERT — updating a
+      // non-existent player would silently fabricate a partial PROFILE row (only PK/SK/pinHash,
+      // missing name/nameKey/etc). Require the row to already exist and surface a NotFoundError.
+      try {
+        await doc.send(
+          new UpdateCommand({
+            TableName: Table,
+            Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
+            UpdateExpression: 'SET pinHash = :p, updatedAt = :u',
+            ConditionExpression: 'attribute_exists(PK)',
+            ExpressionAttributeValues: { ':p': pinHash, ':u': new Date().toISOString() },
+          }),
+        );
+      } catch (err) {
+        if (isConditionFailed(err)) throw new NotFoundError('Player not found');
+        throw err;
+      }
     },
     async setTourSeen(id, iso) {
-      await doc.send(
-        new UpdateCommand({
-          TableName: Table,
-          Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
-          UpdateExpression: 'SET tourSeenAt = :t',
-          ExpressionAttributeValues: { ':t': iso },
-        }),
-      );
+      // FIX(LOW): same upsert hazard as updatePin — guard with attribute_exists(PK) so marking the
+      // tour seen for a missing player fails loudly instead of fabricating a partial PROFILE row.
+      try {
+        await doc.send(
+          new UpdateCommand({
+            TableName: Table,
+            Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
+            UpdateExpression: 'SET tourSeenAt = :t',
+            ConditionExpression: 'attribute_exists(PK)',
+            ExpressionAttributeValues: { ':t': iso },
+          }),
+        );
+      } catch (err) {
+        if (isConditionFailed(err)) throw new NotFoundError('Player not found');
+        throw err;
+      }
     },
     async listAll() {
       const items = await scanItems('SK = :sk', { ':sk': 'PROFILE' });
@@ -222,6 +265,12 @@ export function createDynamoRepositories(config: Config): Repositories {
       );
       return Boolean(r.Item);
     },
+    async getJoinedAt(groupId, playerId) {
+      const r = await doc.send(
+        new GetCommand({ TableName: Table, Key: { PK: keys.groupPk(groupId), SK: keys.memberSk(playerId) } }),
+      );
+      return r.Item ? ((r.Item.joinedAt ?? null) as string | null) : null;
+    },
     async listMembers(groupId) {
       const r = await doc.send(
         new QueryCommand({
@@ -249,17 +298,36 @@ export function createDynamoRepositories(config: Config): Repositories {
       );
     },
     async removeAll(groupId) {
-      const r = await doc.send(
-        new QueryCommand({
-          TableName: Table,
-          KeyConditionExpression: 'PK = :pk AND begins_with(SK, :m)',
-          ExpressionAttributeValues: { ':pk': keys.groupPk(groupId), ':m': 'MEMBER#' },
-        }),
-      );
-      for (const item of r.Items ?? []) {
-        await doc.send(
-          new DeleteCommand({ TableName: Table, Key: { PK: item.PK as string, SK: item.SK as string } }),
+      // FIX(LOW): a single QueryCommand returns at most one page (capped at 1MB / the implicit
+      // page size), so a large group previously left orphaned MEMBER# rows behind. Paginate over
+      // LastEvaluatedKey and delete every page. Deletes are chunked into BatchWrite (max 25/req);
+      // retry any UnprocessedItems so nothing is silently dropped.
+      const toDelete: Array<{ PK: string; SK: string }> = [];
+      let ExclusiveStartKey: Record<string, unknown> | undefined;
+      do {
+        const r = await doc.send(
+          new QueryCommand({
+            TableName: Table,
+            KeyConditionExpression: 'PK = :pk AND begins_with(SK, :m)',
+            ExpressionAttributeValues: { ':pk': keys.groupPk(groupId), ':m': 'MEMBER#' },
+            ExclusiveStartKey,
+          }),
         );
+        for (const item of r.Items ?? []) {
+          toDelete.push({ PK: item.PK as string, SK: item.SK as string });
+        }
+        ExclusiveStartKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+      } while (ExclusiveStartKey);
+
+      for (let i = 0; i < toDelete.length; i += 25) {
+        let RequestItems: Record<string, Array<{ DeleteRequest: { Key: { PK: string; SK: string } } }>> = {
+          [Table]: toDelete.slice(i, i + 25).map((Key) => ({ DeleteRequest: { Key } })),
+        };
+        // BatchWrite can return UnprocessedItems under throttling — resend until drained.
+        do {
+          const res = await doc.send(new BatchWriteCommand({ RequestItems }));
+          RequestItems = (res.UnprocessedItems ?? {}) as typeof RequestItems;
+        } while (RequestItems[Table]?.length);
       }
     },
   };
@@ -318,6 +386,16 @@ export function createDynamoRepositories(config: Config): Repositories {
       return (r.Items ?? []).map((i) => predictionFromItem(i as Item));
     },
     async listByMatch(matchId) {
+      // READ-AMPLIFICATION (SCOPED-DOWN, do not change keys without a migration):
+      // Predictions and bracket picks share the same GSI1 partition for a match
+      // (GSI1PK = MATCH#<id>). Both query that partition and then FilterExpression-DISCARD the
+      // sibling type. Filtering happens AFTER read, so for every prediction we also read+pay for
+      // every bracket pick on the same match (and vice-versa) — wasted RCUs that grow with the
+      // sibling count. The proper fix is to make the row type part of the GSI1 SORT key, e.g.
+      // GSI1SK = 'PRED#'<playerId> vs 'BRK#'<playerId>, then narrow with
+      // KeyConditionExpression begins_with(GSI1SK, 'PRED#') and drop the FilterExpression. That is
+      // a GSI1SK key-schema change requiring a backfill/migration of existing items, so it is
+      // intentionally NOT done here.
       const r = await doc.send(
         new QueryCommand({
           TableName: Table,
@@ -356,6 +434,12 @@ export function createDynamoRepositories(config: Config): Repositories {
       return (r.Items ?? []).map((i) => bracketFromItem(i as Item));
     },
     async listByMatch(matchId) {
+      // READ-AMPLIFICATION (SCOPED-DOWN): mirror of predictions.listByMatch above. Bracket picks
+      // share the GSI1 partition (GSI1PK = MATCH#<id>) with predictions, so this query reads both
+      // types and then FilterExpression-discards the predictions. Fixing it properly means encoding
+      // the row type into GSI1SK (e.g. 'BRK#'<playerId>) and using begins_with on the key instead
+      // of a post-read FilterExpression — a GSI1SK key-schema change that needs a data migration,
+      // so it is deliberately left as-is here. See the matching note in predictions.listByMatch.
       const r = await doc.send(
         new QueryCommand({
           TableName: Table,

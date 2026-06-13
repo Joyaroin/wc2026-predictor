@@ -58,6 +58,13 @@ export function createPredictionService(
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
+      // TOCTOU mitigation (SCOPED-DOWN): re-check the lock immediately before writing to narrow
+      // the window between the initial check above and this put(). With a fixed/server clock the
+      // gap is tiny, but a residual race remains — a match can cross its kickoff between this
+      // re-check and the storage write. The full fix is a storage-layer conditional write
+      // (e.g. DynamoDB ConditionExpression on kickoff > now), which is owned by the repo layer
+      // and intentionally NOT done here to avoid touching the repo interface.
+      if (matchService.isLocked(match)) throw new LockedError();
       await predictions.put(prediction);
       return prediction;
     },
@@ -89,11 +96,21 @@ export function createPredictionService(
         const lockedById = new Map(all.map((m) => [m.id, m.locked]));
         const targetSection = sections.get(matchId);
         const mine = await predictions.listByPlayer(callerId);
+
+        // Validate-before-write: split the section's other Jokers into "must clear" vs. "conflict"
+        // BEFORE performing any write. The old loop cleared as it went, so a locked conflict found
+        // partway through would persist a clear and then throw — leaving the player with zero Jokers
+        // AND an error. By scanning first and throwing up front, a conflict leaves all Jokers intact.
+        const toClear: Prediction[] = [];
         for (const p of mine) {
           if (p.matchId === matchId || !p.joker || sections.get(p.matchId) !== targetSection) continue;
           if (lockedById.get(p.matchId)) {
             throw new ConflictError('Your Joker for this match week is locked on a match that has already started');
           }
+          toClear.push(p);
+        }
+        // No conflicts — safe to commit the clears now, then set the new Joker below.
+        for (const p of toClear) {
           await predictions.put({ ...p, joker: false, updatedAt: now });
         }
       }

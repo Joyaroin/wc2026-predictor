@@ -72,8 +72,7 @@ interface Standing {
 }
 
 /** Rank picks by score ascending; pay placement bonus by distinct-score groups (ties share a placement). */
-function computeStandings(matches: Match[], picks: DarkHorsePick[]): Map<string, Standing> {
-  const weights = deepestWeightByCode(matches);
+function computeStandings(weights: Map<string, number>, picks: DarkHorsePick[]): Map<string, Standing> {
   const scored = picks
     .map((p) => ({ p, score: darkHorseScore(p.teamCode, weights.get(p.teamCode.toUpperCase()) ?? STAGE_WEIGHT.GROUP_STAGE) }))
     .sort((a, b) => a.score - b.score);
@@ -99,9 +98,10 @@ export function createDarkHorseService(
   matchService: MatchService,
   clock: Clock,
 ): DarkHorseService {
-  async function teamPool(): Promise<DarkHorseTeam[]> {
+  // Build the pool from an already-fetched match list to avoid a second matchService.list() per poll.
+  function teamPool(matches: Match[]): DarkHorseTeam[] {
     const seen = new Map<string, string>(); // code -> name
-    for (const m of await matchService.list()) {
+    for (const m of matches) {
       if (m.stage !== 'GROUP_STAGE') continue;
       if (m.homeCode) seen.set(m.homeCode.toUpperCase(), m.homeTeam);
       if (m.awayCode) seen.set(m.awayCode.toUpperCase(), m.awayTeam);
@@ -111,30 +111,29 @@ export function createDarkHorseService(
       .sort((a, b) => b.prob - a.prob || a.name.localeCompare(b.name));
   }
 
-  async function tournamentStart(): Promise<Date | null> {
-    const matches = await matchService.list();
-    if (matches.length === 0) return null;
-    return new Date(Math.min(...matches.map((m) => Date.parse(m.kickoff))));
-  }
-
   async function isLocked(): Promise<boolean> {
     return awardsLocked(clock.now());
   }
 
   return {
     async getStatus(callerId) {
-      const [teams, pick, matches, locked] = await Promise.all([
-        teamPool(),
+      // Fetch matches + picks ONCE; derive teamPool, weights and standings from them (no duplicate
+      // matchService.list() / deepestWeightByCode calls per poll). The full scanAll below is still
+      // O(picks) per poll — persisting score/placement at refresh time would remove it, but that is a
+      // larger change; the minimal safe fix here is removing the redundant computation.
+      const [pick, matches, picks, locked] = await Promise.all([
         darkHorse.get(callerId),
         matchService.list(),
+        darkHorse.scanAll(),
         isLocked(),
       ]);
+      const teams = teamPool(matches);
+      const weights = deepestWeightByCode(matches);
       let pickView: DarkHorseStatus['pick'] = null;
-      const picks = await darkHorse.scanAll();
       if (pick) {
-        const standings = computeStandings(matches, picks);
+        const standings = computeStandings(weights, picks);
         const me = standings.get(callerId);
-        const weight = deepestWeightByCode(matches).get(pick.teamCode.toUpperCase()) ?? STAGE_WEIGHT.GROUP_STAGE;
+        const weight = weights.get(pick.teamCode.toUpperCase()) ?? STAGE_WEIGHT.GROUP_STAGE;
         pickView = {
           teamCode: pick.teamCode,
           teamName: pick.teamName,
@@ -148,7 +147,7 @@ export function createDarkHorseService(
     },
 
     async setPick(callerId, teamCode, teamName) {
-      const pool = await teamPool();
+      const pool = teamPool(await matchService.list());
       const team = pool.find((t) => t.code === teamCode.toUpperCase());
       if (!team) throw new ValidationError('Pick a team from the tournament');
       if (await isLocked()) throw new LockedError();
@@ -172,7 +171,7 @@ export function createDarkHorseService(
       if (picks.length === 0) return;
       // Placements are a live preview; placement points only pay out once the tournament is over.
       const finished = tournamentFinished(matches);
-      const standings = computeStandings(matches, picks);
+      const standings = computeStandings(deepestWeightByCode(matches), picks);
       const now = clock.now().toISOString();
       for (const pick of picks) {
         const pts = finished ? (standings.get(pick.playerId)?.points ?? 0) : 0;

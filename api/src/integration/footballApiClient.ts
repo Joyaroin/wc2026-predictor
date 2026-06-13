@@ -87,11 +87,13 @@ export function createFootballApiClient(
 ): FootballApiClient {
   const base = 'https://api.football-data.org/v4';
 
+  const TIMEOUT_MS = 8000;
+
   async function fetchWithRetry(url: string, attempts = 3): Promise<Response> {
     let lastErr: unknown;
     for (let i = 0; i < attempts; i++) {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
       try {
         const res = await fetchImpl(url, {
           headers: { 'X-Auth-Token': config.footballApiToken },
@@ -102,10 +104,17 @@ export function createFootballApiClient(
         }
         return res;
       } catch (err) {
-        lastErr = err;
-        const backoff = 250 * 2 ** i + Math.floor(Math.random() * 100);
-        logger.warn('football api retry', { attempt: i + 1, backoff });
-        await sleep(backoff);
+        // Replace the opaque AbortError ('The operation was aborted') with a clear timeout message.
+        lastErr =
+          err instanceof Error && err.name === 'AbortError'
+            ? new Error(`football-data request timed out after ${TIMEOUT_MS}ms`)
+            : err;
+        // Don't sleep after the final attempt — we're about to throw, so the wait is wasted latency.
+        if (i < attempts - 1) {
+          const backoff = 250 * 2 ** i + Math.floor(Math.random() * 100);
+          logger.warn('football api retry', { attempt: i + 1, backoff });
+          await sleep(backoff);
+        }
       } finally {
         clearTimeout(timer);
       }

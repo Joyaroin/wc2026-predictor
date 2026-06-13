@@ -13,12 +13,19 @@ const REDACT_KEYS = new Set([
   'apiKey',
 ]);
 
+// Redact a single value, recursing through plain objects AND array elements so a secret
+// nested inside an array (e.g. `tokens: [{ token: '...' }]`) is not leaked verbatim.
+function redactValue(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(redactValue);
+  if (v && typeof v === 'object') return redact(v as Fields);
+  return v;
+}
+
 function redact(fields: Fields): Fields {
   const out: Fields = {};
   for (const [k, v] of Object.entries(fields)) {
     if (REDACT_KEYS.has(k)) out[k] = '[REDACTED]';
-    else if (v && typeof v === 'object' && !Array.isArray(v)) out[k] = redact(v as Fields);
-    else out[k] = v;
+    else out[k] = redactValue(v);
   }
   return out;
 }

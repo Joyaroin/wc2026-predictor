@@ -5,8 +5,9 @@ import rateLimit from 'express-rate-limit';
 import type { ZodSchema } from 'zod';
 import type { Config } from '../lib/config';
 import type { Logger } from '../lib/logger';
-import { AppError, AuthError, ValidationError } from '../lib/errors';
+import { AppError, AuthError, ForbiddenError, ValidationError } from '../lib/errors';
 import { verifySession } from '../lib/token';
+import { secureEquals } from '../lib/secureCompare';
 
 // Augment Express request with our fields.
 declare global {
@@ -42,6 +43,23 @@ export function requireSession(config: Config): RequestHandler {
   };
 }
 
+/**
+ * Gates /admin/* routes on a valid X-Admin-Token, in constant time (SECURITY-12).
+ * Applied BEFORE validateBody so unauthorized requests are rejected before any body parsing/
+ * schema validation work — and before the strict admin rate limiter is consumed by attackers'
+ * malformed bodies. Service-layer token checks remain as defense in depth.
+ */
+export function requireAdminToken(config: Config): RequestHandler {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const token = req.header('x-admin-token') ?? '';
+    if (!secureEquals(token, config.adminToken)) {
+      next(new ForbiddenError('Admin token required'));
+      return;
+    }
+    next();
+  };
+}
+
 /** Validates and replaces req.body using a zod schema (SECURITY-05). */
 export function validateBody<T>(schema: ZodSchema<T>): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
@@ -55,9 +73,28 @@ export function validateBody<T>(schema: ZodSchema<T>): RequestHandler {
   };
 }
 
-export const globalLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: true, legacyHeaders: false });
-export const loginLimiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: true, legacyHeaders: false });
-export const joinLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false });
+export interface RateLimiters {
+  global: RequestHandler;
+  login: RequestHandler;
+  join: RequestHandler;
+  admin: RequestHandler;
+}
+
+/**
+ * Build the per-app rate limiters. Created once per `buildApp` call rather than as module
+ * singletons: production builds the app a single time (so the in-memory counters persist for the
+ * process lifetime, exactly as before), while each test app gets its own fresh, isolated store.
+ * The strict `admin` cap guards privileged actions so a stolen/guessed token cannot be used for
+ * high-rate abuse (SECURITY-11).
+ */
+export function createRateLimiters(): RateLimiters {
+  return {
+    global: rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: true, legacyHeaders: false }),
+    login: rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: true, legacyHeaders: false }),
+    join: rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false }),
+    admin: rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: true, legacyHeaders: false }),
+  };
+}
 
 export function notFoundHandler(): RequestHandler {
   return (_req, res) => {

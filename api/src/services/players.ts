@@ -1,6 +1,6 @@
 import type { PlayerRepo } from '../repos/types';
 import type { PublicPlayer } from './dtos';
-import { NotFoundError, ConflictError, AuthError } from '../lib/errors';
+import { NotFoundError, ConflictError, AuthError, ValidationError } from '../lib/errors';
 import { hashPin, verifyPin } from '../lib/pin';
 import { nameKeyOf } from './auth';
 
@@ -27,10 +27,12 @@ export function createPlayerService(players: PlayerRepo): PlayerService {
       return { id: callerId, name: name.trim() };
     },
     async changePin(callerId, currentPin, newPin) {
+      // Reject a no-op change before doing any (expensive) hashing.
+      if (newPin === currentPin) throw new ValidationError('New PIN must differ from the current PIN');
       const player = await players.getById(callerId);
       if (!player) throw new NotFoundError('Player not found');
-      if (!verifyPin(currentPin, player.pinHash)) throw new AuthError('Current PIN is incorrect');
-      await players.updatePin(callerId, hashPin(newPin));
+      if (!(await verifyPin(currentPin, player.pinHash))) throw new AuthError('Current PIN is incorrect');
+      await players.updatePin(callerId, await hashPin(newPin));
     },
   };
 }

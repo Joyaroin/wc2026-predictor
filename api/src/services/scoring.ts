@@ -5,7 +5,9 @@ import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 import type { Clock } from '../lib/clock';
 
 export interface ScoringService {
-  scoreMatch(matchId: string): Promise<number>; // returns number of score-predictions scored
+  // Returns the number of score-predictions that actually changed (a put() occurred this pass),
+  // NOT the number evaluated — an idempotent rescore that changes nothing returns 0.
+  scoreMatch(matchId: string): Promise<number>;
 }
 
 export function createScoringService(
@@ -32,8 +34,9 @@ export function createScoringService(
         const points = bd.points + fg.firstTeam + fg.firstPlayer;
         if (points !== p.points || bd.exact !== p.exact || bd.outcome !== p.correctOutcome) {
           await predictions.put({ ...p, points, exact: bd.exact, correctOutcome: bd.outcome, updatedAt: now });
+          // Count only predictions that were actually (re)scored — i.e. a put() happened.
+          scored++;
         }
-        scored++;
       }
 
       // Knockout bracket (advancement) points — Dark Horse: backing a longer shot pays more.
