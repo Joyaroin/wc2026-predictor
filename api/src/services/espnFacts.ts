@@ -62,7 +62,7 @@ export function createEspnFactsService(
 
       let facts: MatchFirstGoal[];
       try {
-        facts = await espn.fetchMatchFirstGoals(recentDates(now, 2)); // recent finished matches only (cheap)
+        facts = await espn.fetchMatchFirstGoals(recentDates(now, 2)); // live + recently-finished matches
       } catch (err) {
         logger.warn('espn facts fetch failed', { error: err instanceof Error ? err.message : 'unknown' });
         return;
@@ -73,20 +73,32 @@ export function createEspnFactsService(
         const match = all.find((m) => m.kickoff.slice(0, 10) === day && teamsMatch(m, f));
         if (!match) continue;
 
-        let firstGoalTeam: 'HOME' | 'AWAY' | 'NONE' = 'NONE';
-        let firstScorerId: string | null = null;
-        let firstScorerName: string | null = null;
+        // First goal: settle it the moment a goal exists (works mid-match); only lock in 'NONE'
+        // once the match is final — a live 0-0 must stay "unknown" so we don't show a wrong ✗.
+        let firstGoalTeam: 'HOME' | 'AWAY' | 'NONE' | null = match.firstGoalTeam ?? null;
+        let firstScorerId: string | null = match.firstScorerId ?? null;
+        let firstScorerName: string | null = match.firstScorerName ?? null;
         if (f.first) {
           const scoringTeam = f.first.side === 'HOME' ? f.homeName : f.awayName;
           firstGoalTeam = canon(scoringTeam) === canon(match.homeTeam) ? 'HOME' : canon(scoringTeam) === canon(match.awayTeam) ? 'AWAY' : 'NONE';
           firstScorerId = f.first.scorerId;
           firstScorerName = f.first.scorerName;
+        } else if (f.finished) {
+          firstGoalTeam = 'NONE';
+          firstScorerId = null;
+          firstScorerName = null;
         }
 
-        if (match.firstGoalTeam === firstGoalTeam && (match.firstScorerId ?? null) === firstScorerId) continue;
-        await matches.upsert({ ...match, firstGoalTeam, firstScorerId, firstScorerName });
-        await scoring.scoreMatch(match.id);
-        logger.info('espn first-goal ingested', { matchId: match.id, firstGoalTeam, firstScorerName });
+        // Live game minute straight from ESPN's clock (football-data doesn't provide one).
+        const minute = f.finished ? null : f.minute;
+
+        const goalChanged = match.firstGoalTeam !== firstGoalTeam || (match.firstScorerId ?? null) !== firstScorerId;
+        const minuteChanged = (match.minute ?? null) !== minute;
+        if (!goalChanged && !minuteChanged) continue;
+
+        await matches.upsert({ ...match, firstGoalTeam, firstScorerId, firstScorerName, minute });
+        if (goalChanged) await scoring.scoreMatch(match.id);
+        logger.info('espn facts ingested', { matchId: match.id, firstGoalTeam, firstScorerName, minute });
       }
     },
   };

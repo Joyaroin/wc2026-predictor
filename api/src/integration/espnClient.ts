@@ -76,8 +76,12 @@ export interface MatchFirstGoal {
   date: string; // ISO
   homeName: string;
   awayName: string;
-  /** First goal: which ESPN side scored + the scorer. null = finished 0-0 (no goals). */
+  /** First goal: which ESPN side scored + the scorer. null = no goal yet (or finished 0-0). */
   first: { side: 'HOME' | 'AWAY'; scorerId: string; scorerName: string } | null;
+  /** Live game minute from ESPN's clock (e.g. 67). Null when not available/finished. */
+  minute: number | null;
+  /** True once the match is final ('post'); a null `first` then means a real 0-0. */
+  finished: boolean;
 }
 
 export interface EspnClient {
@@ -132,13 +136,16 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         }
         for (const e of get<Json[]>(board, 'events') ?? []) {
           const state = get<string>(e, 'status', 'type', 'state');
-          if (state !== 'post') continue; // finished only
+          if (state !== 'post' && state !== 'in') continue; // live or finished
           const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
           if (!comp) continue;
           const { homeName, awayName, goals } = goalsFromCompetition(comp);
           const fg = goals.find((g) => !g.shootout); // first goal in normal/extra time (not a shootout pen)
           const first = fg ? { side: fg.side, scorerId: fg.scorerId, scorerName: fg.scorerName } : null;
-          result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first });
+          const dc = get<string>(e, 'status', 'displayClock'); // e.g. "67'" or "90'+3'"
+          const parsed = dc != null ? parseInt(dc, 10) : NaN;
+          const minute = state === 'in' && Number.isFinite(parsed) ? parsed : null;
+          result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first, minute, finished: state === 'post' });
         }
       }
       return result;

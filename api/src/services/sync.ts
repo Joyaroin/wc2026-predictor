@@ -50,10 +50,21 @@ export function createSyncService(
       for (const next of fetched) {
         try {
           const prev = await matches.getById(next.id);
-          // Stamp the real kickoff the first time the match is seen live; keep it thereafter.
-          const live = next.status === 'IN_PLAY' || next.status === 'PAUSED';
-          const startedAt = prev?.startedAt ?? (live ? new Date().toISOString() : null);
-          await matches.upsert({ ...next, startedAt });
+          // Stamp the real kickoff only when we witness SCHEDULED→live. If a match is discovered
+          // already live (e.g. right after a restart), leave it null → the clock falls back to the
+          // scheduled kickoff instead of resetting to ~1'.
+          const nowLive = next.status === 'IN_PLAY' || next.status === 'PAUSED';
+          const wasLive = !!prev && (prev.status === 'IN_PLAY' || prev.status === 'PAUSED');
+          const startedAt = prev?.startedAt ?? (nowLive && !wasLive ? new Date().toISOString() : null);
+          // football-data doesn't carry these — preserve what ESPN ingest set so we don't wipe them each cycle.
+          await matches.upsert({
+            ...next,
+            startedAt,
+            minute: next.minute ?? prev?.minute ?? null,
+            firstGoalTeam: next.firstGoalTeam ?? prev?.firstGoalTeam ?? null,
+            firstScorerId: next.firstScorerId ?? prev?.firstScorerId ?? null,
+            firstScorerName: next.firstScorerName ?? prev?.firstScorerName ?? null,
+          });
           report.upserted++;
           if (resultChanged(prev, next)) {
             report.scored += await scoring.scoreMatch(next.id);
