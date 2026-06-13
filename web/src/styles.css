@@ -224,7 +224,7 @@ tr.me { background: var(--on-bg); }
 .odds-pct { flex: none; width: 44px; text-align: right; color: var(--muted); font-size: 0.85rem; }
 
 /* Onboarding tour (driver.js) — dark theme */
-.driver-popover.wc-tour { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); max-width: 320px; }
+.driver-popover.wc-tour { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); max-width: min(320px, calc(100vw - 24px)); }
 .driver-popover.wc-tour .driver-popover-title { color: var(--ink); font-size: 1.05rem; font-weight: 800; }
 .driver-popover.wc-tour .driver-popover-description { color: var(--muted); line-height: 1.45; }
 .driver-popover.wc-tour .driver-popover-description b { color: var(--ink); }
