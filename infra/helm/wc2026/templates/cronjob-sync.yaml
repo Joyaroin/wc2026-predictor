@@ -20,6 +20,8 @@ spec:
             {{- include "wc2026.labels" . | nindent 12 }}
         spec:
           serviceAccountName: {{ .Values.serviceAccount.name }}
+          # Authenticates to AWS via the EC2 node/instance role (IMDS), not the k8s API.
+          automountServiceAccountToken: false
           restartPolicy: Never
           securityContext:
             runAsNonRoot: true

@@ -16,6 +16,9 @@ spec:
         {{- include "wc2026.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
+      # The app authenticates to AWS via the EC2 node/instance role (IMDS), not the k8s API,
+      # so it never needs a projected ServiceAccount token mounted in the pod.
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -35,11 +38,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "wc2026.secretName" . }}
                   key: SESSION_SIGNING_SECRET
+            # Optional on the API: only the sync CronJob actually calls football-data.org.
+            # The API treats it as optional at boot, so a missing key must not crash the pod.
             - name: FOOTBALL_DATA_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "wc2026.secretName" . }}
                   key: FOOTBALL_DATA_TOKEN
+                  optional: true
             # Optional — gates admin actions (Player of the Tournament). Absent = admin disabled.
             - name: ADMIN_TOKEN
               valueFrom:

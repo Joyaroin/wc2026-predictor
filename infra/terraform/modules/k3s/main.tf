@@ -55,6 +55,12 @@ resource "aws_security_group" "k3s" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = var.tags
+
+  # Standard companion to name_prefix: create the replacement SG (with a fresh generated name)
+  # before destroying the old one, so the rule set can change without an in-use-name conflict.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # --- IAM: instance role with scoped DynamoDB + SSM read (for secrets) + SSM Session Manager ---
@@ -75,6 +81,13 @@ resource "aws_iam_role" "node" {
 }
 
 data "aws_iam_policy_document" "node" {
+  # TRADEOFF (single-node design, accepted): this one instance role grants access to BOTH the
+  # dev and prod DynamoDB tables (var.table_arns = [dev, prod]). Because dev and prod pods run
+  # on the SAME k3s node and share the EC2 instance role, there is no IAM-level isolation between
+  # environments — a compromised dev pod could reach the prod table. This is inherent to the
+  # cheap single-node topology. Proper isolation needs separate nodes (or IRSA + per-env roles);
+  # do NOT rearchitect here. Mitigations in place: per-namespace NetworkPolicy, distinct table
+  # names, and app-level TABLE_NAME scoping. Revisit if prod data sensitivity grows.
   statement {
     sid    = "DynamoDB"
     effect = "Allow"

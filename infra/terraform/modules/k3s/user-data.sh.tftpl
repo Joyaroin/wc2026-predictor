@@ -33,14 +33,66 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl -n argocd rollout status deploy/argocd-server --timeout=300s || true
 
 # --- App secrets per namespace (token from SSM, signing secret generated here) ---
+# IMPORTANT: SESSION_SIGNING_SECRET must be STABLE across re-bootstraps. Regenerating it would
+# invalidate every signed session cookie and log all users out. So: only generate a new secret
+# if one does not already exist in the namespace; otherwise reuse the existing value.
 TOKEN=$(/usr/local/bin/aws ssm get-parameter --with-decryption --name "${football_ssm_param}" --region "${region}" --query Parameter.Value --output text)
 for ns in ${namespaces}; do
   kubectl create namespace "$${ns}" || true
+
+  # Reuse the existing signing secret if the Secret already has one (idempotent re-bootstrap).
+  EXISTING=$(kubectl -n "$${ns}" get secret wc2026-secrets \
+    -o jsonpath='{.data.SESSION_SIGNING_SECRET}' 2>/dev/null | base64 -d 2>/dev/null || true)
+  if [ -n "$${EXISTING}" ]; then
+    SIGNING_SECRET="$${EXISTING}"
+    echo "Reusing existing SESSION_SIGNING_SECRET for namespace $${ns}"
+  else
+    SIGNING_SECRET="$(openssl rand -hex 32)"
+    echo "Generated new SESSION_SIGNING_SECRET for namespace $${ns}"
+  fi
+
   kubectl -n "$${ns}" create secret generic wc2026-secrets \
-    --from-literal=SESSION_SIGNING_SECRET="$(openssl rand -hex 32)" \
+    --from-literal=SESSION_SIGNING_SECRET="$${SIGNING_SECRET}" \
     --from-literal=FOOTBALL_DATA_TOKEN="$${TOKEN}" \
     --dry-run=client -o yaml | kubectl apply -f -
 done
+
+# --- cert-manager (issues the TLS certs the Helm ingress requests via clusterIssuer) ---
+# The Helm chart + DNS advertise HTTPS with a `letsencrypt-prod` ClusterIssuer, but nothing
+# installed cert-manager or created that issuer — so certs would never be issued. Install it
+# (with CRDs) and create the ClusterIssuer BEFORE the app-of-apps, so Ingresses can be fulfilled.
+#
+# TODO (REQUIRED before TLS will issue): replace the placeholder ACME email below with a real
+# address you control. Let's Encrypt uses it for expiry/abuse notices.
+ACME_EMAIL="REPLACE_ME@example.com" # TODO: set a real contact email
+
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager \
+  -n cert-manager --create-namespace \
+  --set installCRDs=true \
+  --wait --timeout 5m || true
+
+# Wait for the cert-manager webhook to be ready before applying the ClusterIssuer.
+kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=300s || true
+
+# letsencrypt-prod ClusterIssuer (HTTP-01 solved via the ingress-nginx controller).
+cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: $${ACME_EMAIL}
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+EOF
 
 # --- GitOps: apply the AppProject + app-of-apps; ArgoCD then deploys from git ---
 kubectl apply -f "${repo_raw_base}/infra/gitops/projects/wc2026.yaml"

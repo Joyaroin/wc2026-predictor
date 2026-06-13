@@ -8,8 +8,10 @@ variable "instance_type" {
   default     = "t4g.small"
 }
 variable "ssh_cidr" {
-  type    = string
-  default = "0.0.0.0/0"
+  # No default: a forgotten value must fail the plan rather than open port 22 to 0.0.0.0/0.
+  # Set to your own IP/CIDR (e.g. "203.0.113.4/32"). SSM Session Manager works without SSH.
+  description = "CIDR allowed to SSH (port 22). REQUIRED — restrict to your IP, or use SSM only."
+  type        = string
 }
 variable "key_name" {
   type    = string
@@ -24,10 +26,6 @@ variable "domain" {
   description = "Registered domain (hosted zone must exist in this account)."
   type        = string
   default     = "wc-predictions-2026.com"
-}
-variable "repo_url" {
-  type    = string
-  default = "https://github.com/Joyaroin/wc2026-predictor.git"
 }
 variable "repo_raw_base" {
   type    = string

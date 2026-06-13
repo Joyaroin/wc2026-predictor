@@ -11,9 +11,11 @@ variable "instance_type" {
   default     = "t4g.small"
 }
 variable "ssh_cidr" {
-  description = "CIDR allowed to SSH (port 22). Default open; restrict to your IP. SSM Session Manager works regardless."
+  # No default on purpose: a forgotten value should FAIL the plan, not silently open port 22
+  # to the entire internet. Set it to your own IP/CIDR (e.g. "203.0.113.4/32").
+  # You usually don't need SSH at all — SSM Session Manager works without it (no open port 22).
+  description = "CIDR allowed to SSH (port 22). REQUIRED. Use SSM Session Manager to avoid SSH entirely."
   type        = string
-  default     = "0.0.0.0/0"
 }
 variable "key_name" {
   description = "Optional EC2 key pair name for SSH (null = use SSM Session Manager only)."
@@ -27,10 +29,6 @@ variable "table_arns" {
 variable "secret_parameter_arns" {
   description = "SSM parameter ARNs the node may read (app secrets)."
   type        = list(string)
-}
-variable "repo_url" {
-  type    = string
-  default = "https://github.com/Joyaroin/wc2026-predictor.git"
 }
 variable "repo_raw_base" {
   description = "Raw base URL for applying the GitOps bootstrap manifests."

@@ -17,6 +17,24 @@ spec:
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
+  # Restrict to only the namespaced kinds the wc2026 Helm chart actually deploys,
+  # so a compromised/misconfigured source repo can't create arbitrary RBAC, etc.
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: ServiceAccount
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: batch
+      kind: CronJob

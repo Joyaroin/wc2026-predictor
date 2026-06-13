@@ -18,13 +18,20 @@ jobs:
       - run: npm ci
       - run: npm run build --workspace @wc2026/shared
       - run: npm test
-      - run: npm audit --omit=dev
+      # Fail CI only on high/critical runtime advisories; low/moderate are reported but
+      # don't block (avoids flaky CI on transient low-severity advisories).
+      - run: npm audit --omit=dev --audit-level=high
 
   images:
     # Build + push public images to GHCR on pushes to main (dev) / release (prod promotion).
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    # Serialize per-branch so concurrent pushes to main don't race on the auto-deploy
+    # commit/push below. cancel-in-progress:false → every push still gets deployed (queued).
+    concurrency:
+      group: deploy-dev-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write # push the values-dev SHA bump (auto-deploy to dev)
       packages: write # push to GHCR
@@ -63,10 +70,19 @@ jobs:
           export SHA=${{ github.sha }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main && git pull --rebase origin main
+          git checkout main
           yq -i '.image.api.tag = strenv(SHA) | .image.web.tag = strenv(SHA)' infra/helm/wc2026/values-dev.yaml
           git add infra/helm/wc2026/values-dev.yaml
           # [skip ci] avoids re-triggering this workflow on the bot commit.
           git commit -m "chore(dev): deploy ${SHA} [skip ci]" || { echo "dev already on this SHA"; exit 0; }
-          git push origin main
+          # Retry loop: even with job-level concurrency, a human push can land between our
+          # commit and push. Rebase onto the latest main and retry rather than failing the run.
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin main; then
+              echo "Pushed dev deploy on attempt ${attempt}"; exit 0
+            fi
+            echo "Push attempt ${attempt} lost the race; retrying after backoff..."
+            sleep $((attempt * 5))
+          done
+          echo "::error::Failed to push values-dev bump after 5 attempts"; exit 1
       # prod is promoted via the `promote-to-prod` workflow (commit-SHA pinned, approved).

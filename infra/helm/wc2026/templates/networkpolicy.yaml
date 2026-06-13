@@ -19,12 +19,36 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+    # Allow kubelet health probes. These originate from the NODE's host IP (not a pod IP),
+    # so namespace/pod selectors don't match them; on enforcing CNIs (e.g. Calico) they would
+    # be dropped, killing the readiness/liveness probes. We allow the link-local/private host
+    # ranges the kubelet can source from.
+    #
+    # NOTE (kube-router assumption): this chart targets single-node k3s, whose default CNI is
+    # flannel + kube-router for NetworkPolicy. kube-router does NOT enforce policy on
+    # host-network/local-node traffic, so probes already pass there even without this rule.
+    # This block is the portable safety net for stricter CNIs. Adjust the CIDRs to match the
+    # actual pod/host subnet if you deploy on a different network.
+    - from:
+        - ipBlock:
+            cidr: 169.254.0.0/16 # link-local (kubelet may source probes from here)
+        - ipBlock:
+            cidr: 10.0.0.0/8 # private node/pod ranges
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
   egress:
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+    # SCOPED-DOWN: egress 443 is left open to 0.0.0.0/0. The app legitimately needs HTTPS to
+    # the regional DynamoDB endpoint and football-data.org, whose IPs are large, rotating AWS
+    # ranges — pinning a CIDR allowlist is impractical and brittle. RESIDUAL RISK: an attacker
+    # with code execution in a pod could use this for SSRF/data exfil over 443. Accepted for
+    # now; revisit with an egress proxy / FQDN-aware policy (e.g. Cilium) if threat model tightens.
     - ports:
         - protocol: TCP
           port: 443

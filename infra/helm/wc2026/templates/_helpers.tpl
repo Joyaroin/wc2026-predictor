@@ -24,11 +24,18 @@ environment: {{ .Values.environment }}
 {{- end -}}
 {{- end -}}
 
-{{/* Name of the Secret holding SESSION_SIGNING_SECRET + FOOTBALL_DATA_TOKEN */}}
+{{/* Name of the Secret holding SESSION_SIGNING_SECRET + FOOTBALL_DATA_TOKEN.
+
+  Guard: if the chart neither creates the Secret (secret.create=false) nor is pointed at an
+  existing one (secret.existingSecret=""), every workload would reference a Secret that does
+  not exist and silently CrashLoop / fail to mount. Fail the render fast with a clear message
+  instead of producing a dangling reference. */}}
 {{- define "wc2026.secretName" -}}
 {{- if .Values.secret.existingSecret -}}
 {{ .Values.secret.existingSecret }}
-{{- else -}}
+{{- else if .Values.secret.create -}}
 {{ printf "wc2026-%s-secrets" .Values.environment }}
+{{- else -}}
+{{ required "A Secret is required: set secret.existingSecret to a pre-provisioned Secret (e.g. external-secrets), or set secret.create=true to have the chart create one." .Values.secret.existingSecret }}
 {{- end -}}
 {{- end -}}

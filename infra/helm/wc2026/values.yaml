@@ -50,6 +50,12 @@ serviceAccount:
 
 # Secret with SESSION_SIGNING_SECRET + FOOTBALL_DATA_TOKEN.
 # Prefer external-secrets (set existingSecret to the synced Secret name).
+# IMPORTANT: you must set exactly one of these, or the chart render fails fast
+# (see the `required` guard in templates/_helpers.tpl > wc2026.secretName):
+#   - secret.existingSecret = <name of a pre-provisioned Secret>   (recommended for prod), OR
+#   - secret.create = true  (+ provide sessionSigningSecret below) (dev/test convenience).
+# The default below intentionally leaves both unset so a misconfigured deploy errors clearly
+# instead of pointing every pod at a Secret that does not exist.
 secret:
   create: false
   existingSecret: "" # name of an existing Secret to use instead of creating one

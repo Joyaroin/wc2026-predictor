@@ -33,7 +33,6 @@ module "k3s" {
   table_arns            = [module.data_dev.table_arn, module.data_prod.table_arn]
   secret_parameter_arns = [aws_ssm_parameter.football_token.arn]
   football_ssm_param    = aws_ssm_parameter.football_token.name
-  repo_url              = var.repo_url
   repo_raw_base         = var.repo_raw_base
   tags                  = var.tags
 }
