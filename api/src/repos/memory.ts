@@ -55,6 +55,10 @@ export function createMemoryRepositories(): Repositories {
     async rename(id, name, nameKey) {
       const existing = players.get(id);
       if (!existing) return false;
+      // FIX(LOW): genuine no-op (same display name AND same nameKey) — short-circuit before mutating
+      // so we don't churn the name index or bump updatedAt. Mirrors the dynamo repo, which returns
+      // true without writing in this case.
+      if (existing.name === name && existing.nameKey === nameKey) return true;
       const owner = nameIndex.get(nameKey);
       if (owner && owner !== id) return false;
       nameIndex.delete(existing.nameKey);

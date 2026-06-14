@@ -63,6 +63,10 @@ function isConditionFailed(err: unknown): boolean {
   return name === 'ConditionalCheckFailedException' || name === 'TransactionCanceledException';
 }
 
+// Jittered exponential backoff (mirrors footballApiClient's `250 * 2**i + jitter` pattern, with a
+// smaller base) — used to space out BatchWrite UnprocessedItems resends under DynamoDB throttling.
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
 export function createDynamoRepositories(config: Config): Repositories {
   const doc = createDynamoDocClient(config);
   const Table = config.tableName;
@@ -123,16 +127,25 @@ export function createDynamoRepositories(config: Config): Repositories {
       // repo (which does persist it). Update the name/updatedAt directly; no lock transaction needed.
       if (current.nameKey === nameKey) {
         if (current.name === name) return true; // genuine no-op
-        await doc.send(
-          new UpdateCommand({
-            TableName: Table,
-            Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
-            UpdateExpression: 'SET #n = :n, updatedAt = :u',
-            ExpressionAttributeNames: { '#n': 'name' },
-            ExpressionAttributeValues: { ':n': name, ':u': new Date().toISOString() },
-          }),
-        );
-        return true;
+        // FIX(LOW): guard with attribute_exists(PK) like updatePin/setTourSeen — a bare UpdateCommand
+        // is an upsert that would fabricate a partial PROFILE row if the player vanished concurrently.
+        // rename returns boolean, so treat a failed condition as "not found" → false.
+        try {
+          await doc.send(
+            new UpdateCommand({
+              TableName: Table,
+              Key: { PK: keys.playerPk(id), SK: 'PROFILE' },
+              UpdateExpression: 'SET #n = :n, updatedAt = :u',
+              ConditionExpression: 'attribute_exists(PK)',
+              ExpressionAttributeNames: { '#n': 'name' },
+              ExpressionAttributeValues: { ':n': name, ':u': new Date().toISOString() },
+            }),
+          );
+          return true;
+        } catch (err) {
+          if (isConditionFailed(err)) return false;
+          throw err;
+        }
       }
       try {
         // FIX(MED): do the old name-lock delete INSIDE the same TransactWriteItems so the whole
@@ -323,11 +336,22 @@ export function createDynamoRepositories(config: Config): Repositories {
         let RequestItems: Record<string, Array<{ DeleteRequest: { Key: { PK: string; SK: string } } }>> = {
           [Table]: toDelete.slice(i, i + 25).map((Key) => ({ DeleteRequest: { Key } })),
         };
-        // BatchWrite can return UnprocessedItems under throttling — resend until drained.
-        do {
+        // FIX(MED): BatchWrite can return UnprocessedItems under throttling. Previously this resent
+        // immediately with no delay and no cap, so persistent throttling spun/hung this loop
+        // indefinitely. Drain with jittered exponential backoff and a bounded attempt cap; if items
+        // still remain after the cap, throw so the caller surfaces an error instead of hanging.
+        const MAX_ATTEMPTS = 8;
+        for (let attempt = 0; ; attempt++) {
           const res = await doc.send(new BatchWriteCommand({ RequestItems }));
           RequestItems = (res.UnprocessedItems ?? {}) as typeof RequestItems;
-        } while (RequestItems[Table]?.length);
+          if (!RequestItems[Table]?.length) break; // drained — happy path sends once, never sleeps
+          if (attempt >= MAX_ATTEMPTS - 1) {
+            throw new Error(
+              `removeAll: ${RequestItems[Table].length} item(s) still unprocessed after ${MAX_ATTEMPTS} BatchWrite attempts`,
+            );
+          }
+          await sleep(50 * 2 ** attempt + Math.floor(Math.random() * 50));
+        }
       }
     },
   };

@@ -88,4 +88,26 @@ describe('PlayerRepo (memory) — casing/whitespace-only rename persists', () =>
     expect(after?.name).toBe('Bob');
     expect(after?.nameKey).toBe('bob'); // unchanged key
   });
+
+  it('short-circuits a genuine no-op rename without bumping updatedAt', async () => {
+    // Mirrors the dynamo repo, which returns true WITHOUT writing when both the display
+    // name and nameKey are unchanged.
+    const repos = createMemoryRepositories();
+    const now = '2026-06-01T00:00:00.000Z';
+    await repos.players.create({
+      id: 'p1',
+      name: 'Bob',
+      nameKey: 'bob',
+      pinHash: 'h',
+      tourSeenAt: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const ok = await repos.players.rename('p1', 'Bob', 'bob');
+    expect(ok).toBe(true);
+
+    const after = await repos.players.getById('p1');
+    expect(after?.updatedAt).toBe(now); // unchanged — no write happened
+  });
 });
