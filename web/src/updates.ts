@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-14.2',
+    date: 'June 14, 2026',
+    emoji: '💾',
+    title: 'No more Save button',
+    points: [
+      'Your pick now saves itself — type a scoreline and it\'s stored automatically',
+      'First team to score, first goalscorer and your Joker also save the moment you tap them',
+      'A little "Saving… / Saved ✓" shows the status; clear both boxes to remove a pick',
+    ],
+  },
+  {
     id: '2026-06-14',
     date: 'June 14, 2026',
     emoji: '🗂️',
