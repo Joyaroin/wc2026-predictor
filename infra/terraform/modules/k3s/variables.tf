@@ -16,6 +16,10 @@ variable "ssh_cidr" {
   # You usually don't need SSH at all — SSM Session Manager works without it (no open port 22).
   description = "CIDR allowed to SSH (port 22). REQUIRED. Use SSM Session Manager to avoid SSH entirely."
   type        = string
+  validation {
+    condition     = can(cidrhost(var.ssh_cidr, 0)) && var.ssh_cidr != "0.0.0.0/0"
+    error_message = "ssh_cidr must be a valid CIDR and must not be 0.0.0.0/0 (do not open SSH to the entire internet)."
+  }
 }
 variable "key_name" {
   description = "Optional EC2 key pair name for SSH (null = use SSM Session Manager only)."

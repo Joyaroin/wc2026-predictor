@@ -33,9 +33,13 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl -n argocd rollout status deploy/argocd-server --timeout=300s || true
 
 # --- App secrets per namespace (token from SSM, signing secret generated here) ---
-# IMPORTANT: SESSION_SIGNING_SECRET must be STABLE across re-bootstraps. Regenerating it would
-# invalidate every signed session cookie and log all users out. So: only generate a new secret
-# if one does not already exist in the namespace; otherwise reuse the existing value.
+# SESSION_SIGNING_SECRET handling: reuse an existing in-cluster value if present, else generate
+# one. IMPORTANT SCOPE: this reuse only helps a manual SAME-INSTANCE cloud-init re-run — it does
+# NOT survive node replacement. aws_instance.k3s sets lifecycle ignore_changes=[user_data], so
+# cloud-init runs once per instance; a rebuilt node boots an empty cluster, finds no existing
+# Secret, regenerates a fresh secret, and logs all users out. There is no durable off-node store
+# for the signing secret (accepted for this single-node setup; to survive rebuilds, persist it in
+# SSM like the football token and read it back here).
 TOKEN=$(/usr/local/bin/aws ssm get-parameter --with-decryption --name "${football_ssm_param}" --region "${region}" --query Parameter.Value --output text)
 for ns in ${namespaces}; do
   kubectl create namespace "$${ns}" || true

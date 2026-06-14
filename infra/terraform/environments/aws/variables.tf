@@ -12,6 +12,10 @@ variable "ssh_cidr" {
   # Set to your own IP/CIDR (e.g. "203.0.113.4/32"). SSM Session Manager works without SSH.
   description = "CIDR allowed to SSH (port 22). REQUIRED — restrict to your IP, or use SSM only."
   type        = string
+  validation {
+    condition     = can(cidrhost(var.ssh_cidr, 0)) && var.ssh_cidr != "0.0.0.0/0"
+    error_message = "ssh_cidr must be a valid CIDR and must not be 0.0.0.0/0 (do not open SSH to the entire internet)."
+  }
 }
 variable "key_name" {
   type    = string

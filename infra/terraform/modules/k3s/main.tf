@@ -48,7 +48,14 @@ resource "aws_security_group" "k3s" {
     protocol    = "tcp"
     cidr_blocks = [var.ssh_cidr]
   }
+  # RESIDUAL RISK (accepted): egress is wide open. The node is already internet-facing on
+  # 80/443, and self-bootstrap needs broad outbound (SSM, container registries, ACME/Let's
+  # Encrypt, get.k3s.io, GitHub raw, Helm charts, DNS). Enumerating/pinning every destination
+  # is brittle and would risk breaking the k3s install, so we accept the defense-in-depth gap
+  # (a compromised pod could exfiltrate/C2 over arbitrary ports). Revisit with an egress proxy
+  # or FQDN-aware policy if the threat model tightens.
   egress {
+    description = "All outbound — bootstrap needs SSM/registries/ACME/k3s/DNS (see RESIDUAL RISK above)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

@@ -41,11 +41,12 @@ output "public_ip" {
   value = module.k3s.public_ip
 }
 output "app_url_dev" {
-  description = "Set this as ingress.host in values-dev.yaml (without http://)."
-  value       = "http://${module.k3s.nip_io_host_dev}"
+  description = "Dev app URL (custom domain over HTTPS; matches values-dev.yaml ingress.host)."
+  value       = "https://dev.${var.domain}"
 }
 output "app_url_prod" {
-  value = "http://${module.k3s.nip_io_host_prod}"
+  description = "Prod app URL (custom domain over HTTPS; matches values-prod.yaml ingress.host)."
+  value       = "https://${var.domain}"
 }
 output "dev_table" {
   value = module.data_dev.table_name
