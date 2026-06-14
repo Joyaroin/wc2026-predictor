@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute, compareFixtures } from '../src/lib/format';
-import type { Match } from '@wc2026/shared';
+import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute } from '../src/lib/format';
 
 describe('matchState', () => {
   it('Played when finished with a score', () => {
@@ -15,44 +14,6 @@ describe('matchState', () => {
   });
   it('Open before kickoff', () => {
     expect(matchState({ status: 'SCHEDULED', homeScore: null, awayScore: null, locked: false })).toBe('Open');
-  });
-});
-
-describe('compareFixtures', () => {
-  const mk = (status: Match['status'], kickoff: string) => ({ status, kickoff });
-  const order = (ms: { status: Match['status']; kickoff: string }[]) =>
-    ms.slice().sort(compareFixtures).map((m) => m.kickoff);
-
-  it('puts the live match first', () => {
-    const live = mk('IN_PLAY', '2026-06-15T18:00:00Z');
-    const upcoming = mk('TIMED', '2026-06-15T21:00:00Z');
-    const done = mk('FINISHED', '2026-06-15T15:00:00Z');
-    expect(order([done, upcoming, live])[0]).toBe(live.kickoff);
-  });
-
-  it('after the live match, the soonest match to predict is next; finished sink to the bottom', () => {
-    const live = mk('IN_PLAY', '2026-06-15T18:00:00Z');
-    const soon = mk('SCHEDULED', '2026-06-15T19:00:00Z');
-    const later = mk('SCHEDULED', '2026-06-15T21:00:00Z');
-    const done = mk('FINISHED', '2026-06-15T15:00:00Z');
-    expect(order([done, later, soon, live])).toEqual([
-      live.kickoff,
-      soon.kickoff,
-      later.kickoff,
-      done.kickoff,
-    ]);
-  });
-
-  it('when nothing is live, the next match to predict is on top', () => {
-    const done = mk('FINISHED', '2026-06-15T15:00:00Z');
-    const next = mk('SCHEDULED', '2026-06-15T19:00:00Z');
-    expect(order([done, next])[0]).toBe(next.kickoff);
-  });
-
-  it('finished cards are newest-first at the bottom', () => {
-    const early = mk('FINISHED', '2026-06-15T12:00:00Z');
-    const late = mk('FINISHED', '2026-06-15T15:00:00Z');
-    expect(order([early, late])).toEqual([late.kickoff, early.kickoff]);
   });
 });
 

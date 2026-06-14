@@ -537,20 +537,18 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .timeline-entry { animation: fadeUp 0.45s ease backwards; }
 }
 
-/* Fixtures controls: tip + hide-finished toggle */
-.fixtures-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+/* Fixtures controls: tip + link to results */
+.fixtures-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .fixtures-controls p { margin: 0; }
-.chip-toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem; font-weight: 600; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
-.chip-toggle input { width: 15px; height: 15px; accent-color: var(--accent); }
-.chip-toggle .results-link { margin-left: 4px; font-weight: 700; }
+.results-link { font-weight: 700; white-space: nowrap; }
 
 /* My Results */
 .results-summary { font-size: 0.95rem; margin: 4px 0 14px; }
 .results-summary .total strong { color: var(--accent); font-size: 1.15rem; }
-.exact-row { background: var(--success-bg); }
-.exact-row td:last-child { color: var(--accent); font-weight: 800; }
-.pending-picks { margin-top: 18px; }
-.pending-picks summary { cursor: pointer; color: var(--muted); font-weight: 700; font-size: 0.9rem; padding: 6px 0; }
+.results-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.filter-chip { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.filter-chip:hover { color: var(--ink); }
+.filter-chip.on { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
 
 /* ============ Fluidity ============ */
 /* Saved toast */

@@ -18,30 +18,6 @@ export function isLive(status: Match['status']): boolean {
   return status === 'IN_PLAY' || status === 'PAUSED';
 }
 
-/** Board priority: live matches first (0), upcoming/predictable next (1), finished last (2). */
-export function boardRank(status: Match['status']): number {
-  if (status === 'IN_PLAY' || status === 'PAUSED') return 0;
-  if (status === 'FINISHED') return 2;
-  return 1;
-}
-
-/**
- * Orders the cards within a fixtures section so the actionable match is always on top:
- * a live match comes first, then the soonest upcoming match to predict, and finished
- * matches drop to the bottom (most recent first). When a live match ends it becomes
- * FINISHED and falls away, lifting the next match to predict to the top automatically.
- */
-export function compareFixtures(
-  a: { status: Match['status']; kickoff: string },
-  b: { status: Match['status']; kickoff: string },
-): number {
-  const ra = boardRank(a.status);
-  const rb = boardRank(b.status);
-  if (ra !== rb) return ra - rb;
-  // Finished sit at the bottom newest-first; live & upcoming run soonest-first.
-  return ra === 2 ? b.kickoff.localeCompare(a.kickoff) : a.kickoff.localeCompare(b.kickoff);
-}
-
 /**
  * Display minute for a live match — provider minute when available, otherwise an
  * estimate from kickoff (assumes a 15-minute half-time break). Null when not live.
