@@ -141,7 +141,9 @@ export function createLeaderboardService(
       for (const m of all) {
         const pred = preds.get(m.id);
         if (!pred) continue;
-        const locked = now >= new Date(m.kickoff).getTime();
+        // Mirror MatchService.isLocked fail-closed semantics: an unparseable kickoff locks.
+        const kickoffMs = new Date(m.kickoff).getTime();
+        const locked = Number.isNaN(kickoffMs) || now >= kickoffMs;
         const hide = !locked && targetPlayerId !== callerId; // VR: don't reveal others' picks pre-lock
         rows.push({
           matchId: m.id,

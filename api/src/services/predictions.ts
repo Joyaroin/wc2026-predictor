@@ -142,10 +142,18 @@ export function createPredictionService(
       // Post-lock: all group members' predictions.
       const memberIds = new Set(await memberships.listMembers(groupId));
       const all = await predictions.listByMatch(matchId);
+      // Resolve players concurrently (was a sequential N+1 getById per prediction). Filter to
+      // members first, resolve the unique ids in parallel, then assemble rows in `all` order.
+      const memberPreds = all.filter((p) => memberIds.has(p.playerId));
+      const uniqueIds = [...new Set(memberPreds.map((p) => p.playerId))];
+      const playerById = new Map(
+        (await Promise.all(uniqueIds.map((id) => players.getById(id))))
+          .filter((player): player is NonNullable<typeof player> => player !== null)
+          .map((player) => [player.id, player]),
+      );
       const rows: MatchPredictionRow[] = [];
-      for (const p of all) {
-        if (!memberIds.has(p.playerId)) continue;
-        const player = await players.getById(p.playerId);
+      for (const p of memberPreds) {
+        const player = playerById.get(p.playerId);
         if (!player) continue;
         rows.push({ playerId: p.playerId, name: player.name, home: p.home, away: p.away, points: p.points });
       }
