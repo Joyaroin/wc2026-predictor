@@ -91,7 +91,7 @@ export const matchSchema = z.object({
   minute: z.number().int().nullable().optional(),
   homeScore: goalSchema.nullable(),
   awayScore: goalSchema.nullable(),
-  winner: outcomeSchema.nullable().optional(),
+  winner: bracketSideSchema.nullable().optional(),
   firstGoalTeam: z.enum(['HOME', 'AWAY', 'NONE']).nullable().optional(),
   firstScorerId: z.string().nullable().optional(),
   firstScorerName: z.string().nullable().optional(),

@@ -21,10 +21,11 @@ export interface ProviderMatch {
   score?: { winner?: string | null; fullTime?: { home: number | null; away: number | null } };
 }
 
-const WINNER: Record<string, 'HOME' | 'AWAY' | 'DRAW'> = {
+// `winner` is semantically HOME|AWAY only (who advanced/won). A provider DRAW carries no winner,
+// so it maps to null (omitted) to stay valid against matchSchema.winner (HOME|AWAY).
+const WINNER: Record<string, 'HOME' | 'AWAY'> = {
   HOME_TEAM: 'HOME',
   AWAY_TEAM: 'AWAY',
-  DRAW: 'DRAW',
 };
 
 const STAGES: Record<string, Stage> = {
