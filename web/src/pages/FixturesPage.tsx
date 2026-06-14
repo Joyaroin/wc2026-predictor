@@ -4,6 +4,7 @@ import { computeSections, SECTION_ORDER, sectionLabel, type Prediction } from '@
 import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
 import { canonTeam } from '../lib/teams';
+import { compareFixtures, isLive } from '../lib/format';
 
 const PREDS = ['my-predictions'] as const;
 
@@ -179,11 +180,15 @@ export function FixturesPage() {
       key: k,
       label: sectionLabel(k),
       isGroup: k.startsWith('MW'),
-      matches: (byKey.get(k) ?? []).sort((a, b) => a.kickoff.localeCompare(b.kickoff)),
+      // Live match on top, then the next match to predict, finished cards last.
+      matches: (byKey.get(k) ?? []).slice().sort(compareFixtures),
     }));
   }, [matches.data, sectionById]);
 
   const activeKey = useMemo(() => {
+    // Open the section with a live match first; otherwise the first with anything still to play.
+    const liveSection = sections.find((s) => s.matches.some((m) => isLive(m.status)));
+    if (liveSection) return liveSection.key;
     const active = sections.find((s) => s.matches.some((m) => m.status !== 'FINISHED'));
     return active?.key ?? sections[0]?.key;
   }, [sections]);
