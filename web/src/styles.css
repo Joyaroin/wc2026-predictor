@@ -148,6 +148,9 @@ input.mc-box:focus { outline: none; border-color: var(--accent); }
 .joker-static { color: var(--accent2); font-weight: 700; font-size: 0.85rem; }
 .btn-save { background: var(--accent); color: var(--accent-contrast); border: none; border-radius: 8px; padding: 8px 18px; font-weight: 700; }
 .btn-save:disabled { opacity: 0.4; }
+.mc-savestate { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.mc-savestate.saving { color: var(--muted); }
+.mc-savestate.saved { color: var(--accent); }
 
 .head-right { display: flex; align-items: center; gap: 6px; }
 .joker-badge { font-size: 0.7rem; font-weight: 800; color: var(--accent2-contrast); background: var(--accent2); padding: 1px 6px; border-radius: 999px; }

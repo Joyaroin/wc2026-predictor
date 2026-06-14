@@ -76,14 +76,44 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
 
   const editable = state === 'Open' && !match.placeholder;
   const canSave = editable && home !== '' && away !== '';
-  // Both boxes cleared on a saved prediction → Save removes it.
-  const canClear = editable && !!prediction && home === '' && away === '';
-  // Unsaved edits → gently pulse the Save button so the next step is obvious.
+  // Edits not yet persisted → show a "Saving…" hint (no Save button — it auto-saves).
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
   // Debounced auto-advance home → away, so two-digit scores (10–30) can still be typed.
   const advanceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(advanceRef.current), []);
+
+  // Auto-save: persist the scoreline as soon as both boxes hold a valid number; auto-remove when
+  // both are cleared. No Save button — score, first team, first scorer and Joker all save on change.
+  const validScore = (h: number, a: number) =>
+    Number.isInteger(h) && Number.isInteger(a) && h >= 0 && a >= 0 && h <= 30 && a <= 30;
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
+  useEffect(() => {
+    if (!editable) return;
+    clearTimeout(saveTimer.current);
+    if (home !== '' && away !== '') {
+      const h = Number(home);
+      const a = Number(away);
+      if (!validScore(h, a)) return;
+      if (prediction && h === prediction.home && a === prediction.away) return; // unchanged
+      saveTimer.current = setTimeout(() => onSave(match.id, h, a), 600);
+    } else if (home === '' && away === '' && prediction) {
+      saveTimer.current = setTimeout(() => onClear(match.id), 800);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [home, away, editable, prediction?.home, prediction?.away]);
+
+  // Flush the pending save immediately (e.g. on blur / Enter) so bonus buttons unlock sooner.
+  const flushSave = () => {
+    if (!editable || home === '' || away === '') return;
+    const h = Number(home);
+    const a = Number(away);
+    if (validScore(h, a) && (!prediction || h !== prediction.home || a !== prediction.away)) {
+      clearTimeout(saveTimer.current);
+      onSave(match.id, h, a);
+    }
+  };
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
@@ -174,9 +204,12 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           }
         }}
         onFocus={(e) => e.target.select()}
+        onBlur={flushSave}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && canSave) {
             clearTimeout(advanceRef.current);
+            clearTimeout(saveTimer.current);
+            (e.target as HTMLInputElement).blur();
             onSave(match.id, Number(home), Number(away));
           }
         }}
@@ -388,15 +421,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         </span>
         <div className="mc-foot-right">
           {editable && (
-            <button
-              className={`btn-save${dirty ? ' attention' : ''}`}
-              disabled={(!canSave && !canClear) || saving}
-              title={canClear ? 'Remove this prediction' : undefined}
-              onClick={() => (canClear ? onClear(match.id) : onSave(match.id, Number(home), Number(away)))}
-              data-testid={`pred-save-${match.id}`}
-            >
-              {canClear ? 'Clear' : 'Save'}
-            </button>
+            dirty ? (
+              <span className="mc-savestate saving" data-testid={`savestate-${match.id}`}>Saving…</span>
+            ) : prediction && home !== '' && away !== '' ? (
+              <span className="mc-savestate saved" data-testid={`savestate-${match.id}`}>Saved ✓</span>
+            ) : null
           )}
         </div>
       </div>
