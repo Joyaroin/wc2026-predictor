@@ -262,11 +262,6 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           bd ? (
             <div className="mc-receipt" data-testid={`receipt-${match.id}`}>
               <div className="mc-divider" />
-              {live && (
-                <div className="rcpt-live muted fine" data-testid={`live-pts-note-${match.id}`}>
-                  <span className="live-dot">●</span> Live points as it stands — settled at full time
-                </div>
-              )}
               {/* While live, show the extras you locked in as a glanceable summary (they're scored
                   in full at the final whistle below). */}
               {live && (prediction.firstTeam || prediction.firstScorerName || prediction.joker) && (

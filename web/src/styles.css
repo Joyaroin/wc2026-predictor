@@ -286,8 +286,6 @@ button.danger { background: var(--danger); color: #2a0a0a; }
 
 /* Post-match receipt */
 .mc-receipt { display: grid; gap: 5px; }
-.rcpt-live { text-align: center; }
-.rcpt-live .live-dot { color: var(--danger); }
 .rcpt-row { display: grid; grid-template-columns: 1fr 22px 44px; align-items: center; gap: 6px; font-size: 0.84rem; }
 .rcpt-label { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .rcpt-pts { text-align: right; font-weight: 800; color: var(--accent); }
