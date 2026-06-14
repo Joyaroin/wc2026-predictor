@@ -57,8 +57,8 @@ export function StandingsPage() {
       <h2>Group standings</h2>
       <p className="muted fine">Top two in each group advance to the Round of 32, joined by the eight best third-placed teams.</p>
       <div className="standings-grid">
-        {tables.map(({ group, rows }) => (
-          <div className="card standing-card" key={group} data-testid={`standing-${group}`}>
+        {tables.map(({ group, rows }, ci) => (
+          <div className="card standing-card" key={group} data-testid={`standing-${group}`} style={{ animationDelay: `${ci * 70}ms` }}>
             <h3 className="standing-title">Group {group}</h3>
             <table className="standing-table">
               <thead>
@@ -66,7 +66,7 @@ export function StandingsPage() {
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={r.code} className={i < 2 ? 'adv' : ''}>
+                  <tr key={r.code} className={i < 2 ? 'adv' : ''} style={{ animationDelay: `${ci * 70 + i * 55}ms` }}>
                     <td className="t-team"><Flag code={r.code} name={r.name} /> <span title={r.name}>{r.code}</span></td>
                     <td>{r.p}</td><td>{r.w}</td><td>{r.d}</td><td>{r.l}</td>
                     <td>{r.gf - r.ga > 0 ? `+${r.gf - r.ga}` : r.gf - r.ga}</td>

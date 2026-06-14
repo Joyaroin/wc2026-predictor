@@ -334,6 +334,22 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .theme-chip:active, .pick:active, .firstteam:active, .btn-save:active:not(:disabled) { transform: scale(0.96); }
   .menu-dropdown { animation: fadeUp 0.16s ease; }
   .modal { animation: pop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  /* Standings build in: cards and rows cascade up (delays set inline per index). */
+  .standing-card { animation: fadeUp 0.4s ease backwards; }
+  .standing-table tbody tr { animation: fadeUp 0.34s ease backwards; }
+  .standing-table tbody tr.adv .t-pts { animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) backwards; animation-delay: inherit; }
+  /* Group/global leaderboard rows + podium also cascade in. */
+  .lb-row { animation: fadeUp 0.3s ease backwards; }
+  .lb-row:nth-child(1) { animation-delay: 30ms; }
+  .lb-row:nth-child(2) { animation-delay: 75ms; }
+  .lb-row:nth-child(3) { animation-delay: 120ms; }
+  .lb-row:nth-child(4) { animation-delay: 165ms; }
+  .lb-row:nth-child(n+5) { animation-delay: 210ms; }
+  .podium-spot { animation: pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) backwards; }
+  .podium-spot.rank-2 { animation-delay: 60ms; }
+  .podium-spot.rank-1 { animation-delay: 140ms; }
+  .podium-spot.rank-3 { animation-delay: 220ms; }
+  .group-card { animation: fadeUp 0.34s ease backwards; }
 }
 @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 65% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
