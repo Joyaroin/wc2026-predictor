@@ -313,6 +313,10 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .awards .award:nth-child(2) { animation-delay: 90ms; }
   .awards .award:nth-child(3) { animation-delay: 180ms; }
   .awards .award:nth-child(4) { animation-delay: 270ms; }
+  /* Groups area: stagger cards, podium and leaderboard rows in like the rest of the UI. */
+  .group-card { animation: fadeUp 0.4s ease backwards; }
+  .podium { animation: fadeUp 0.45s ease backwards; }
+  .lb-row { animation: fadeUp 0.34s ease backwards; }
   .theme-chip, .pick, .firstteam, .select-btn, .joker-btn, .btn-save { transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease; }
   .theme-chip:active, .pick:active, .firstteam:active, .btn-save:active:not(:disabled) { transform: scale(0.96); }
   .menu-dropdown { animation: fadeUp 0.16s ease; }
