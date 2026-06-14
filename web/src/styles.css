@@ -317,6 +317,19 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .group-card { animation: fadeUp 0.4s ease backwards; }
   .podium { animation: fadeUp 0.45s ease backwards; }
   .lb-row { animation: fadeUp 0.34s ease backwards; }
+  /* My Results: results cards + filter chips fade in like Fixtures. */
+  .results .match-grid, .results-filter { animation: fadeUp 0.3s ease; }
+  /* Standings: stagger the group tables in. */
+  .standing-card { animation: fadeUp 0.4s ease backwards; }
+  .standing-card:nth-child(2) { animation-delay: 60ms; }
+  .standing-card:nth-child(3) { animation-delay: 120ms; }
+  .standing-card:nth-child(4) { animation-delay: 180ms; }
+  .standing-card:nth-child(n+5) { animation-delay: 240ms; }
+  /* Account, Match detail, Help — content fades in too. */
+  .settings .card { animation: fadeUp 0.4s ease backwards; }
+  .match-detail .predictions, .match-detail .result { animation: fadeUp 0.34s ease; }
+  .help-sec { animation: fadeUp 0.34s ease backwards; }
+  .feedback .card, .feedback form { animation: fadeUp 0.4s ease; }
   .theme-chip, .pick, .firstteam, .select-btn, .joker-btn, .btn-save { transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease; }
   .theme-chip:active, .pick:active, .firstteam:active, .btn-save:active:not(:disabled) { transform: scale(0.96); }
   .menu-dropdown { animation: fadeUp 0.16s ease; }
