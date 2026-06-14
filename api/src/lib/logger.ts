@@ -2,15 +2,27 @@
 // Writes one JSON object per line to stdout; CloudWatch captures it.
 type Fields = Record<string, unknown>;
 
+// All entries MUST be lowercase; keys are lower-cased before membership checks so
+// redaction is case-insensitive (e.g. 'Authorization' and 'authorization' both match).
 const REDACT_KEYS = new Set([
   'pin',
-  'pinHash',
+  'pinhash',
   'password',
   'token',
   'authorization',
-  'sessionSigningSecret',
-  'footballApiToken',
-  'apiKey',
+  'sessionsigningsecret',
+  'footballapitoken',
+  'apikey',
+  'secret',
+  'jwt',
+  'cookie',
+  'set-cookie',
+  'bearer',
+  'refreshtoken',
+  'privatekey',
+  'accesskey',
+  'footballdatatoken',
+  'admintoken',
 ]);
 
 // Redact a single value, recursing through plain objects AND array elements so a secret
@@ -24,7 +36,7 @@ function redactValue(v: unknown): unknown {
 function redact(fields: Fields): Fields {
   const out: Fields = {};
   for (const [k, v] of Object.entries(fields)) {
-    if (REDACT_KEYS.has(k)) out[k] = '[REDACTED]';
+    if (REDACT_KEYS.has(k.toLowerCase())) out[k] = '[REDACTED]';
     else out[k] = redactValue(v);
   }
   return out;

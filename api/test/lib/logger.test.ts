@@ -34,6 +34,12 @@ describe('logger redaction (SECURITY-03)', () => {
     expect(JSON.stringify(line)).not.toContain('leak-me');
   });
 
+  it('redacts a mixed-case secret key (case-insensitive)', () => {
+    const line = captureLine(() => createLogger().info('hi', { Authorization: 'Bearer xyz' }));
+    expect(line.Authorization).toBe('[REDACTED]');
+    expect(JSON.stringify(line)).not.toContain('Bearer xyz');
+  });
+
   it('redacts a secret in an object nested deeper inside arrays', () => {
     const line = captureLine(() =>
       createLogger().info('hi', { groups: [{ members: [{ password: 'hunter2' }] }] }),

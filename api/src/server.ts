@@ -22,11 +22,16 @@ export function buildApp(services: Services, config: Config, logger: Logger): Ex
 
   app.use(helmet()); // SECURITY-04
   app.use(cors({ origin: config.allowedOrigin })); // SECURITY-08 (strict allowlist)
-  app.use(requestContext(logger)); // SECURITY-03
-  app.use(express.json({ limit: '16kb' })); // SECURITY-05 (body size limit)
-  app.use(limiters.global); // SECURITY-11
+  app.use(requestContext(logger)); // SECURITY-03 (sets req.log; must precede limiter)
 
+  // Health/probe endpoint is registered before the global limiter so probes are never
+  // rate-limited and never consume the global bucket.
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // Global limiter runs before body parsing so rejected requests aren't parsed first.
+  app.use(limiters.global); // SECURITY-11
+  app.use(express.json({ limit: '16kb' })); // SECURITY-05 (body size limit)
+
   app.use('/api', buildRouter(services, config, limiters));
 
   app.use(notFoundHandler());
