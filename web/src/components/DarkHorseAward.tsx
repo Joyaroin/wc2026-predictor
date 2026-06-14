@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type DarkHorseTeam } from '../api/client';
+import { api, ApiError, type DarkHorseTeam } from '../api/client';
 import { Flag } from './Flag';
 import { ProbabilitiesModal } from './ProbabilitiesModal';
 
@@ -14,14 +14,17 @@ function ordinal(n: number): string {
 export function DarkHorseAward() {
   const qc = useQueryClient();
   const [modal, setModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['dark-horse'], queryFn: api.darkHorse });
 
   const pick = useMutation({
     mutationFn: (t: DarkHorseTeam) => api.setDarkHorse(t.code, t.name),
     onSuccess: () => {
+      setError(null);
       void qc.invalidateQueries({ queryKey: ['dark-horse'] });
       setModal(false);
     },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Could not save your pick.'),
   });
 
   const s = q.data;
@@ -51,11 +54,13 @@ export function DarkHorseAward() {
             📊 View odds{s.locked ? '' : ' & pick'}
           </button>
           {s.locked && <p className="muted fine">🔒 Picks closed June 13, 2 PM ET.</p>}
+          {error && <p className="error fine">{error}</p>}
           {modal && (
             <ProbabilitiesModal
               teams={s.teams}
               pickCode={s.pick?.teamCode}
               locked={s.locked}
+              busy={pick.isPending}
               onPick={(t) => pick.mutate(t)}
               onClose={() => setModal(false)}
             />

@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type WcPlayer } from '../api/client';
+import { api, ApiError, type WcPlayer } from '../api/client';
 import { fold } from '../lib/search';
 
 export function PlayerOfTournamentAward() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const status = useQuery({ queryKey: ['player-of-tournament'], queryFn: api.playerOfTournament });
   const pool = useQuery({ queryKey: ['player-pool'], queryFn: api.playerPool, staleTime: 60 * 60 * 1000 });
 
   const pick = useMutation({
     mutationFn: (p: WcPlayer) => api.setPlayerOfTournament(p.id, p.name),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['player-of-tournament'] }),
+    onSuccess: () => {
+      setError(null);
+      void qc.invalidateQueries({ queryKey: ['player-of-tournament'] });
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Could not save your pick.'),
   });
 
   const matches = useMemo(() => {
@@ -49,6 +54,8 @@ export function PlayerOfTournamentAward() {
                 disabled={pool.isLoading}
               />
               {pool.isLoading && <p className="muted">Loading squads…</p>}
+              {search.trim().length >= 2 && matches.length === 0 && !pool.isLoading && <p className="muted">No players found.</p>}
+              {error && <p className="error fine">{error}</p>}
               <ul className="gb-results">
                 {matches.map((p) => (
                   <li key={p.id}>

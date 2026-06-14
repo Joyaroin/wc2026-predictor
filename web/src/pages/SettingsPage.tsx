@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
 import { Flag } from '../components/Flag';
 
 export function SettingsPage() {
+  const qc = useQueryClient();
   const { player, updateName } = usePlayer();
   const { tzPref, timeZone, setTzPref, theme, setTheme } = usePrefs();
   const [newName, setNewName] = useState('');
@@ -26,6 +27,11 @@ export function SettingsPage() {
       setNameMsg(`You're now "${res.name}".`);
       setNameErr(null);
       setNewName('');
+      // The new name appears on leaderboards, groups and feedback admin — refresh those caches.
+      void qc.invalidateQueries({ queryKey: ['global-leaderboard'] });
+      void qc.invalidateQueries({ queryKey: ['groups'] });
+      void qc.invalidateQueries({ queryKey: ['feedback-admin'] });
+      void qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === 'leaderboard' });
     },
     onError: (e) => {
       setNameMsg(null);

@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type DarkHorseTeam } from '../api/client';
+import { api, ApiError, type DarkHorseTeam } from '../api/client';
 import { Flag } from './Flag';
 import { ProbabilitiesModal } from './ProbabilitiesModal';
 
 export function TournamentWinnerAward() {
   const qc = useQueryClient();
   const [modal, setModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['tournament-winner'], queryFn: api.tournamentWinner });
 
   const pick = useMutation({
     mutationFn: (t: DarkHorseTeam) => api.setTournamentWinner(t.code, t.name),
     onSuccess: () => {
+      setError(null);
       void qc.invalidateQueries({ queryKey: ['tournament-winner'] });
       setModal(false);
     },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Could not save your pick.'),
   });
 
   const s = q.data;
@@ -48,11 +51,13 @@ export function TournamentWinnerAward() {
             {s.locked ? '📊 View teams' : '🏆 Pick the champion'}
           </button>
           {s.locked && <p className="muted fine">🔒 Picks closed June 13, 2 PM ET.</p>}
+          {error && <p className="error fine">{error}</p>}
           {modal && (
             <ProbabilitiesModal
               teams={s.teams}
               pickCode={s.pick?.teamCode}
               locked={s.locked}
+              busy={pick.isPending}
               onPick={(t) => pick.mutate(t)}
               onClose={() => setModal(false)}
               // Mirror the button: once locked you're only viewing the field, not picking.
