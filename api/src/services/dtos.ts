@@ -15,6 +15,7 @@ export interface GroupSummary {
   id: string;
   name: string;
   memberCount: number;
+  inviteCode: string;
 }
 export interface MatchView extends Match {
   locked: boolean;

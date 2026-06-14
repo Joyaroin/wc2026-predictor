@@ -1,26 +1,36 @@
 import type { LeaderboardRow } from '../api/client';
+import { Avatar } from './Avatar';
+import { medal } from '../lib/rank';
 
-export function LeaderboardTable({ rows, meId }: { rows: LeaderboardRow[]; meId: string }) {
+export function LeaderboardTable({
+  rows,
+  meId,
+  onRowClick,
+}: {
+  rows: LeaderboardRow[];
+  meId: string;
+  onRowClick?: (playerId: string) => void;
+}) {
   return (
-    <table className="leaderboard" data-testid="leaderboard">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Player</th>
-          <th>Pts</th>
-          <th>Exact</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.playerId} className={r.playerId === meId ? 'me' : ''} data-testid={`lb-row-${r.playerId}`}>
-            <td>{r.rank}</td>
-            <td>{r.name}</td>
-            <td>{r.points}</td>
-            <td>{r.exacts}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="lb" data-testid="leaderboard">
+      {rows.map((r) => (
+        <button
+          type="button"
+          key={r.playerId}
+          className={`lb-row${r.playerId === meId ? ' me' : ''}${onRowClick ? ' clickable' : ''}`}
+          onClick={() => onRowClick?.(r.playerId)}
+          data-testid={`lb-row-${r.playerId}`}
+        >
+          <span className={`lb-rank${r.rank <= 3 ? ' top' : ''}`}>{medal(r.rank)}</span>
+          <Avatar name={r.name} size={30} />
+          <span className="lb-name">
+            {r.name}
+            {r.playerId === meId && <span className="lb-you">You</span>}
+          </span>
+          {r.exacts > 0 && <span className="lb-pill" title="Exact scorelines">{r.exacts}× exact</span>}
+          <span className="lb-pts">{r.points}</span>
+        </button>
+      ))}
+    </div>
   );
 }

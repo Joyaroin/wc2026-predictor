@@ -1,5 +1,5 @@
 // Leaderboard service: aggregate stored points, order via shared comparator (US-5.3/5.4/5.5).
-import { compareStandings, effectivePoints, type StandingAgg, type Prediction } from '@wc2026/shared';
+import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { BracketRepo, GoldenBootRepo, DarkHorseRepo, TournamentWinnerRepo, PottRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { LeaderboardRow, BreakdownRow, GlobalLeaderboardView } from './dtos';
@@ -19,9 +19,20 @@ function aggregate(playerId: string, name: string, preds: Prediction[], extraPoi
 }
 
 export interface LeaderboardService {
-  getLeaderboard(callerId: string, groupId: string): Promise<LeaderboardRow[]>;
+  getLeaderboard(callerId: string, groupId: string, scope?: 'week'): Promise<LeaderboardRow[]>;
   getBreakdown(callerId: string, groupId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
   getGlobal(callerId: string): Promise<GlobalLeaderboardView>;
+}
+
+/** Match ids in the "current matchday" — first section with an unfinished match, else the last one. */
+function activeSectionMatchIds(all: Match[]): Set<string> {
+  const sectionById = computeSections(all);
+  const present = SECTION_ORDER.filter((k) => all.some((m) => sectionById.get(m.id) === k));
+  if (present.length === 0) return new Set();
+  const active =
+    present.find((k) => all.some((m) => sectionById.get(m.id) === k && m.status !== 'FINISHED')) ??
+    present[present.length - 1];
+  return new Set(all.filter((m) => sectionById.get(m.id) === active).map((m) => m.id));
 }
 
 export function createLeaderboardService(
@@ -44,20 +55,28 @@ export function createLeaderboardService(
   }
 
   return {
-    async getLeaderboard(callerId, groupId) {
+    async getLeaderboard(callerId, groupId, scope) {
       await assertMember(callerId, groupId);
       const memberIds = await memberships.listMembers(groupId);
+      // "This matchday" view: only the current section's scorelines (season-long awards excluded).
+      const weekMatchIds = scope === 'week' ? activeSectionMatchIds(await matches.listAll()) : null;
       const aggs: StandingAgg[] = [];
       for (const id of memberIds) {
         const player = await players.getById(id);
         if (!player) continue;
-        const extra =
-          sumPoints(await bracket.listByPlayer(id)) +
-          ((await goldenBoot.get(id))?.points ?? 0) +
-          ((await darkHorse.get(id))?.points ?? 0) +
-          ((await tournamentWinner.get(id))?.points ?? 0) +
-          ((await pott.get(id))?.points ?? 0);
-        aggs.push(aggregate(id, player.name, await predictions.listByPlayer(id), extra));
+        let preds = await predictions.listByPlayer(id);
+        let extra = 0;
+        if (weekMatchIds) {
+          preds = preds.filter((p) => weekMatchIds.has(p.matchId));
+        } else {
+          extra =
+            sumPoints(await bracket.listByPlayer(id)) +
+            ((await goldenBoot.get(id))?.points ?? 0) +
+            ((await darkHorse.get(id))?.points ?? 0) +
+            ((await tournamentWinner.get(id))?.points ?? 0) +
+            ((await pott.get(id))?.points ?? 0);
+        }
+        aggs.push(aggregate(id, player.name, preds, extra));
       }
       aggs.sort(compareStandings);
       return aggs.map((a, i) => ({ rank: i + 1, ...a }));

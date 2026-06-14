@@ -1,81 +1,133 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, ApiError } from '../api/client';
+import { useMutation, useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
+import { api, ApiError, type LeaderboardRow } from '../api/client';
+import { usePlayer } from '../context/PlayerContext';
+import { AvatarStack } from '../components/Avatar';
+import { ordinal, medal } from '../lib/rank';
 
 export function GroupsPage() {
   const qc = useQueryClient();
+  const { player } = usePlayer();
   const groups = useQuery({ queryKey: ['groups'], queryFn: api.listGroups });
+  const groupList = groups.data ?? [];
+
+  // Per-group standings → show your rank + the leader on each card.
+  const boards = useQueries({
+    queries: groupList.map((g) => ({
+      queryKey: ['leaderboard', g.id],
+      queryFn: () => api.leaderboard(g.id),
+      staleTime: 30_000,
+    })),
+  });
+
+  const [mode, setMode] = useState<null | 'create' | 'join'>(null);
   const [newName, setNewName] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const done = () => {
+    setError(null);
+    setMode(null);
+    void qc.invalidateQueries({ queryKey: ['groups'] });
+  };
   const createGroup = useMutation({
     mutationFn: () => api.createGroup(newName),
-    onSuccess: () => {
-      setNewName('');
-      setError(null);
-      void qc.invalidateQueries({ queryKey: ['groups'] });
-    },
+    onSuccess: () => { setNewName(''); done(); },
     onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to create group'),
   });
-
   const joinGroup = useMutation({
     mutationFn: () => api.joinGroup(code),
-    onSuccess: () => {
-      setCode('');
-      setError(null);
-      void qc.invalidateQueries({ queryKey: ['groups'] });
-    },
+    onSuccess: () => { setCode(''); done(); },
     onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to join group'),
   });
 
   return (
     <div className="groups-page">
       <h2>Your groups</h2>
+
       {groups.isLoading && <p>Loading…</p>}
-      <ul className="group-list">
-        {groups.data?.map((g) => (
-          <li key={g.id} data-testid={`group-${g.id}`}>
-            <Link to={`/groups/${g.id}`}>{g.name}</Link>
-            <span className="muted"> · {g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
-          </li>
-        ))}
-        {groups.data?.length === 0 && <p className="muted">No groups yet — create or join one below.</p>}
-      </ul>
+
+      {!groups.isLoading && groupList.length === 0 && (
+        <div className="group-empty">
+          <div className="ge-emoji" aria-hidden>🏆</div>
+          <h3>No groups yet</h3>
+          <p className="muted">Start a group and invite your mates — or join one with a code.</p>
+        </div>
+      )}
+
+      <div className="group-cards">
+        {groupList.map((g, i) => {
+          const board = boards[i]?.data as LeaderboardRow[] | undefined;
+          const me = board?.find((r) => r.playerId === player?.playerId);
+          const leader = board?.[0];
+          const names = board?.map((r) => r.name) ?? [];
+          return (
+            <Link to={`/groups/${g.id}`} className="group-card" key={g.id} data-testid={`group-${g.id}`}>
+              <div className="gc-top">
+                <span className="gc-name">{g.name}</span>
+                <span className="gc-members muted fine">{g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
+              </div>
+
+              {names.length > 0 && <AvatarStack names={names} />}
+
+              <div className="gc-stats">
+                {me ? (
+                  <span className="gc-rank"><span className="gc-medal">{medal(me.rank)}</span> {ordinal(me.rank)} · <strong>{me.points}</strong> pts</span>
+                ) : (
+                  <span className="muted fine">No points yet</span>
+                )}
+                {leader && leader.playerId !== player?.playerId && (
+                  <span className="gc-leader muted fine">👑 {leader.name} · {leader.points}</span>
+                )}
+                {leader && leader.playerId === player?.playerId && (
+                  <span className="gc-leader muted fine">👑 You're leading</span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
 
       {error && <p className="error">{error}</p>}
 
-      <div className="card">
-        <h3>Create a group</h3>
-        <div className="row">
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Group name"
-            maxLength={40}
-            data-testid="create-group-name"
-          />
-          <button disabled={!newName.trim() || createGroup.isPending} onClick={() => createGroup.mutate()} data-testid="create-group-button">
-            Create
-          </button>
-        </div>
+      <div className="group-actions">
+        <button onClick={() => setMode(mode === 'create' ? null : 'create')} data-testid="show-create">+ New group</button>
+        <button className="ghost" onClick={() => setMode(mode === 'join' ? null : 'join')} data-testid="show-join">Join with code</button>
       </div>
 
-      <div className="card">
-        <h3>Join a group</h3>
-        <div className="row">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))}
-            placeholder="Invite code"
-            data-testid="join-group-code"
-          />
-          <button disabled={code.length !== 8 || joinGroup.isPending} onClick={() => joinGroup.mutate()} data-testid="join-group-button">
-            Join
-          </button>
+      {mode === 'create' && (
+        <div className="card group-form">
+          <div className="row">
+            <input
+              autoFocus
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Group name"
+              maxLength={40}
+              onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) createGroup.mutate(); }}
+              data-testid="create-group-name"
+            />
+            <button disabled={!newName.trim() || createGroup.isPending} onClick={() => createGroup.mutate()} data-testid="create-group-button">Create</button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {mode === 'join' && (
+        <div className="card group-form">
+          <div className="row">
+            <input
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))}
+              placeholder="Invite code"
+              onKeyDown={(e) => { if (e.key === 'Enter' && code.length === 8) joinGroup.mutate(); }}
+              data-testid="join-group-code"
+            />
+            <button disabled={code.length !== 8 || joinGroup.isPending} onClick={() => joinGroup.mutate()} data-testid="join-group-button">Join</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

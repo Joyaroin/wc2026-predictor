@@ -15,6 +15,16 @@ export interface GroupSummary {
   id: string;
   name: string;
   memberCount: number;
+  inviteCode: string;
+}
+export interface BreakdownRow {
+  matchId: string;
+  home: number | null;
+  away: number | null;
+  actualHome: number | null;
+  actualAway: number | null;
+  points: number;
+  locked: boolean;
 }
 export interface MatchView extends Match {
   locked: boolean;
@@ -118,7 +128,10 @@ export const api = {
   changePin: (currentPin: string, newPin: string) =>
     req<{ ok: true }>('/players/me/pin', { method: 'POST', body: { currentPin, newPin } }),
   members: (id: string) => req<PublicPlayer[]>(`/groups/${id}/members`),
-  leaderboard: (id: string) => req<LeaderboardRow[]>(`/groups/${id}/leaderboard`),
+  leaderboard: (id: string, scope?: 'week') =>
+    req<LeaderboardRow[]>(`/groups/${id}/leaderboard${scope ? `?scope=${scope}` : ''}`),
+  groupBreakdown: (groupId: string, playerId: string) =>
+    req<BreakdownRow[]>(`/groups/${groupId}/players/${playerId}/breakdown`),
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),

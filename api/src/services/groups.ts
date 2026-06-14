@@ -66,7 +66,7 @@ export function createGroupService(
         const group = await groups.getById(id);
         if (!group) continue;
         const memberCount = (await memberships.listMembers(id)).length;
-        summaries.push({ id: group.id, name: group.name, memberCount });
+        summaries.push({ id: group.id, name: group.name, memberCount, inviteCode: group.inviteCode });
       }
       return summaries;
     },

@@ -32,6 +32,12 @@ describe('leaderboard flow (US-2.x / US-5.x)', () => {
       [1, 'Sam', 12],
       [2, 'Mia', 2],
     ]);
+
+    // "This matchday" scope returns a ranked array too (current-section scorelines only).
+    const week = await request(t.app).get(`/api/groups/${groupId}/leaderboard?scope=week`).set('Authorization', `Bearer ${samTok}`);
+    expect(week.status).toBe(200);
+    expect(Array.isArray(week.body)).toBe(true);
+    expect(week.body.map((r: { name: string }) => r.name).sort()).toEqual(['Mia', 'Sam']);
   });
 
   it('forbids non-members from reading a group leaderboard', async () => {

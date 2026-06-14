@@ -631,3 +631,87 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .ms-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--line); }
 .ms-bar-home { background: var(--accent); }
 .ms-bar-away { background: var(--muted); opacity: 0.55; }
+
+/* ===== Groups experience ===== */
+/* Avatars */
+.avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font-weight: 800; line-height: 1; flex: none; letter-spacing: 0.02em; }
+.avatar.ring { box-shadow: 0 0 0 2px var(--card); }
+.avatar.more { background: var(--line-strong); color: var(--ink); }
+.avatar-stack { display: inline-flex; align-items: center; }
+.avatar-slot { display: inline-flex; }
+
+/* Group hub cards */
+.group-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin: 12px 0; }
+.group-card { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); transition: border-color 0.15s ease, transform 0.1s ease; }
+.group-card:hover { border-color: var(--accent); }
+.group-card:active { transform: scale(0.99); }
+.gc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.gc-name { font-weight: 800; font-size: 1.05rem; }
+.gc-stats { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.gc-rank { font-size: 0.95rem; }
+.gc-rank strong { color: var(--accent); }
+.gc-medal { font-weight: 800; }
+
+.group-empty { text-align: center; padding: 28px 16px; border: 1px dashed var(--line); border-radius: 14px; margin: 12px 0; }
+.group-empty .ge-emoji { font-size: 2.6rem; }
+.group-empty h3 { margin: 6px 0; }
+
+.group-actions { display: flex; gap: 10px; margin-top: 8px; }
+.group-actions button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.group-form { margin-top: 10px; }
+
+/* Share invite */
+.share-invite { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 16px; }
+.invite-chip { display: inline-flex; align-items: center; gap: 10px; background: var(--surface-2); color: var(--ink); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 8px 12px; font-weight: 800; letter-spacing: 0.08em; }
+.invite-chip:hover { border-color: var(--accent); }
+.invite-icon { color: var(--muted); font-weight: 700; }
+.share-copied { align-self: center; }
+
+/* Group detail hero + menu */
+.gd-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.gd-hero-main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gd-hero-main h2 { margin: 0; }
+.gd-menu { position: relative; }
+.icon-btn { background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 1.1rem; line-height: 1; }
+.menu-dropdown.right { right: 0; left: auto; }
+.danger-item { background: transparent; color: var(--danger); width: 100%; text-align: left; }
+
+/* Scope toggle */
+.lb-scope { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; margin: 4px 0 14px; }
+.lb-scope button { background: transparent; color: var(--muted); border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; }
+.lb-scope button.on { background: var(--accent); color: var(--accent-contrast); }
+
+/* Podium */
+.podium { display: flex; align-items: flex-end; justify-content: center; gap: 14px; margin: 6px 0 16px; }
+.podium-spot { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 70px; }
+.podium-spot.rank-1 { transform: translateY(-10px); }
+.podium-medal { font-size: 1.1rem; }
+.podium-name { font-weight: 700; font-size: 0.85rem; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium-name.me { color: var(--accent); }
+.podium-pts { font-weight: 800; color: var(--accent2); }
+
+/* Leaderboard list */
+.lb { display: flex; flex-direction: column; gap: 6px; }
+.lb-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font: inherit; }
+.lb-row.clickable { cursor: pointer; }
+.lb-row.clickable:hover { border-color: var(--accent); }
+.lb-row.me { border-color: var(--accent); background: var(--success-bg); }
+.lb-rank { min-width: 34px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lb-rank.top { color: var(--ink); }
+.lb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.lb-you { margin-left: 8px; font-size: 0.66rem; font-weight: 800; color: var(--accent-contrast); background: var(--accent); border-radius: 999px; padding: 2px 7px; vertical-align: middle; }
+.lb-pill { font-size: 0.7rem; font-weight: 700; color: var(--accent2); background: color-mix(in srgb, var(--accent2) 16%, transparent); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.lb-pts { font-weight: 800; font-size: 1.05rem; min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+.gd-hint { text-align: center; margin-top: 10px; }
+
+/* Member breakdown */
+.member-head { display: flex; align-items: center; gap: 10px; }
+.member-head h2 { margin: 0; }
+.member-total { margin-left: auto; font-weight: 800; color: var(--accent2); }
+.member-results { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.mr-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.mr-teams { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+.mr-pick { font-weight: 700; font-variant-numeric: tabular-nums; }
+.mr-actual { font-variant-numeric: tabular-nums; }
+.mr-pts { min-width: 34px; text-align: right; font-weight: 800; color: var(--muted); }
+.mr-pts.got { color: var(--accent); }

@@ -5,6 +5,7 @@ import { Nav } from './components/Nav';
 import { LandingPage } from './pages/LandingPage';
 import { GroupsPage } from './pages/GroupsPage';
 import { GroupDetailPage } from './pages/GroupDetailPage';
+import { GroupMemberPage } from './pages/GroupMemberPage';
 import { FixturesPage } from './pages/FixturesPage';
 import { MatchDetailPage } from './pages/MatchDetailPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/bracket" element={<Navigate to="/awards" replace />} />
           <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
           <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
+          <Route path="/groups/:id/players/:pid" element={<RequireAuth><GroupMemberPage /></RequireAuth>} />
           <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><MyBreakdownPage /></RequireAuth>} />
           <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
