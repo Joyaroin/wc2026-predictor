@@ -21,9 +21,9 @@ const ADS: Ad[] = [
   {
     id: 'dany',
     img: '/dany.png',
-    label: 'Follow Dany on Insta 📸',
-    coin: '📸',
-    action: { kind: 'link', href: 'https://www.instagram.com/adha6621/' },
+    label: 'Quick question about Dany 🐶',
+    coin: '🐶',
+    action: { kind: 'modal' },
   },
 ];
 
@@ -33,6 +33,8 @@ export function AdPopup() {
   const ad = useMemo(() => ADS[Math.floor(Math.random() * ADS.length)]!, []);
   const [closed, setClosed] = useState(false);
   const [modal, setModal] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const closeModal = () => { setModal(false); setAnswer(null); };
 
   // Hidden unless the admin flag is on (and until the flag loads).
   if (closed || !flags.data?.adsEnabled) return null;
@@ -62,6 +64,27 @@ export function AdPopup() {
             </div>
             <img className="donate-qr" src="/tarek-qr.jpg" alt="PayPal QR code — scan to pay Tarek Eid" />
             <p className="muted fine" style={{ textAlign: 'center', marginTop: 8 }}>Scan with your phone to pay <b>Tarek Eid</b> on PayPal 🙏</p>
+          </div>
+        </div>
+      )}
+
+      {modal && ad.id === 'dany' && (
+        <div className="modal-backdrop" onClick={closeModal}>
+          <div className="modal puppy-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Quick question">
+            <div className="modal-head">
+              <h3>🐶 Quick question</h3>
+              <button className="modal-close" onClick={closeModal} aria-label="Close">✕</button>
+            </div>
+            <img className="puppy-img" src="/dany-puppy.jpg" alt="Dany" />
+            <p className="puppy-q">dany is a submissive puppy dog</p>
+            {answer ? (
+              <p className="puppy-result">Knew it. 🐶</p>
+            ) : (
+              <div className="puppy-options">
+                <button className="puppy-opt" onClick={() => setAnswer('yes')} data-testid="puppy-yes">Yes</button>
+                <button className="puppy-opt strong" onClick={() => setAnswer('fuck yes')} data-testid="puppy-fuck-yes">Fuck yes</button>
+              </div>
+            )}
           </div>
         </div>
       )}
