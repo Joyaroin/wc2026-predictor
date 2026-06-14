@@ -30,4 +30,11 @@ describe('session token (SECURITY-12, PBT-02 round-trip)', () => {
     const token = signSession('player-1', SECRET, -1); // already expired
     expect(verifySession(token, SECRET)).toBeNull();
   });
+
+  it('rejects a validly-signed token with an empty subject', () => {
+    // signSession never emits this today, but a malformed/future signer could; an empty callerId
+    // must not be accepted as an authenticated principal.
+    const token = signSession('', SECRET, 30);
+    expect(verifySession(token, SECRET)).toBeNull();
+  });
 });

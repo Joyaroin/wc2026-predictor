@@ -36,7 +36,8 @@ export function verifySession(token: string, secret: string): string | null {
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString()) as Payload;
     if (typeof payload.exp !== 'number' || payload.exp < Math.floor(Date.now() / 1000)) return null;
-    return typeof payload.sub === 'string' ? payload.sub : null;
+    // Require a non-empty subject: an empty/whitespace id must never be treated as a valid principal.
+    return typeof payload.sub === 'string' && payload.sub.length > 0 ? payload.sub : null;
   } catch {
     return null;
   }

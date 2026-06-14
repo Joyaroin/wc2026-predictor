@@ -52,7 +52,7 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
   const espn = createEspnClient(logger);
   return {
     auth: createAuthService(repos.players, config, clock),
-    players: createPlayerService(repos.players),
+    players: createPlayerService(repos.players, config.adminPlayer),
     groups: createGroupService(repos.groups, repos.memberships, repos.players, clock),
     matches,
     predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
