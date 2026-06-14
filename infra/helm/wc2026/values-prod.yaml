@@ -1,23 +1,18 @@
 environment: prod
-
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: { repository: wc2026-api, tag: 359ac83c44e0ffd82cb749344d266906f40182b9 } # optionally pin a built SHA at promotion time
-  web: { repository: wc2026-web, tag: 359ac83c44e0ffd82cb749344d266906f40182b9 }
-
+  api: {repository: wc2026-api, tag: c40676fb7d3f59f38d20ac39c681c1340862bdb0} # optionally pin a built SHA at promotion time
+  web: {repository: wc2026-web, tag: c40676fb7d3f59f38d20ac39c681c1340862bdb0}
 api:
   replicas: 1 # single small node — keep modest; bump with a larger instance
   env:
     TABLE_NAME: wc2026-prod
     ALLOWED_ORIGIN: https://wc-predictions-2026.com
-
 serviceAccount:
   roleArn: ""
-
 secret:
   existingSecret: wc2026-secrets
-
 ingress:
   host: wc-predictions-2026.com
   tls:
@@ -25,6 +20,5 @@ ingress:
     secretName: wc2026-prod-tls
   certManager:
     clusterIssuer: letsencrypt-prod
-
 hpa:
   enabled: false
