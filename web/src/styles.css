@@ -803,3 +803,9 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .puppy-opt { flex: 1; padding: 12px; font-weight: 800; font-size: 1rem; }
 .puppy-opt.strong { background: var(--accent2); color: var(--accent2-contrast); }
 .puppy-result { text-align: center; font-weight: 800; font-size: 1.2rem; margin: 8px 0 2px; color: var(--accent); }
+
+/* Live/finished cards: clearly label the predicted scoreline as "your pick" so it
+   reads as a prediction, not a second scoreboard competing with the live score. */
+.mc-pred-cap { text-align: center; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.mc-pred.is-prediction .mc-box { width: 38px; height: 38px; font-size: 1.05rem; background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+.mc-pred.is-prediction .mc-flag-big, .mc-pred.is-prediction .flag-big { opacity: 0.9; }

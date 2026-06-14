@@ -233,7 +233,10 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
       <div className="mc-body">
         <div className="mc-meta">{formatKickoff(match.kickoff, timeZone)}</div>
 
-        <div className="mc-pred">
+        {!editable && !match.placeholder && (
+          <div className="mc-pred-cap" data-testid={`pred-cap-${match.id}`}>{prediction ? 'Your pick' : 'No prediction'}</div>
+        )}
+        <div className={`mc-pred${!editable && !match.placeholder ? ' is-prediction' : ''}`}>
           {teamSide(match.homeCode, match.homeTeam, 'home')}
           <div className="mc-scores">
             {scoreBox(home, setHome, 'home')}
@@ -264,22 +267,32 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
                   <span className="live-dot">●</span> Live points as it stands — settled at full time
                 </div>
               )}
+              {/* While live, show the extras you locked in as a glanceable summary (they're scored
+                  in full at the final whistle below). */}
+              {live && (prediction.firstTeam || prediction.firstScorerName || prediction.joker) && (
+                <div className="mc-yourpicks muted fine" data-testid={`live-picks-${match.id}`}>
+                  Locked in:
+                  {prediction.firstTeam && <> 1st to score <Flag code={pickedTeamCode} name={pickedTeamName} /></>}
+                  {prediction.firstScorerName && <> · ⚽ {prediction.firstScorerName}</>}
+                  {prediction.joker && <> · ★ Joker ×2</>}
+                </div>
+              )}
               {rcptRow('Result', bd.outcome, SCORE_POINTS.outcome)}
               {rcptRow('Goal difference', bd.goalDiff, SCORE_POINTS.goalDiff)}
               {rcptRow('Exact score', bd.exact, SCORE_POINTS.exact)}
               {rcptRow(`${match.homeCode ?? 'Home'} goals`, bd.home, SCORE_POINTS.home)}
               {rcptRow(`${match.awayCode ?? 'Away'} goals`, bd.away, SCORE_POINTS.away)}
-              {(prediction.firstTeam || (goalless && firstTeamHit)) && rcptRow(
+              {!live && (prediction.firstTeam || (goalless && firstTeamHit)) && rcptRow(
                 goalless ? <>1st to score: <em>none (0-0)</em></> : <>1st to score: <Flag code={pickedTeamCode} name={pickedTeamName} /></>,
                 firstGoalKnown ? firstTeamHit : undefined,
                 FIRST_TEAM_POINTS,
               )}
-              {(prediction.firstScorerId || (goalless && firstScorerHit)) && rcptRow(
+              {!live && (prediction.firstScorerId || (goalless && firstScorerHit)) && rcptRow(
                 goalless ? <>1st scorer: <em>none (0-0)</em></> : <>1st scorer: {prediction.firstScorerName}</>,
                 firstGoalKnown ? firstScorerHit : undefined,
                 FIRST_PLAYER_POINTS,
               )}
-              {prediction.joker && (
+              {!live && prediction.joker && (
                 <div className="rcpt-row rcpt-joker" style={{ animationDelay: `${rcptIdx * 70}ms` }}>
                   <span className="rcpt-label">★ Joker</span>
                   <span className="tick ok">✓</span>
