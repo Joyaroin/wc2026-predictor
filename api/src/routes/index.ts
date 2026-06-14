@@ -38,6 +38,7 @@ const jokerSchema = z.object({ joker: z.boolean() });
 const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
 const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
 const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
+const flagsSchema = z.object({ adsEnabled: z.boolean() });
 const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
 
 const wrap =
@@ -115,6 +116,13 @@ export function buildRouter(services: Services, config: Config): Router {
   r.post('/admin/rescore', auth, wrap(async (req) => {
     if (!(await services.feedback.isAdmin(caller(req)))) throw new ForbiddenError('Not authorized');
     return { rescored: await services.scoring.rescoreAll() };
+  }));
+
+  // --- Feature flags (public read; admin toggle) ---
+  r.get('/flags', auth, wrap(() => services.flags.get()));
+  r.post('/admin/flags', auth, validateBody(flagsSchema), wrap(async (req) => {
+    if (!(await services.feedback.isAdmin(caller(req)))) throw new ForbiddenError('Not authorized');
+    return services.flags.set(req.body);
   }));
 
   // --- Global leaderboard ---

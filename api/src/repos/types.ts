@@ -88,6 +88,12 @@ export interface TopScorer {
   goals: number;
 }
 
+/** Runtime, admin-toggleable feature flags. */
+export interface AppFlags {
+  adsEnabled: boolean;
+}
+export const DEFAULT_FLAGS: AppFlags = { adsEnabled: true };
+
 export interface StatsRepo {
   getLeader(): Promise<TopScorer | null>;
   setLeader(leader: TopScorer): Promise<void>;
@@ -96,6 +102,9 @@ export interface StatsRepo {
   /** Admin-set Player of the Tournament winner. */
   getPottWinner(): Promise<Winner | null>;
   setPottWinner(winner: Winner): Promise<void>;
+  /** Runtime feature flags (admin-toggleable). */
+  getFlags(): Promise<AppFlags>;
+  setFlags(patch: Partial<AppFlags>): Promise<AppFlags>;
 }
 
 /** A user's pre-tournament Dark Horse pick (a team). */

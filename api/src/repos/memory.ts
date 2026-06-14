@@ -22,7 +22,9 @@ import type {
   StatsRepo,
   TopScorer,
   Winner,
+  AppFlags,
 } from './types';
+import { DEFAULT_FLAGS } from './types';
 
 export function createMemoryRepositories(): Repositories {
   const players = new Map<string, PlayerRecord>();
@@ -238,6 +240,7 @@ export function createMemoryRepositories(): Repositories {
   let leader: TopScorer | null = null;
   let lastEspnRun: string | null = null;
   let pottWinner: Winner | null = null;
+  let flags: AppFlags = { ...DEFAULT_FLAGS };
   const statsRepo: StatsRepo = {
     async getLeader() {
       return leader;
@@ -256,6 +259,13 @@ export function createMemoryRepositories(): Repositories {
     },
     async setPottWinner(w) {
       pottWinner = w;
+    },
+    async getFlags() {
+      return { ...flags };
+    },
+    async setFlags(patch) {
+      flags = { ...flags, ...patch };
+      return { ...flags };
     },
   };
 

@@ -31,6 +31,7 @@ import type {
   FeedbackRepo,
   StatsRepo,
 } from './types';
+import { DEFAULT_FLAGS } from './types';
 import {
   keys,
   playerToItem,
@@ -529,6 +530,16 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
     async setPottWinner(w) {
       await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'POTT', ...w } }));
+    },
+    async getFlags() {
+      const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'FLAGS' } }));
+      return { ...DEFAULT_FLAGS, ...(r.Item ? { adsEnabled: r.Item.adsEnabled as boolean } : {}) };
+    },
+    async setFlags(patch) {
+      const current = await this.getFlags();
+      const next = { ...current, ...patch };
+      await doc.send(new PutCommand({ TableName: Table, Item: { PK: 'STATS', SK: 'FLAGS', ...next } }));
+      return next;
     },
   };
 

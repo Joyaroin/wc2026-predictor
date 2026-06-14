@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api/client';
 
 interface Ad {
   id: string;
@@ -27,11 +29,13 @@ const ADS: Ad[] = [
 
 /** A cheeky floating "ad". One ad is picked at random per page load; ✕ hides it until the next refresh. */
 export function AdPopup() {
+  const flags = useQuery({ queryKey: ['flags'], queryFn: api.flags, staleTime: 60_000 });
   const ad = useMemo(() => ADS[Math.floor(Math.random() * ADS.length)]!, []);
   const [closed, setClosed] = useState(false);
   const [modal, setModal] = useState(false);
 
-  if (closed) return null;
+  // Hidden unless the admin flag is on (and until the flag loads).
+  if (closed || !flags.data?.adsEnabled) return null;
 
   const onClick = () => {
     if (ad.action.kind === 'link') window.open(ad.action.href, '_blank', 'noopener,noreferrer');

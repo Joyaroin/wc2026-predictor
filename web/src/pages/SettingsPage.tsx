@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
@@ -18,6 +18,14 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4);
+
+  const qc = useQueryClient();
+  const adminMe = useQuery({ queryKey: ['admin-me'], queryFn: api.feedbackAdminMe });
+  const flags = useQuery({ queryKey: ['flags'], queryFn: api.flags });
+  const togglePopup = useMutation({
+    mutationFn: (on: boolean) => api.setAdsEnabled(on),
+    onSuccess: (f) => qc.setQueryData(['flags'], f),
+  });
 
   const rename = useMutation({
     mutationFn: () => api.rename(newName.trim()),
@@ -137,6 +145,27 @@ export function SettingsPage() {
           {changePin.isPending ? 'Saving…' : 'Update PIN'}
         </button>
       </form>
+
+      {adminMe.data?.isAdmin && (
+        <div className="card">
+          <h3>Admin · Bottom-right pop-up</h3>
+          <p className="muted fine">Show or hide the floating bottom-right pop-up for everyone — takes effect immediately.</p>
+          <div className="toggle-row">
+            <button
+              type="button"
+              className={`switch ${flags.data?.adsEnabled ? 'on' : ''}`}
+              role="switch"
+              aria-checked={!!flags.data?.adsEnabled}
+              disabled={flags.isLoading || togglePopup.isPending}
+              onClick={() => togglePopup.mutate(!flags.data?.adsEnabled)}
+              data-testid="toggle-popup"
+            >
+              <span className="switch-knob" />
+            </button>
+            <span className="fine">{flags.data?.adsEnabled ? 'On' : 'Off'}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

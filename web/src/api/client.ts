@@ -65,6 +65,10 @@ export interface MatchStats {
   status: string | null;
   stats: MatchStatRow[];
 }
+/** Runtime feature flags. `adsEnabled` controls the bottom-right pop-up. */
+export interface AppFlags {
+  adsEnabled: boolean;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -137,6 +141,8 @@ export const api = {
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
   matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
+  flags: () => req<AppFlags>('/flags'),
+  setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   submitFeedback: (message: string, page?: string) =>
     req<{ ok: true }>('/feedback', { method: 'POST', body: { message, page } }),
   feedbackAdminMe: () => req<{ isAdmin: boolean }>('/feedback/admin/me'),
