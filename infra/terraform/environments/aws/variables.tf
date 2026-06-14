@@ -13,8 +13,10 @@ variable "ssh_cidr" {
   description = "CIDR allowed to SSH (port 22). REQUIRED — restrict to your IP, or use SSM only."
   type        = string
   validation {
-    condition     = can(cidrhost(var.ssh_cidr, 0)) && var.ssh_cidr != "0.0.0.0/0"
-    error_message = "ssh_cidr must be a valid CIDR and must not be 0.0.0.0/0 (do not open SSH to the entire internet)."
+    # Reject malformed CIDRs and any range broader than /8 (blocks 0.0.0.0/0, 0.0.0.0/1, etc. —
+    # not just the exact all-internet string). try() keeps a non-CIDR value from erroring here.
+    condition     = can(cidrhost(var.ssh_cidr, 0)) && try(tonumber(split("/", var.ssh_cidr)[1]) >= 8, false)
+    error_message = "ssh_cidr must be a valid CIDR no broader than /8 (do not open SSH to the whole/half internet, e.g. 0.0.0.0/0 or 0.0.0.0/1)."
   }
 }
 variable "key_name" {

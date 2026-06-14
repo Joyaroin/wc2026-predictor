@@ -27,11 +27,12 @@ export function SettingsPage() {
       setNameMsg(`You're now "${res.name}".`);
       setNameErr(null);
       setNewName('');
-      // The new name appears on leaderboards, groups and feedback admin — refresh those caches.
+      // The new name appears on leaderboards, groups, feedback admin and the per-match predictions
+      // view — refresh those caches so the rename is reflected everywhere immediately.
       void qc.invalidateQueries({ queryKey: ['global-leaderboard'] });
       void qc.invalidateQueries({ queryKey: ['groups'] });
       void qc.invalidateQueries({ queryKey: ['feedback-admin'] });
-      void qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === 'leaderboard' });
+      void qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === 'leaderboard' || q.queryKey[0] === 'match-predictions') });
     },
     onError: (e) => {
       setNameMsg(null);
