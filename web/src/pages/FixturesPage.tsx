@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { computeSections, SECTION_ORDER, sectionLabel, type Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
 import { canonTeam } from '../lib/teams';
 import { compareFixtures, isLive } from '../lib/format';
+
+const HIDE_FINISHED_KEY = 'wc2026.fixtures.hideFinished';
 
 const PREDS = ['my-predictions'] as const;
 
@@ -47,6 +50,29 @@ export function FixturesPage() {
     }
     return map;
   }, [pool.data]);
+
+  // Finished matches move to the My Results tab by default, keeping Fixtures about what's next.
+  const [hideFinished, setHideFinished] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(HIDE_FINISHED_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const toggleHideFinished = () =>
+    setHideFinished((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(HIDE_FINISHED_KEY, next ? '1' : '0');
+      } catch {
+        /* storage unavailable — keep the in-memory choice */
+      }
+      return next;
+    });
+  const finishedCount = useMemo(
+    () => (matches.data ?? []).filter((m) => m.status === 'FINISHED').length,
+    [matches.data],
+  );
 
   const sectionById = useMemo(() => computeSections(matches.data ?? []), [matches.data]);
 
@@ -171,6 +197,7 @@ export function FixturesPage() {
     const all = matches.data ?? [];
     const byKey = new Map<string, MatchView[]>();
     for (const m of all) {
+      if (hideFinished && m.status === 'FINISHED') continue;
       const k = sectionById.get(m.id) ?? 'MW1';
       const list = byKey.get(k) ?? [];
       list.push(m);
@@ -183,7 +210,7 @@ export function FixturesPage() {
       // Live match on top, then the next match to predict, finished cards last.
       matches: (byKey.get(k) ?? []).slice().sort(compareFixtures),
     }));
-  }, [matches.data, sectionById]);
+  }, [matches.data, sectionById, hideFinished]);
 
   const activeKey = useMemo(() => {
     // Open the section with a live match first; otherwise the first with anything still to play.
@@ -204,7 +231,31 @@ export function FixturesPage() {
   return (
     <div className="fixtures">
       <h2>Fixtures</h2>
-      <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per section (match week / round) to double its points.</p>
+      <div className="fixtures-controls">
+        <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per section (match week / round) to double its points.</p>
+        <label className="chip-toggle" title="Finished matches stay on your My Results tab">
+          <input
+            type="checkbox"
+            checked={hideFinished}
+            onChange={toggleHideFinished}
+            data-testid="toggle-hide-finished"
+          />
+          Hide finished
+          {hideFinished && finishedCount > 0 && (
+            <Link to="/me" className="results-link" onClick={(e) => e.stopPropagation()}>{finishedCount} → My results</Link>
+          )}
+        </label>
+      </div>
+
+      {sections.length === 0 && (
+        <p className="muted" data-testid="fixtures-empty">
+          {finishedCount > 0 ? (
+            <>All matches here are done — see <Link to="/me">My results</Link>.</>
+          ) : (
+            'No fixtures to show yet.'
+          )}
+        </p>
+      )}
 
       <div className="weeks">
         {sections.map((s) => {

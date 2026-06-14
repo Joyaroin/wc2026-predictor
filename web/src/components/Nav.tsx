@@ -38,7 +38,7 @@ export function Nav() {
               <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
               <div className="menu-dropdown" onClick={() => setMenuOpen(false)} data-testid="nav-dropdown">
                 <NavLink viewTransition to="/awards" data-testid="nav-awards">Awards</NavLink>
-                <NavLink viewTransition to="/me" data-testid="nav-me">My Points</NavLink>
+                <NavLink viewTransition to="/me" data-testid="nav-me">My Results</NavLink>
                 <NavLink viewTransition to="/global" data-testid="nav-global">Global leaderboard</NavLink>
                 <NavLink viewTransition to="/settings" data-testid="nav-settings">Account</NavLink>
                 <NavLink viewTransition to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>

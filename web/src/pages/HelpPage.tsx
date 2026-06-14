@@ -76,7 +76,7 @@ export function HelpPage() {
           <li>Create a group in <b>Groups</b> and share its <b>invite code</b>; friends join with that code.</li>
           <li>Each group has its own leaderboard; the <b>Global leaderboard</b> (⋮ menu) ranks everyone.</li>
           <li>Ties break by: total points → exact scorelines → correct results → name.</li>
-          <li><b>⋮ → My Points</b> shows your full match-by-match breakdown.</li>
+          <li><b>⋮ → My Results</b> shows your played predictions and points, newest first.</li>
         </ul>
       </details>
 
