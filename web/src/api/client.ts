@@ -66,14 +66,19 @@ export interface FeedbackItem {
 }
 
 let authToken: string | null = null;
+// One-shot latch for the central 401 handler (see req()): a session-expiry logout fires at most
+// once until the next login re-arms it. Re-armed whenever a new (non-null) token is installed.
+let unauthorizedHandled = false;
 export function setAuthToken(token: string | null): void {
   authToken = token;
+  if (token) unauthorizedHandled = false;
 }
 
 /**
  * Central 401 hook. Registered by the app (PlayerProvider) so an expired/invalid
  * session is handled in one place — without it, a stale token leaves the SPA stuck
- * on authenticated pages that keep failing silently. Invoked once per 401 response.
+ * on authenticated pages that keep failing silently. Invoked at most once per session
+ * (re-armed on the next login), and never for credential-check endpoints (see req()).
  */
 let onUnauthorized: (() => void) | null = null;
 export function setOnUnauthorized(handler: (() => void) | null): void {
@@ -91,8 +96,16 @@ async function req<T>(path: string, opts: { method?: string; body?: unknown; hea
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
-    // Expired/invalid session — let the app log the user out (redirect to landing).
-    if (res.status === 401) onUnauthorized?.();
+    // Expired/invalid SESSION → log the user out (redirect to landing). But 401 is overloaded:
+    // login + change-PIN return 401 for a wrong PIN on an otherwise-valid session, which must NOT
+    // destroy the session. Exclude those credential-check endpoints, and fire at most once per
+    // session (re-armed on the next login) to avoid redundant logout bursts when several
+    // authenticated queries 401 together on a hard reload.
+    const isCredentialCheck = path.startsWith('/auth/login') || path.startsWith('/players/me/pin');
+    if (res.status === 401 && !isCredentialCheck && !unauthorizedHandled) {
+      unauthorizedHandled = true;
+      onUnauthorized?.();
+    }
     let message = res.statusText;
     try {
       const data = (await res.json()) as { error?: string };
