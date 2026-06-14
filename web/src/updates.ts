@@ -9,6 +9,16 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-14.5',
+    date: 'June 14, 2026',
+    emoji: '🧾',
+    title: 'See how anyone scored',
+    points: [
+      'Open a player from a leaderboard and tap any of their played matches',
+      'It expands into the full points receipt — result, goal difference, exact, each team\'s goals, first scorer and Joker',
+    ],
+  },
+  {
     id: '2026-06-14.4',
     date: 'June 14, 2026',
     emoji: '👤',

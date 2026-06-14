@@ -48,6 +48,16 @@ export interface GlobalLeaderboardView {
   top: LeaderboardRow[];
   me: LeaderboardRow | null;
 }
+export interface PointsBreakdown {
+  outcome: boolean;
+  goalDiff: boolean;
+  exact: boolean;
+  home: boolean;
+  away: boolean;
+  firstTeam: { picked: 'HOME' | 'AWAY'; hit: boolean | null } | null;
+  firstScorer: { name: string | null; hit: boolean | null } | null;
+  joker: boolean;
+}
 export interface BreakdownRow {
   matchId: string;
   home: number | null;
@@ -56,4 +66,5 @@ export interface BreakdownRow {
   actualAway: number | null;
   points: Points;
   locked: boolean;
+  breakdown?: PointsBreakdown | null;
 }

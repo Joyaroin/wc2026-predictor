@@ -745,7 +745,13 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .member-head h2 { margin: 0; }
 .member-total { margin-left: auto; font-weight: 800; color: var(--accent2); }
 .member-results { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
-.mr-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.mr-item { display: flex; flex-direction: column; gap: 4px; }
+.mr-row { display: grid; grid-template-columns: 1fr auto auto auto auto; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 12px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; font: inherit; }
+.mr-row.expandable { cursor: pointer; }
+.mr-row.expandable:hover { border-color: var(--accent); }
+.mr-chev { color: var(--muted); transition: transform 0.15s ease; }
+.mr-chev.up { transform: rotate(180deg); }
+.mr-breakdown { display: grid; gap: 5px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; }
 .mr-teams { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
 .mr-pick { font-weight: 700; font-variant-numeric: tabular-nums; }
 .mr-actual { font-variant-numeric: tabular-nums; }

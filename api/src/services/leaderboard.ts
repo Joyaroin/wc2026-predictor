@@ -1,5 +1,5 @@
 // Leaderboard service: aggregate stored points, order via shared comparator (US-5.3/5.4/5.5).
-import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
+import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, scoreBreakdown, firstGoalPoints, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { BracketRepo, GoldenBootRepo, DarkHorseRepo, TournamentWinnerRepo, PottRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { LeaderboardRow, BreakdownRow, GlobalLeaderboardView } from './dtos';
@@ -67,6 +67,26 @@ export function createLeaderboardService(
       if (!pred) continue;
       const locked = now >= new Date(m.kickoff).getTime();
       const hide = !locked && targetPlayerId !== callerId; // VR: don't reveal others' picks pre-lock
+
+      // Per-rule points breakdown once there's a score to compare against (live or final).
+      let breakdown: BreakdownRow['breakdown'] = null;
+      if (!hide && m.homeScore != null && m.awayScore != null) {
+        const actual = { home: m.homeScore, away: m.awayScore };
+        const bd = scoreBreakdown({ home: pred.home, away: pred.away }, actual);
+        const fg = firstGoalPoints(pred, actual, { firstGoalTeam: m.firstGoalTeam, firstScorerId: m.firstScorerId });
+        const firstGoalKnown = m.firstGoalTeam != null || (actual.home === 0 && actual.away === 0);
+        breakdown = {
+          outcome: bd.outcome,
+          goalDiff: bd.goalDiff,
+          exact: bd.exact,
+          home: bd.home,
+          away: bd.away,
+          firstTeam: pred.firstTeam ? { picked: pred.firstTeam, hit: firstGoalKnown ? fg.firstTeam > 0 : null } : null,
+          firstScorer: pred.firstScorerId ? { name: pred.firstScorerName ?? null, hit: firstGoalKnown ? fg.firstPlayer > 0 : null } : null,
+          joker: !!pred.joker,
+        };
+      }
+
       rows.push({
         matchId: m.id,
         home: hide ? null : pred.home,
@@ -75,6 +95,7 @@ export function createLeaderboardService(
         actualAway: m.awayScore,
         points: pred.points,
         locked,
+        breakdown,
       });
     }
     return rows;
