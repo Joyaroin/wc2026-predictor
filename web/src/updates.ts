@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-14',
+    date: 'June 14, 2026',
+    emoji: '🗂️',
+    title: 'Your results, all in one place',
+    points: [
+      'New My Results tab (⋮ menu) — every finished match as a card with its full points receipt',
+      'Filter your results by match week or knockout round',
+      'Fixtures now stays focused on what\'s left to play — matches move to My Results the moment they finish',
+    ],
+  },
+  {
     id: '2026-06-13',
     date: 'June 13, 2026',
     emoji: '📊',
