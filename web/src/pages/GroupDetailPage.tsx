@@ -106,7 +106,7 @@ export function GroupDetailPage() {
           <LeaderboardTable
             rows={rows}
             meId={player?.playerId ?? ''}
-            onRowClick={(pid) => navigate(`/groups/${id}/players/${pid}`)}
+            onRowClick={(row) => navigate(`/players/${row.playerId}`, { state: { name: row.name } })}
           />
           <p className="muted fine gd-hint">Tap a player to see their picks.</p>
         </>

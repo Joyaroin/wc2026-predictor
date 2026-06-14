@@ -21,6 +21,7 @@ function aggregate(playerId: string, name: string, preds: Prediction[], extraPoi
 export interface LeaderboardService {
   getLeaderboard(callerId: string, groupId: string, scope?: 'week'): Promise<LeaderboardRow[]>;
   getBreakdown(callerId: string, groupId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
+  getPlayerBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
   getGlobal(callerId: string): Promise<GlobalLeaderboardView>;
 }
 
@@ -52,6 +53,30 @@ export function createLeaderboardService(
     if (!(await memberships.isMember(groupId, callerId))) {
       throw new ForbiddenError('Not a member of this group');
     }
+  }
+
+  // A player's picks vs results. Others' picks stay hidden until each match locks (kickoff).
+  async function buildBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownRow[]> {
+    const now = clock.now().getTime();
+    const all = await matches.listAll();
+    const preds = new Map((await predictions.listByPlayer(targetPlayerId)).map((p) => [p.matchId, p]));
+    const rows: BreakdownRow[] = [];
+    for (const m of all) {
+      const pred = preds.get(m.id);
+      if (!pred) continue;
+      const locked = now >= new Date(m.kickoff).getTime();
+      const hide = !locked && targetPlayerId !== callerId; // VR: don't reveal others' picks pre-lock
+      rows.push({
+        matchId: m.id,
+        home: hide ? null : pred.home,
+        away: hide ? null : pred.away,
+        actualHome: m.homeScore,
+        actualAway: m.awayScore,
+        points: pred.points,
+        locked,
+      });
+    }
+    return rows;
   }
 
   return {
@@ -122,26 +147,12 @@ export function createLeaderboardService(
       if (!(await memberships.isMember(groupId, targetPlayerId))) {
         throw new ForbiddenError('Target is not a member of this group');
       }
-      const now = clock.now().getTime();
-      const all = await matches.listAll();
-      const preds = new Map((await predictions.listByPlayer(targetPlayerId)).map((p) => [p.matchId, p]));
-      const rows: BreakdownRow[] = [];
-      for (const m of all) {
-        const pred = preds.get(m.id);
-        if (!pred) continue;
-        const locked = now >= new Date(m.kickoff).getTime();
-        const hide = !locked && targetPlayerId !== callerId; // VR: don't reveal others' picks pre-lock
-        rows.push({
-          matchId: m.id,
-          home: hide ? null : pred.home,
-          away: hide ? null : pred.away,
-          actualHome: m.homeScore,
-          actualAway: m.awayScore,
-          points: pred.points,
-          locked,
-        });
-      }
-      return rows;
+      return buildBreakdown(callerId, targetPlayerId);
+    },
+
+    async getPlayerBreakdown(callerId, targetPlayerId) {
+      // Global view: any signed-in player can see anyone's *locked* (past) picks.
+      return buildBreakdown(callerId, targetPlayerId);
     },
   };
 }

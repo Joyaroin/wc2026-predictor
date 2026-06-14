@@ -9,7 +9,7 @@ export function LeaderboardTable({
 }: {
   rows: LeaderboardRow[];
   meId: string;
-  onRowClick?: (playerId: string) => void;
+  onRowClick?: (row: LeaderboardRow) => void;
 }) {
   return (
     <div className="lb" data-testid="leaderboard">
@@ -18,7 +18,7 @@ export function LeaderboardTable({
           type="button"
           key={r.playerId}
           className={`lb-row${r.playerId === meId ? ' me' : ''}${onRowClick ? ' clickable' : ''}`}
-          onClick={() => onRowClick?.(r.playerId)}
+          onClick={() => onRowClick?.(r)}
           data-testid={`lb-row-${r.playerId}`}
         >
           <span className={`lb-rank${r.rank <= 3 ? ' top' : ''}`}>{medal(r.rank)}</span>

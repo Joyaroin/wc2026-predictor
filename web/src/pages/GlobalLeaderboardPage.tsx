@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../api/client';
+import { useNavigate } from 'react-router-dom';
+import { api, type LeaderboardRow } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
+import { LeaderboardTable } from '../components/LeaderboardTable';
 
 export function GlobalLeaderboardPage() {
   const { player } = usePlayer();
+  const navigate = useNavigate();
   const q = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard });
 
   const meInTop = q.data?.top.some((r) => r.playerId === player?.playerId);
+  const openPlayer = (row: LeaderboardRow) => navigate(`/players/${row.playerId}`, { state: { name: row.name } });
 
   return (
     <div className="global-leaderboard">
@@ -15,33 +19,17 @@ export function GlobalLeaderboardPage() {
       {q.data && (
         <>
           <p className="muted">{q.data.total} player{q.data.total === 1 ? '' : 's'} · top {q.data.top.length}</p>
-          <table className="leaderboard" data-testid="global-leaderboard">
-            <thead>
-              <tr><th>#</th><th>Player</th><th>Pts</th><th>Exact</th></tr>
-            </thead>
-            <tbody>
-              {q.data.top.map((r) => (
-                <tr key={r.playerId} className={r.playerId === player?.playerId ? 'me' : ''}>
-                  <td>{r.rank}</td>
-                  <td>{r.name}</td>
-                  <td>{r.points}</td>
-                  <td>{r.exacts}</td>
-                </tr>
-              ))}
-              {q.data.me && !meInTop && (
-                <>
-                  <tr><td colSpan={4} className="muted" style={{ textAlign: 'center' }}>…</td></tr>
-                  <tr className="me" data-testid="my-global-rank">
-                    <td>{q.data.me.rank}</td>
-                    <td>{q.data.me.name}</td>
-                    <td>{q.data.me.points}</td>
-                    <td>{q.data.me.exacts}</td>
-                  </tr>
-                </>
-              )}
-            </tbody>
-          </table>
+          <LeaderboardTable rows={q.data.top} meId={player?.playerId ?? ''} onRowClick={openPlayer} />
+
+          {q.data.me && !meInTop && (
+            <>
+              <p className="muted" style={{ textAlign: 'center', margin: '8px 0' }}>…</p>
+              <LeaderboardTable rows={[q.data.me]} meId={player?.playerId ?? ''} onRowClick={openPlayer} />
+            </>
+          )}
+
           {q.data.total === 0 && <p className="muted">No predictions scored yet.</p>}
+          <p className="muted fine gd-hint">Tap a player to see their past picks.</p>
         </>
       )}
     </div>

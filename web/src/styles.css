@@ -709,6 +709,7 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .gd-hint { text-align: center; margin-top: 10px; }
 
 /* Member breakdown */
+.linklike { background: transparent; color: var(--accent); border: none; padding: 0; font: inherit; font-weight: 600; cursor: pointer; }
 .member-head { display: flex; align-items: center; gap: 10px; }
 .member-head h2 { margin: 0; }
 .member-total { margin-left: auto; font-weight: 800; color: var(--accent2); }

@@ -132,6 +132,7 @@ export const api = {
     req<LeaderboardRow[]>(`/groups/${id}/leaderboard${scope ? `?scope=${scope}` : ''}`),
   groupBreakdown: (groupId: string, playerId: string) =>
     req<BreakdownRow[]>(`/groups/${groupId}/players/${playerId}/breakdown`),
+  playerBreakdown: (playerId: string) => req<BreakdownRow[]>(`/players/${playerId}/breakdown`),
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),

@@ -119,6 +119,7 @@ export function buildRouter(services: Services, config: Config): Router {
 
   // --- Global leaderboard ---
   r.get('/leaderboard/global', auth, wrap((req) => services.leaderboard.getGlobal(caller(req))));
+  r.get('/players/:pid/breakdown', auth, wrap((req) => services.leaderboard.getPlayerBreakdown(caller(req), param(req, 'pid'))));
 
   return r;
 }
