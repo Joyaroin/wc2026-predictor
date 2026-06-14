@@ -70,6 +70,53 @@ describe('espnFacts.ingest', () => {
     expect(m?.firstScorerId).toBe('7');
   });
 
+  it('records the first-goal team from an opening own goal but no first scorer', async () => {
+    const repos = createMemoryRepositories();
+    await repos.matches.upsert(
+      sampleMatch({ id: 'og', status: 'FINISHED', homeScore: 1, awayScore: 1, homeTeam: 'Portugal', homeCode: 'POR', awayTeam: 'Spain', awayCode: 'ESP', kickoff: '2026-06-20T18:00:00.000Z' }),
+    );
+    const now = '2026-06-21T00:00:00.000Z';
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, fixedClock(now));
+    const fakeEspn: EspnClient = {
+      async fetchPlayerPool() { return []; },
+      async fetchFinishedEventGoals() { return []; },
+      async fetchMatchFirstGoals() {
+        // Own-goal opener benefits Portugal (HOME); no creditable scorer.
+        return [{ date: '2026-06-20T18:00:00.000Z', homeName: 'Portugal', awayName: 'Spain', first: { side: 'HOME', scorerId: '', scorerName: 'Own goal' } }];
+      },
+    };
+    const facts = createEspnFactsService(fakeEspn, repos.matches, scoring, fixedClock(now), noopLogger);
+    await facts.ingest();
+
+    const m = await repos.matches.getById('og');
+    expect(m?.firstGoalTeam).toBe('HOME');
+    expect(m?.firstScorerId ?? null).toBeNull();
+    expect(m?.firstScorerName ?? null).toBeNull();
+  });
+
+  it('maps a fact whose date is the compact YYYYMMDD fallback (ESPN omitted the event date)', async () => {
+    const repos = createMemoryRepositories();
+    await repos.matches.upsert(
+      sampleMatch({ id: 'cf', status: 'FINISHED', homeScore: 1, awayScore: 0, homeTeam: 'Brazil', homeCode: 'BRA', awayTeam: 'Korea', awayCode: 'KOR', kickoff: '2026-06-15T18:00:00.000Z' }),
+    );
+    const now = '2026-06-16T00:00:00.000Z';
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, fixedClock(now));
+    const fakeEspn: EspnClient = {
+      async fetchPlayerPool() { return []; },
+      async fetchFinishedEventGoals() { return []; },
+      async fetchMatchFirstGoals() {
+        // ESPN omitted the event date → the client emitted the compact query date '20260615'.
+        return [{ date: '20260615', homeName: 'Brazil', awayName: 'South Korea', first: { side: 'HOME', scorerId: '7', scorerName: 'Neymar' } }];
+      },
+    };
+    const facts = createEspnFactsService(fakeEspn, repos.matches, scoring, fixedClock(now), noopLogger);
+    await facts.ingest();
+
+    const m = await repos.matches.getById('cf');
+    expect(m?.firstGoalTeam).toBe('HOME');
+    expect(m?.firstScorerId).toBe('7');
+  });
+
   it('does not back-fill a match that already has a firstGoalTeam', async () => {
     const repos = createMemoryRepositories();
     await repos.matches.upsert(

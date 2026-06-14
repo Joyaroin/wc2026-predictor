@@ -36,10 +36,10 @@ describe('espn goal parsing', () => {
 });
 
 describe('fetchMatchFirstGoals — opening own goal', () => {
-  it('attributes the FIRST REAL goal (not an opening own goal) to the scoring side', async () => {
-    // Opening goal is an OWN GOAL credited to Portugal (home), then Spain (away) scores the first
-    // real goal. The first-goal team must be Spain/AWAY — the own goal must be skipped, not counted
-    // for the conceding/benefiting side with a bogus scorer.
+  it('attributes the first-goal TEAM to the side an opening own goal benefits, crediting no scorer', async () => {
+    // Opening goal is an OWN GOAL credited (by ESPN) to Portugal (home), then Spain (away) scores a
+    // real goal. Portugal scored first, so the first-goal team must be Portugal/HOME — but an own goal
+    // has no creditable scorer (ESPN only tags the conceding defender), so the scorer is nulled out.
     const board = {
       events: [
         {
@@ -67,7 +67,7 @@ describe('fetchMatchFirstGoals — opening own goal', () => {
     const [match] = await client.fetchMatchFirstGoals(['20260620']);
     expect(match?.homeName).toBe('Portugal');
     expect(match?.awayName).toBe('Spain');
-    expect(match?.first).toEqual({ side: 'AWAY', scorerId: '9', scorerName: 'Morata' });
+    expect(match?.first).toEqual({ side: 'HOME', scorerId: '', scorerName: 'Own goal' });
   });
 });
 

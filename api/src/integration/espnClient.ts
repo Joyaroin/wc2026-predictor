@@ -151,11 +151,14 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
           const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
           if (!comp) continue;
           const { homeName, awayName, goals } = goalsFromCompetition(comp);
-          // First *real* goal: skip shootout pens AND own goals. An own goal must not be attributed
-          // to the conceding side (ESPN tags it on the team that benefits, i.e. the scorer's opponent),
-          // so counting it here would record the wrong first-goal team + a bogus scorer.
-          const fg = goals.find((g) => !g.shootout && !g.ownGoal);
-          const first = fg ? { side: fg.side, scorerId: fg.scorerId, scorerName: fg.scorerName } : null;
+          // First goal for TEAM attribution: skip only shootout pens. An own goal still puts a team
+          // ahead (ESPN tags it on the BENEFITING side), so it determines the first-goal team — but it
+          // must NOT credit a scorer (the only athlete ESPN attaches is the conceding defender, whom no
+          // predictor can pick), so the scorer is nulled out for an own goal.
+          const fg = goals.find((g) => !g.shootout);
+          const first = fg
+            ? { side: fg.side, scorerId: fg.ownGoal ? '' : fg.scorerId, scorerName: fg.ownGoal ? 'Own goal' : fg.scorerName }
+            : null;
           result.push({ date: get<string>(e, 'date') ?? date, homeName, awayName, first });
         }
       }

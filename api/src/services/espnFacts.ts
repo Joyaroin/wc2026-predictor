@@ -35,6 +35,16 @@ function utcDay(d: Date): string {
   return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
+/**
+ * UTC day key (YYYYMMDD) from either an ISO instant ('2026-06-15T..') or an already-compact
+ * YYYYMMDD string ('20260615'). ESPN facts fall back to the compact scoreboard query date when
+ * an event omits its `date`, so both sides of the match lookup must normalize the same way.
+ */
+function dayKey(s: string): string {
+  const t = Date.parse(s);
+  return Number.isNaN(t) ? s.replace(/\D/g, '').slice(0, 8) : utcDay(new Date(t));
+}
+
 /** Last `days` UTC dates (inclusive) as YYYYMMDD. */
 function recentDates(now: Date, days: number): string[] {
   const out: string[] = [];
@@ -79,7 +89,9 @@ export function createEspnFactsService(
       const recent = recentDates(now, 2);
       const dates = new Set(recent);
       const cap = recent.length + MAX_BACKFILL_DATES;
-      const backfill = all.filter(needsFirstGoal).map((m) => utcDay(new Date(Date.parse(m.kickoff)))).sort();
+      // Most-recent-first: under the cap, prioritise recent finished matches so a backlog of older
+      // permanently-unmappable matches can't starve recent ones out of this run's fetch window.
+      const backfill = all.filter(needsFirstGoal).map((m) => utcDay(new Date(Date.parse(m.kickoff)))).sort().reverse();
       for (const day of new Set(backfill)) {
         if (dates.size >= cap) break;
         dates.add(day);
@@ -94,8 +106,8 @@ export function createEspnFactsService(
       }
 
       for (const f of facts) {
-        const day = f.date.slice(0, 10);
-        const match = all.find((m) => m.kickoff.slice(0, 10) === day && teamsMatch(m, f));
+        const day = dayKey(f.date);
+        const match = all.find((m) => dayKey(m.kickoff) === day && teamsMatch(m, f));
         if (!match) continue;
 
         let firstGoalTeam: 'HOME' | 'AWAY' | 'NONE' = 'NONE';
@@ -104,8 +116,10 @@ export function createEspnFactsService(
         if (f.first) {
           const scoringTeam = f.first.side === 'HOME' ? f.homeName : f.awayName;
           firstGoalTeam = canon(scoringTeam) === canon(match.homeTeam) ? 'HOME' : canon(scoringTeam) === canon(match.awayTeam) ? 'AWAY' : 'NONE';
-          firstScorerId = f.first.scorerId;
-          firstScorerName = f.first.scorerName;
+          // An own-goal opener has no creditable scorer (the client emits scorerId ''), so record the
+          // team but leave the first scorer empty — own goals don't count for the first-scorer bonus.
+          firstScorerId = f.first.scorerId || null;
+          firstScorerName = f.first.scorerId ? f.first.scorerName : null;
         }
 
         if (match.firstGoalTeam === firstGoalTeam && (match.firstScorerId ?? null) === firstScorerId) continue;
