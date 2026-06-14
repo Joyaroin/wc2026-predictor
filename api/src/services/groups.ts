@@ -61,14 +61,16 @@ export function createGroupService(
     },
     async listForPlayer(callerId) {
       const groupIds = await memberships.listGroups(callerId);
-      const summaries: GroupSummary[] = [];
-      for (const id of groupIds) {
-        const group = await groups.getById(id);
-        if (!group) continue;
-        const memberCount = (await memberships.listMembers(id)).length;
-        summaries.push({ id: group.id, name: group.name, memberCount });
-      }
-      return summaries;
+      // Resolve each group + its member count in parallel (was a sequential ~2N round-trip N+1 on
+      // the GET /groups critical path), mirroring the parallelized leaderboard fix.
+      const summaries = await Promise.all(
+        groupIds.map(async (id): Promise<GroupSummary | null> => {
+          const [group, members] = await Promise.all([groups.getById(id), memberships.listMembers(id)]);
+          if (!group) return null;
+          return { id: group.id, name: group.name, memberCount: members.length };
+        }),
+      );
+      return summaries.filter((s): s is GroupSummary => s !== null);
     },
     async get(callerId, groupId) {
       await assertMember(callerId, groupId);
