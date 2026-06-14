@@ -5,7 +5,7 @@ import { Flag } from './Flag';
 import { Avatar } from './Avatar';
 
 /** A player's picks vs results (read-only). Others' pre-lock picks arrive hidden from the API. */
-export function PlayerResults({ name, rows, loading }: { name: string; rows: BreakdownRow[]; loading?: boolean }) {
+export function PlayerResults({ name, rows, loading, color }: { name: string; rows: BreakdownRow[]; loading?: boolean; color?: string | null }) {
   const matches = useQuery({ queryKey: ['matches'], queryFn: api.matches });
   const matchById = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.id, m])),
@@ -21,7 +21,7 @@ export function PlayerResults({ name, rows, loading }: { name: string; rows: Bre
   return (
     <>
       <div className="member-head">
-        <Avatar name={name} size={40} ring />
+        <Avatar name={name} size={40} ring color={color} />
         <h2>{name}</h2>
         <span className="member-total">{total} pts</span>
       </div>

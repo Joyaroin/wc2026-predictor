@@ -10,7 +10,7 @@ export function GlobalLeaderboardPage() {
   const q = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard });
 
   const meInTop = q.data?.top.some((r) => r.playerId === player?.playerId);
-  const openPlayer = (row: LeaderboardRow) => navigate(`/players/${row.playerId}`, { state: { name: row.name } });
+  const openPlayer = (row: LeaderboardRow) => navigate(`/players/${row.playerId}`, { state: { name: row.name, color: row.avatarColor } });
 
   return (
     <div className="global-leaderboard">

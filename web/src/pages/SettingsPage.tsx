@@ -1,107 +1,140 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
 import { Flag } from '../components/Flag';
+import { Avatar, AVATAR_PALETTE } from '../components/Avatar';
+import { ordinal } from '../lib/rank';
 
 export function SettingsPage() {
-  const { player, updateName } = usePlayer();
+  const { player, updateName, logout } = usePlayer();
   const { tzPref, timeZone, setTzPref, theme, setTheme } = usePrefs();
+  const qc = useQueryClient();
+
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 1800);
+    return () => clearTimeout(t);
+  }, [toast]);
+  const flash = (m: string) => setToast(m);
+
+  // Profile + quick stats (reuse the same cached queries the other tabs use).
+  const me = useQuery({ queryKey: ['account-me'], queryFn: api.me });
+  const global = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard, staleTime: 30_000 });
+  const groups = useQuery({ queryKey: ['groups'], queryFn: api.listGroups, staleTime: 30_000 });
+  const myColor = me.data?.avatarColor ?? null;
+  const myRank = global.data?.me?.rank;
+  const myPoints = global.data?.me?.points ?? 0;
+  const myExacts = global.data?.me?.exacts ?? 0;
+  const groupCount = groups.data?.length ?? 0;
+  const memberSince = me.data?.createdAt
+    ? new Date(me.data.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    : null;
+
+  // Display name
   const [newName, setNewName] = useState('');
-  const [nameMsg, setNameMsg] = useState<string | null>(null);
   const [nameErr, setNameErr] = useState<string | null>(null);
+  const rename = useMutation({
+    mutationFn: () => api.rename(newName.trim()),
+    onSuccess: (res) => { updateName(res.name); setNewName(''); setNameErr(null); flash('Name updated ✓'); void qc.invalidateQueries({ queryKey: ['account-me'] }); },
+    onError: (e) => setNameErr(e instanceof ApiError && e.status === 409 ? 'That name is already taken.' : 'Could not change name.'),
+  });
+
+  // Avatar colour
+  const setColor = useMutation({
+    mutationFn: (c: string | null) => api.setAvatarColor(c),
+    onSuccess: (p) => { qc.setQueryData(['account-me'], p); flash('Saved ✓'); },
+  });
+
+  // PIN
+  const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4);
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [pinErr, setPinErr] = useState<string | null>(null);
+  const [showPin, setShowPin] = useState(false);
+  const changePin = useMutation({
+    mutationFn: () => api.changePin(currentPin, newPin),
+    onSuccess: () => { setCurrentPin(''); setNewPin(''); setConfirmPin(''); setPinErr(null); flash('PIN updated ✓'); },
+    onError: (e) => setPinErr(e instanceof ApiError ? e.message : 'Could not change PIN'),
+  });
+  const submitPin = (e: FormEvent): void => {
+    e.preventDefault();
+    if (newPin !== confirmPin) { setPinErr('New PIN and confirmation do not match'); return; }
+    changePin.mutate();
+  };
+  const pinValid = /^\d{4}$/.test(currentPin) && /^\d{4}$/.test(newPin) && newPin === confirmPin;
+  const pinType = showPin ? 'text' : 'password';
 
-  const onlyDigits = (v: string) => v.replace(/\D/g, '').slice(0, 4);
-
-  const qc = useQueryClient();
+  // Admin
   const adminMe = useQuery({ queryKey: ['admin-me'], queryFn: api.feedbackAdminMe });
   const flags = useQuery({ queryKey: ['flags'], queryFn: api.flags });
   const togglePopup = useMutation({
     mutationFn: (on: boolean) => api.setAdsEnabled(on),
-    onSuccess: (f) => qc.setQueryData(['flags'], f),
+    onSuccess: (f) => { qc.setQueryData(['flags'], f); flash('Saved ✓'); },
   });
-
-  const rename = useMutation({
-    mutationFn: () => api.rename(newName.trim()),
-    onSuccess: (res) => {
-      updateName(res.name);
-      setNameMsg(`You're now "${res.name}".`);
-      setNameErr(null);
-      setNewName('');
-    },
-    onError: (e) => {
-      setNameMsg(null);
-      setNameErr(e instanceof ApiError && e.status === 409 ? 'That name is already taken.' : 'Could not change name.');
-    },
-  });
-
-  const changePin = useMutation({
-    mutationFn: () => api.changePin(currentPin, newPin),
-    onSuccess: () => {
-      setMessage('PIN updated.');
-      setError(null);
-      setCurrentPin('');
-      setNewPin('');
-      setConfirmPin('');
-    },
-    onError: (e) => {
-      setMessage(null);
-      setError(e instanceof ApiError ? e.message : 'Could not change PIN');
-    },
-  });
-
-  const submit = (e: FormEvent): void => {
-    e.preventDefault();
-    if (newPin !== confirmPin) {
-      setError('New PIN and confirmation do not match');
-      return;
-    }
-    changePin.mutate();
-  };
-
-  const valid = /^\d{4}$/.test(currentPin) && /^\d{4}$/.test(newPin) && /^\d{4}$/.test(confirmPin);
 
   return (
     <div className="settings">
-      <h2>Account settings</h2>
-      <p className="muted">Signed in as <strong>{player?.name}</strong></p>
+      <h2>Account</h2>
 
-      <div className="card">
-        <h3>Display name</h3>
-        <p className="muted fine">Change the name shown on leaderboards. You'll keep all your predictions and points — log in with the new name (same PIN) from now on.</p>
-        <div className="row">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder={player?.name}
-            maxLength={30}
-            data-testid="rename-input"
-          />
-          <button disabled={newName.trim().length < 2 || rename.isPending} onClick={() => rename.mutate()} data-testid="rename-save">
-            Change
-          </button>
+      <div className="card profile-card">
+        <Avatar name={player?.name ?? '?'} size={64} ring color={myColor} />
+        <div className="profile-main">
+          <div className="profile-name">{player?.name}</div>
+          <div className="profile-stats">
+            <span>🌍 {myRank ? ordinal(myRank) : 'unranked'}</span>
+            <span className="dot">·</span><span><strong>{myPoints}</strong> pts</span>
+            <span className="dot">·</span><span>{myExacts} exact</span>
+            <span className="dot">·</span><span>{groupCount} group{groupCount === 1 ? '' : 's'}</span>
+          </div>
+          {memberSince && <div className="muted fine">Member since {memberSince}</div>}
         </div>
-        {nameMsg && <p className="muted fine">✅ {nameMsg}</p>}
-        {nameErr && <p className="error fine">{nameErr}</p>}
       </div>
 
+      <h3 className="section-head">Profile</h3>
       <div className="card">
-        <h3>Theme</h3>
-        <p className="muted fine">Pick a look — the default dark, light, or one inspired by a World Cup nation.</p>
+        <h4>Display name</h4>
+        <p className="muted fine">Change the name shown on leaderboards. You keep all your predictions and points — log in with the new name (same PIN).</p>
+        <div className="row stack-sm">
+          <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={player?.name} maxLength={30} data-testid="rename-input" />
+          <button disabled={newName.trim().length < 2 || rename.isPending} onClick={() => rename.mutate()} data-testid="rename-save">Change</button>
+        </div>
+        {nameErr && <p className="error fine">{nameErr}</p>}
+      </div>
+      <div className="card">
+        <h4>Avatar colour</h4>
+        <p className="muted fine">Personalise your avatar across leaderboards and groups.</p>
+        <div className="color-picker">
+          {AVATAR_PALETTE.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`color-dot${myColor === c ? ' on' : ''}`}
+              style={{ background: c }}
+              aria-label={`Avatar colour ${c}`}
+              disabled={setColor.isPending}
+              onClick={() => setColor.mutate(c)}
+              data-testid={`color-${c}`}
+            />
+          ))}
+          {myColor && <button type="button" className="linklike color-reset" onClick={() => setColor.mutate(null)}>Reset to auto</button>}
+        </div>
+      </div>
+
+      <h3 className="section-head">Appearance</h3>
+      <div className="card">
+        <h4>Theme</h4>
+        <p className="muted fine">Pick a look — dark, light, or one inspired by a World Cup nation.</p>
         <div className="theme-grid">
           {THEMES.map((t) => (
             <button
               key={t.id}
               type="button"
               className={theme === t.id ? 'theme-chip on' : 'theme-chip'}
-              onClick={() => setTheme(t.id)}
+              onClick={() => { setTheme(t.id); flash('Saved ✓'); }}
               data-testid={`theme-${t.id}`}
             >
               {t.flag ? <Flag code={t.flag} name={t.label} /> : <span aria-hidden>{t.id === 'light' ? '☀️' : '🌙'}</span>}
@@ -110,13 +143,12 @@ export function SettingsPage() {
           ))}
         </div>
       </div>
-
       <div className="card">
-        <h3>Timezone</h3>
-        <p className="muted fine">Match times display in this timezone. "Auto" follows your device's location.</p>
+        <h4>Timezone</h4>
+        <p className="muted fine">Match times display in this timezone. "Auto" follows your device.</p>
         <label>
           Show times in
-          <select value={tzPref} onChange={(e) => setTzPref(e.target.value)} data-testid="tz-select">
+          <select value={tzPref} onChange={(e) => { setTzPref(e.target.value); flash('Saved ✓'); }} data-testid="tz-select">
             <option value={AUTO}>Auto — your device ({timeZone})</option>
             {listTimeZones().map((z) => (
               <option key={z} value={z}>{z}</option>
@@ -125,47 +157,63 @@ export function SettingsPage() {
         </label>
       </div>
 
-      <form className="card" onSubmit={submit}>
-        <h3>Change PIN</h3>
+      <h3 className="section-head">Security</h3>
+      <form className="card" onSubmit={submitPin}>
+        <h4>Change PIN</h4>
         <label>
           Current PIN
-          <input value={currentPin} onChange={(e) => setCurrentPin(onlyDigits(e.target.value))} inputMode="numeric" data-testid="current-pin" />
+          <input type={pinType} value={currentPin} onChange={(e) => setCurrentPin(onlyDigits(e.target.value))} inputMode="numeric" autoComplete="off" data-testid="current-pin" />
         </label>
         <label>
           New PIN
-          <input value={newPin} onChange={(e) => setNewPin(onlyDigits(e.target.value))} inputMode="numeric" data-testid="new-pin" />
+          <input type={pinType} value={newPin} onChange={(e) => setNewPin(onlyDigits(e.target.value))} inputMode="numeric" autoComplete="off" data-testid="new-pin" />
         </label>
         <label>
           Confirm new PIN
-          <input value={confirmPin} onChange={(e) => setConfirmPin(onlyDigits(e.target.value))} inputMode="numeric" data-testid="confirm-pin" />
+          <input type={pinType} value={confirmPin} onChange={(e) => setConfirmPin(onlyDigits(e.target.value))} inputMode="numeric" autoComplete="off" data-testid="confirm-pin" />
         </label>
-        {error && <p className="error" data-testid="settings-error">{error}</p>}
-        {message && <p className="success" data-testid="settings-message">{message}</p>}
-        <button type="submit" disabled={!valid || changePin.isPending} data-testid="change-pin-button">
+        <div className="pin-row">
+          <label className="pin-show"><input type="checkbox" checked={showPin} onChange={(e) => setShowPin(e.target.checked)} /> Show PIN</label>
+          {confirmPin.length === 4 && (
+            <span className={`pin-match ${newPin === confirmPin ? 'ok' : 'no'}`}>{newPin === confirmPin ? 'PINs match ✓' : "PINs don't match ✗"}</span>
+          )}
+        </div>
+        {pinErr && <p className="error" data-testid="settings-error">{pinErr}</p>}
+        <button type="submit" disabled={!pinValid || changePin.isPending} data-testid="change-pin-button">
           {changePin.isPending ? 'Saving…' : 'Update PIN'}
         </button>
       </form>
 
       {adminMe.data?.isAdmin && (
-        <div className="card">
-          <h3>Admin · Bottom-right pop-up</h3>
-          <p className="muted fine">Show or hide the floating bottom-right pop-up for everyone — takes effect immediately.</p>
-          <div className="toggle-row">
-            <button
-              type="button"
-              className={`switch ${flags.data?.adsEnabled ? 'on' : ''}`}
-              role="switch"
-              aria-checked={!!flags.data?.adsEnabled}
-              disabled={flags.isLoading || togglePopup.isPending}
-              onClick={() => togglePopup.mutate(!flags.data?.adsEnabled)}
-              data-testid="toggle-popup"
-            >
-              <span className="switch-knob" />
-            </button>
-            <span className="fine">{flags.data?.adsEnabled ? 'On' : 'Off'}</span>
+        <>
+          <h3 className="section-head">Admin</h3>
+          <div className="card">
+            <h4>Bottom-right pop-up</h4>
+            <p className="muted fine">Show or hide the floating bottom-right pop-up for everyone — takes effect immediately.</p>
+            <div className="toggle-row">
+              <button
+                type="button"
+                className={`switch ${flags.data?.adsEnabled ? 'on' : ''}`}
+                role="switch"
+                aria-checked={!!flags.data?.adsEnabled}
+                disabled={flags.isLoading || togglePopup.isPending}
+                onClick={() => togglePopup.mutate(!flags.data?.adsEnabled)}
+                data-testid="toggle-popup"
+              >
+                <span className="switch-knob" />
+              </button>
+              <span className="fine">{flags.data?.adsEnabled ? 'On' : 'Off'}</span>
+            </div>
           </div>
-        </div>
+        </>
       )}
+
+      <h3 className="section-head">Account actions</h3>
+      <div className="card">
+        <button type="button" className="btn-logout" onClick={logout} data-testid="logout-account">Log out</button>
+      </div>
+
+      {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
 }

@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-14.4',
+    date: 'June 14, 2026',
+    emoji: '👤',
+    title: 'A proper Account page',
+    points: [
+      'New profile header with your avatar, global rank, points, exacts and groups',
+      'Pick your own avatar colour — it shows across every leaderboard',
+      'Cleaner sections, and changes now confirm with a quick "Saved ✓"',
+      'PIN change has show/hide and a live match check; a Log out button lives here too',
+    ],
+  },
+  {
     id: '2026-06-14.3',
     date: 'June 14, 2026',
     emoji: '👥',

@@ -7,14 +7,14 @@ import { PlayerResults } from '../components/PlayerResults';
 export function PlayerResultsPage() {
   const { pid = '' } = useParams();
   const navigate = useNavigate();
-  const state = useLocation().state as { name?: string } | null;
+  const state = useLocation().state as { name?: string; color?: string | null } | null;
 
   const breakdown = useQuery({ queryKey: ['breakdown', pid], queryFn: () => api.playerBreakdown(pid) });
 
   return (
     <div className="member-page">
       <p><button className="linklike" onClick={() => navigate(-1)}>← Back</button></p>
-      <PlayerResults name={state?.name ?? 'Player'} rows={breakdown.data ?? []} loading={breakdown.isLoading} />
+      <PlayerResults name={state?.name ?? 'Player'} color={state?.color ?? null} rows={breakdown.data ?? []} loading={breakdown.isLoading} />
     </div>
   );
 }

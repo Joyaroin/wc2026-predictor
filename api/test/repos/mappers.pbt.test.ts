@@ -82,6 +82,7 @@ const arbPlayer = fc.record({
   nameKey: fc.string({ minLength: 1, maxLength: 30 }),
   pinHash: fc.string({ minLength: 1, maxLength: 200 }),
   tourSeenAt: fc.option(arbIso, { nil: null }),
+  avatarColor: fc.option(fc.constantFrom('#00c389', '#3b82f6', '#ef4444'), { nil: null }),
   createdAt: arbIso,
   updatedAt: arbIso,
 });

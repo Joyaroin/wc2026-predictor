@@ -8,13 +8,14 @@ import { ForbiddenError } from '../lib/errors';
 const GLOBAL_TOP = 100;
 
 /** Build a standing aggregate: joker-adjusted score points + bracket + golden-boot bonus. */
-function aggregate(playerId: string, name: string, preds: Prediction[], extraPoints: number): StandingAgg {
+function aggregate(playerId: string, name: string, preds: Prediction[], extraPoints: number, avatarColor?: string | null): StandingAgg {
   return {
     playerId,
     name,
     points: preds.reduce((s, p) => s + effectivePoints(p), 0) + extraPoints,
     exacts: preds.filter((p) => p.exact).length, // exact scoreline
     correctResults: preds.filter((p) => p.points >= 2).length,
+    avatarColor: avatarColor ?? null,
   };
 }
 
@@ -101,7 +102,7 @@ export function createLeaderboardService(
             ((await tournamentWinner.get(id))?.points ?? 0) +
             ((await pott.get(id))?.points ?? 0);
         }
-        aggs.push(aggregate(id, player.name, preds, extra));
+        aggs.push(aggregate(id, player.name, preds, extra, player.avatarColor));
       }
       aggs.sort(compareStandings);
       return aggs.map((a, i) => ({ rank: i + 1, ...a }));
@@ -134,7 +135,7 @@ export function createLeaderboardService(
         extraByPlayer.set(p.playerId, (extraByPlayer.get(p.playerId) ?? 0) + p.points);
       }
       const aggs: StandingAgg[] = allPlayers.map((p) =>
-        aggregate(p.id, nameById.get(p.id) ?? p.name, byPlayer.get(p.id) ?? [], extraByPlayer.get(p.id) ?? 0),
+        aggregate(p.id, nameById.get(p.id) ?? p.name, byPlayer.get(p.id) ?? [], extraByPlayer.get(p.id) ?? 0, p.avatarColor),
       );
       aggs.sort(compareStandings);
       const ranked: LeaderboardRow[] = aggs.map((a, i) => ({ rank: i + 1, ...a }));

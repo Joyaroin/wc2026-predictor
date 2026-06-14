@@ -73,6 +73,11 @@ export function createMemoryRepositories(): Repositories {
       if (!existing) return;
       players.set(id, { ...existing, tourSeenAt: iso });
     },
+    async setAvatarColor(id, color) {
+      const existing = players.get(id);
+      if (!existing) return;
+      players.set(id, { ...existing, avatarColor: color });
+    },
     async listAll() {
       return [...players.values()];
     },

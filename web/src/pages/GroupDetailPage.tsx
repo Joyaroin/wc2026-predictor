@@ -18,7 +18,7 @@ function Podium({ rows, meId }: { rows: LeaderboardRow[]; meId: string }) {
       {order.map((r) => (
         <div className={`podium-spot rank-${r.rank}`} key={r.playerId}>
           <span className="podium-medal">{medal(r.rank)}</span>
-          <Avatar name={r.name} size={r.rank === 1 ? 58 : 46} ring />
+          <Avatar name={r.name} size={r.rank === 1 ? 58 : 46} ring color={r.avatarColor} />
           <span className={`podium-name${r.playerId === meId ? ' me' : ''}`}>{r.name}</span>
           <span className="podium-pts">{r.points}</span>
         </div>
@@ -106,7 +106,7 @@ export function GroupDetailPage() {
           <LeaderboardTable
             rows={rows}
             meId={player?.playerId ?? ''}
-            onRowClick={(row) => navigate(`/players/${row.playerId}`, { state: { name: row.name } })}
+            onRowClick={(row) => navigate(`/players/${row.playerId}`, { state: { name: row.name, color: row.avatarColor } })}
           />
           <p className="muted fine gd-hint">Tap a player to see their picks.</p>
         </>

@@ -39,6 +39,7 @@ const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerN
 const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
 const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
 const flagsSchema = z.object({ adsEnabled: z.boolean() });
+const avatarColorSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid colour').nullable() });
 const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
 
 const wrap =
@@ -67,6 +68,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.post('/players/me/name', auth, validateBody(renameSchema), wrap((req) => services.players.rename(caller(req), req.body.name)));
   r.post('/players/me/pin', auth, loginLimiter, validateBody(changePinSchema), wrapVoid((req) => services.players.changePin(caller(req), req.body.currentPin, req.body.newPin)));
   r.post('/players/me/tour-seen', auth, wrapVoid((req) => services.players.markTourSeen(caller(req))));
+  r.post('/players/me/avatar-color', auth, validateBody(avatarColorSchema), wrap((req) => services.players.setAvatarColor(caller(req), req.body.color)));
 
   // --- Groups ---
   r.post('/groups', auth, validateBody(createGroupSchema), wrap((req) => services.groups.create(caller(req), req.body.name)));

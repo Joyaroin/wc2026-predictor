@@ -10,6 +10,8 @@ export interface PublicPlayer {
   id: string;
   name: string;
   tourSeen?: boolean;
+  avatarColor?: string | null;
+  createdAt?: string;
 }
 export interface GroupSummary {
   id: string;
@@ -39,6 +41,7 @@ export interface LeaderboardRow {
   points: number;
   exacts: number;
   correctResults: number;
+  avatarColor?: string | null;
 }
 export interface GlobalLeaderboardView {
   total: number;

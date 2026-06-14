@@ -21,11 +21,11 @@ export function avatarColor(name: string): string {
   return PALETTE[hash(name) % PALETTE.length]!;
 }
 
-export function Avatar({ name, size = 28, ring }: { name: string; size?: number; ring?: boolean }) {
+export function Avatar({ name, size = 28, ring, color }: { name: string; size?: number; ring?: boolean; color?: string | null }) {
   return (
     <span
       className={`avatar${ring ? ' ring' : ''}`}
-      style={{ width: size, height: size, background: avatarColor(name), fontSize: size * 0.4 }}
+      style={{ width: size, height: size, background: color || avatarColor(name), fontSize: size * 0.4 }}
       title={name}
       aria-hidden
     >
@@ -33,6 +33,12 @@ export function Avatar({ name, size = 28, ring }: { name: string; size?: number;
     </span>
   );
 }
+
+/** The palette users can pick from for their avatar. */
+export const AVATAR_PALETTE = [
+  '#00c389', '#3b82f6', '#f59e0b', '#ef4444', '#a855f7',
+  '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16',
+];
 
 /** Overlapping stack of avatars (e.g. group members), capped with a "+N". */
 export function AvatarStack({ names, max = 5, size = 26 }: { names: string[]; max?: number; size?: number }) {

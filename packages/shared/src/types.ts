@@ -114,4 +114,5 @@ export interface StandingAgg {
   points: number;
   exacts: number; // count of predictions scoring 5
   correctResults: number; // count of predictions scoring >= 2
+  avatarColor?: string | null;
 }

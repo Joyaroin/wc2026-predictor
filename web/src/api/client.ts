@@ -10,6 +10,8 @@ export interface PublicPlayer {
   id: string;
   name: string;
   tourSeen?: boolean;
+  avatarColor?: string | null;
+  createdAt?: string;
 }
 export interface GroupSummary {
   id: string;
@@ -36,6 +38,7 @@ export interface LeaderboardRow {
   points: number;
   exacts: number;
   correctResults: number;
+  avatarColor?: string | null;
 }
 export interface MatchPredictionRow {
   playerId: string;
@@ -123,6 +126,7 @@ export const api = {
   me: () => req<PublicPlayer>('/players/me'),
   rename: (name: string) => req<PublicPlayer>('/players/me/name', { method: 'POST', body: { name } }),
   markTourSeen: () => req<{ ok: true }>('/players/me/tour-seen', { method: 'POST' }),
+  setAvatarColor: (color: string | null) => req<PublicPlayer>('/players/me/avatar-color', { method: 'POST', body: { color } }),
   listGroups: () => req<GroupSummary[]>('/groups'),
   createGroup: (name: string) => req<Group>('/groups', { method: 'POST', body: { name } }),
   joinGroup: (inviteCode: string) => req<Group>('/groups/join', { method: 'POST', body: { inviteCode } }),

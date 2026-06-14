@@ -7,6 +7,7 @@ export interface PlayerRecord {
   nameKey: string; // lower(trim(name)) — uniqueness key
   pinHash: string;
   tourSeenAt?: string | null; // when the onboarding tour was completed/skipped (null = not yet)
+  avatarColor?: string | null; // user-picked avatar colour (hex); null = auto from name
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +23,8 @@ export interface PlayerRepo {
   updatePin(id: string, pinHash: string): Promise<void>;
   /** Mark the onboarding tour as seen. */
   setTourSeen(id: string, iso: string): Promise<void>;
+  /** Set the user-picked avatar colour (null to reset to auto). */
+  setAvatarColor(id: string, color: string | null): Promise<void>;
   /** All players (used for the global leaderboard). */
   listAll(): Promise<PlayerRecord[]>;
 }

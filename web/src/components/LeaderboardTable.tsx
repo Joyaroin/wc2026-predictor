@@ -23,7 +23,7 @@ export function LeaderboardTable({
           data-testid={`lb-row-${r.playerId}`}
         >
           <span className={`lb-rank${r.rank <= 3 ? ' top' : ''}`}>{medal(r.rank)}</span>
-          <Avatar name={r.name} size={30} />
+          <Avatar name={r.name} size={30} color={r.avatarColor} />
           <span className="lb-name">
             {r.name}
             {r.playerId === meId && <span className="lb-you">You</span>}

@@ -9,14 +9,22 @@ export interface PlayerService {
   rename(callerId: string, name: string): Promise<PublicPlayer>;
   changePin(callerId: string, currentPin: string, newPin: string): Promise<void>;
   markTourSeen(callerId: string): Promise<void>;
+  setAvatarColor(callerId: string, color: string | null): Promise<PublicPlayer>;
 }
 
 export function createPlayerService(players: PlayerRepo): PlayerService {
+  async function publicOf(callerId: string): Promise<PublicPlayer> {
+    const p = await players.getById(callerId);
+    if (!p) throw new NotFoundError('Player not found');
+    return { id: p.id, name: p.name, tourSeen: !!p.tourSeenAt, avatarColor: p.avatarColor ?? null, createdAt: p.createdAt };
+  }
   return {
     async getMe(callerId) {
-      const p = await players.getById(callerId);
-      if (!p) throw new NotFoundError('Player not found');
-      return { id: p.id, name: p.name, tourSeen: !!p.tourSeenAt };
+      return publicOf(callerId);
+    },
+    async setAvatarColor(callerId, color) {
+      await players.setAvatarColor(callerId, color);
+      return publicOf(callerId);
     },
     async markTourSeen(callerId) {
       await players.setTourSeen(callerId, new Date().toISOString());
