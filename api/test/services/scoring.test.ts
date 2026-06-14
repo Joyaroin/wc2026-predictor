@@ -38,6 +38,21 @@ describe('scoringService.scoreMatch', () => {
     expect((await repos.predictions.get('b', 'm1'))?.points).toBe(5); // outcome 2 + goal diff 3, no 0-0 bonus
   });
 
+  it('suppresses the provisional goalless first-goal bonus while a 0-0 match is still live', async () => {
+    const repos = createMemoryRepositories();
+    await repos.matches.upsert(sampleMatch({ id: 'live', status: 'IN_PLAY', homeScore: 0, awayScore: 0 }));
+    const now = new Date().toISOString();
+    await repos.predictions.put({ playerId: 'a', matchId: 'live', home: 0, away: 0, points: 0, createdAt: now, updatedAt: now });
+
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket, systemClock);
+    await scoring.scoreMatch('live');
+
+    // Live 0-0: scoreline points only (12). The +8 goalless first-goal bonus is volatile (one goal
+    // removes it) and must not be persisted until FINISHED — so the leaderboard/My Points agree
+    // with the live MatchCard, which suppresses it too.
+    expect((await repos.predictions.get('a', 'live'))?.points).toBe(12);
+  });
+
   it('persists correctOutcome, distinguishing a wrong-outcome 2-pointer from a correct result', async () => {
     const repos = createMemoryRepositories();
     // actual 0-1 (AWAY win)

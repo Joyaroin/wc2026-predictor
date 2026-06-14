@@ -41,7 +41,9 @@ export function MyBreakdownPage() {
                 <td>{match!.homeTeam} vs {match!.awayTeam}</td>
                 <td>{pred.home}–{pred.away}{pred.joker ? ' ★' : ''}</td>
                 <td>
-                  {settled ? `${match!.homeScore}–${match!.awayScore}` : '—'}
+                  {settled && match!.homeScore != null && match!.awayScore != null
+                    ? `${match!.homeScore}–${match!.awayScore}`
+                    : '—'}
                   {live && <span className="muted fine"> ● live</span>}
                 </td>
                 <td>{settled ? `${pointsLabel(pred.points, pred.exact)}${pred.joker ? ' ×2' : ''}` : '—'}</td>

@@ -42,27 +42,6 @@ export function liveMinute(
   return second >= 90 ? '90+′' : `${second}′`;
 }
 
-/**
- * First-goal bonus to fold into the displayed points.
- *
- * `fg` is the result of `firstGoalPoints` (firstTeam + firstPlayer). For a 0-0,
- * `firstGoalPoints` awards the full bonus because "nobody scores" was called —
- * but while a match is still LIVE a 0-0 scoreline is provisional, so we must NOT
- * pay out that goalless auto-bonus yet (it should only count once FINISHED).
- *
- * - finished: award the bonus as computed.
- * - live & actual 0-0: suppress (provisional goalless — could still be a goal).
- * - live & a goal already scored: award (first-goal facts are known and final).
- */
-export function liveFirstGoalBonus(
-  fg: { firstTeam: number; firstPlayer: number } | null,
-  opts: { finished: boolean; goalless: boolean },
-): number {
-  if (!fg) return 0;
-  if (!opts.finished && opts.goalless) return 0;
-  return fg.firstTeam + fg.firstPlayer;
-}
-
 export function pointsLabel(points: number, exact?: boolean): string {
   const n = points > 0 ? `+${points}` : '+0';
   return exact ? `Exact ${n}` : n;

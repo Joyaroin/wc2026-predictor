@@ -1,6 +1,6 @@
 // Scoring service: precompute & persist points when a match is decided (SR-4 / US-5.2).
 // Scores both score-predictions and knockout bracket (advancement) picks.
-import { scoreBreakdown, firstGoalPoints, darkHorsePoints } from '@wc2026/shared';
+import { scoreBreakdown, firstGoalPoints, liveFirstGoalBonus, darkHorsePoints } from '@wc2026/shared';
 import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 import type { Clock } from '../lib/clock';
 
@@ -30,8 +30,11 @@ export function createScoringService(
       for (const p of preds) {
         const bd = scoreBreakdown({ home: p.home, away: p.away }, actual);
         // First-team/first-player bonuses — a correctly-called 0-0 earns both (no first scorer exists).
+        // While a 0-0 match is still live the bonus is provisional, so suppress it until FINISHED so
+        // the persisted points (leaderboard / My Points) match the live fixture card.
         const fg = firstGoalPoints(p, actual, { firstGoalTeam: match.firstGoalTeam, firstScorerId: match.firstScorerId });
-        const points = bd.points + fg.firstTeam + fg.firstPlayer;
+        const goalless = actual.home === 0 && actual.away === 0;
+        const points = bd.points + liveFirstGoalBonus(fg, { finished: match.status === 'FINISHED', goalless });
         if (points !== p.points || bd.exact !== p.exact || bd.outcome !== p.correctOutcome) {
           await predictions.put({ ...p, points, exact: bd.exact, correctOutcome: bd.outcome, updatedAt: now });
           // Count only predictions that were actually (re)scored — i.e. a put() happened.

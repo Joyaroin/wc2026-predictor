@@ -83,6 +83,26 @@ export function firstGoalPoints(pred: FirstGoalPrediction, actual: Score, facts:
   return { firstTeam, firstPlayer };
 }
 
+/**
+ * First-goal bonus to actually count, given whether the match is FINISHED.
+ *
+ * `fg` is the result of `firstGoalPoints` (firstTeam + firstPlayer). A 0-0 awards the full bonus
+ * because "nobody scores" was called — but while the match is still LIVE a 0-0 is provisional, so
+ * the goalless auto-bonus must NOT be paid yet (a single goal removes it). It counts only once
+ * FINISHED. A real first goal that already happened (non-goalless) is final, so it counts live too.
+ *
+ * Used by BOTH the server (scoreMatch persists points) and the web (live points bubble) so the
+ * leaderboard, My Points, and the fixture card all agree on a live 0-0.
+ */
+export function liveFirstGoalBonus(
+  fg: { firstTeam: number; firstPlayer: number } | null,
+  opts: { finished: boolean; goalless: boolean },
+): number {
+  if (!fg) return 0;
+  if (!opts.finished && opts.goalless) return 0;
+  return fg.firstTeam + fg.firstPlayer;
+}
+
 /** Points after applying the Joker multiplier (doubles when joker is set). */
 export function effectivePoints(p: { points: number; joker?: boolean }): number {
   return p.joker ? p.points * 2 : p.points;

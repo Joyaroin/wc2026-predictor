@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute, liveFirstGoalBonus } from '../src/lib/format';
+import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute } from '../src/lib/format';
+import { liveFirstGoalBonus } from '@wc2026/shared';
 
 describe('matchState', () => {
   it('Played when finished with a score', () => {

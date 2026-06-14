@@ -3,6 +3,7 @@ import {
   effectivePoints,
   scoreBreakdown,
   firstGoalPoints,
+  liveFirstGoalBonus,
   SCORE_POINTS,
   FIRST_TEAM_POINTS,
   FIRST_PLAYER_POINTS,
@@ -10,7 +11,7 @@ import {
 } from '@wc2026/shared';
 import type { MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, formatKickoff, stageLabel, liveMinute, liveFirstGoalBonus } from '../lib/format';
+import { matchState, formatKickoff, stageLabel, liveMinute } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
@@ -59,7 +60,9 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Predictions load async — sync the inputs when the saved prediction arrives or changes
   // (keyed on updatedAt so we don't clobber in-progress typing on unrelated re-renders).
   useEffect(() => {
-    if (prediction) {
+    // Don't clobber in-progress typing: a background poll/refetch bumps prediction.updatedAt and
+    // would otherwise overwrite a focused input with the just-saved server value.
+    if (prediction && !focusedRef.current) {
       setHome(String(prediction.home));
       setAway(String(prediction.away));
     }
@@ -79,6 +82,9 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Unsaved edits → gently pulse the Save button so the next step is obvious.
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
+  // True while a score box is focused — gates the prediction.updatedAt resync so a refetch mid-typing
+  // doesn't overwrite the user's input.
+  const focusedRef = useRef(false);
   // Debounced auto-advance home → away, so two-digit scores (10–30) can still be typed.
   const advanceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(advanceRef.current), []);
@@ -173,7 +179,13 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             if (v !== '') advanceRef.current = setTimeout(() => awayRef.current?.focus(), 300);
           }
         }}
-        onFocus={(e) => e.target.select()}
+        onFocus={(e) => {
+          focusedRef.current = true;
+          e.target.select();
+        }}
+        onBlur={() => {
+          focusedRef.current = false;
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && canSave) {
             clearTimeout(advanceRef.current);
