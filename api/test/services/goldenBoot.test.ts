@@ -30,6 +30,13 @@ describe('espn goal parsing', () => {
 
     const real = goals.filter((g) => !g.shootout && !g.ownGoal);
     expect(real).toHaveLength(2); // 2 Ronaldo goals; shootout + own goal excluded
+
+    // Lock the ESPN own-goal convention the first-goal-team fix relies on: ESPN tags an own-goal
+    // detail's team.id with the BENEFITING side (here Spain's OG benefits... it is tagged team id 2
+    // = Spain/AWAY in this fixture), so goalsFromCompetition derives side from team.id directly.
+    // If a real ESPN payload ever tags the conceding team instead, this assertion will catch it.
+    const og = goals.find((g) => g.ownGoal);
+    expect(og).toMatchObject({ side: 'AWAY', ownGoal: true }); // team.id 2 → AWAY (benefiting side per ESPN)
     const tally = tallyTopScorers([{ eventId: 'e', date: '', goals: real.map((g) => ({ scorerId: g.scorerId, scorerName: g.scorerName })) }]);
     expect(tally[0]).toMatchObject({ scorerId: '7', scorerName: 'Ronaldo', goals: 2 });
   });
@@ -154,6 +161,36 @@ describe('golden boot refresh', () => {
     await svc.refresh();
     expect((await repos.goldenBoot.get('sam'))?.points).toBe(15); // picked the leader
     expect((await repos.goldenBoot.get('mia'))?.points).toBe(0);
+  });
+
+  it('does not re-fetch old fully-finished dates on subsequent refreshes (incremental capture)', async () => {
+    const repos = createMemoryRepositories();
+    const oldDay = '2026-06-11T16:00:00.000Z';
+    await repos.matches.upsert(sampleMatch({ id: 'm1', status: 'FINISHED', homeScore: 1, awayScore: 0, kickoff: oldDay }));
+    await repos.goldenBoot.put({ playerId: 'sam', scorerId: '7', scorerName: 'Ronaldo', points: 0, createdAt: oldDay, updatedAt: oldDay });
+
+    const calls: { dates: string[]; skip: string[] }[] = [];
+    const fakeEspn: EspnClient = {
+      async fetchPlayerPool() { return []; },
+      async fetchMatchFirstGoals() { return []; },
+      async fetchFinishedEventGoals(dates, skipEventIds) {
+        calls.push({ dates: [...dates], skip: [...skipEventIds] });
+        return [{ eventId: 'e1', date: oldDay, goals: [{ scorerId: '7', scorerName: 'Ronaldo' }, { scorerId: '7', scorerName: 'Ronaldo' }] }];
+      },
+    };
+    const now = '2026-06-20T00:00:00.000Z';
+    const svc = createGoldenBootService(
+      repos.goldenBoot, repos.stats, createMatchService(repos.matches, fixedClock(now)), fakeEspn, fixedClock(now), noopLogger,
+    );
+
+    await svc.refresh(); // seed run: fetches the full window incl. the old day
+    await repos.stats.setLastEspnRun('2026-06-19T00:00:00.000Z'); // bypass the 15-min throttle
+    await svc.refresh(); // incremental: the old fully-finished day must NOT be re-fetched
+
+    expect(calls.length).toBe(2);
+    expect(calls[0]!.dates).toContain('20260611'); // seed fetched the old day
+    expect(calls[1]!.dates).not.toContain('20260611'); // incremental skipped it (old + match FINISHED)
+    expect((await repos.stats.getLeader())?.scorerName).toBe('Ronaldo'); // tally still reflects the cached old-day goals
   });
 
   it('a shared Golden Boot (tie at the top) pays EVERY picker of a tied top scorer', async () => {

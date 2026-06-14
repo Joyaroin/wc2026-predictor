@@ -3,7 +3,7 @@ import { awardsLocked, tournamentFinished } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { GoldenBootRepo, StatsRepo, GoldenBootPick, TopScorer } from '../repos/types';
 import type { MatchService } from './matches';
-import { tallyTopScorers, type EspnClient, type WcPlayer } from '../integration/espnClient';
+import { tallyTopScorers, type EspnClient, type EventGoals, type WcPlayer } from '../integration/espnClient';
 import { LockedError, ValidationError } from '../lib/errors';
 import type { Logger } from '../lib/logger';
 
@@ -13,6 +13,9 @@ const POOL_TTL_MS = 6 * 60 * 60 * 1000;
 // repeated requests don't each re-issue ~49 sequential roster calls while the pool is unavailable.
 const POOL_NEGATIVE_TTL_MS = 60 * 1000;
 const ESPN_THROTTLE_MS = 15 * 60 * 1000;
+// After the first (seeding) refresh, only re-fetch the recent tail + days with unfinished matches;
+// older fully-finished days are served from the in-memory capture cache.
+const ESPN_RECENT_DAYS = 3;
 
 // Custom joke entries added to the player pool (just for fun).
 const FUN_PLAYERS: WcPlayer[] = [
@@ -59,6 +62,9 @@ export function createGoldenBootService(
 ): GoldenBootService {
   let pool: WcPlayer[] = [];
   let poolAt = 0;
+  // In-memory cache of captured finished-event goals (same per-instance pattern as `pool`). Lets
+  // refresh() skip re-fetching old fully-finished days every run; re-seeds after a process restart.
+  let capturedGoals: EventGoals[] = [];
 
   async function tournamentStart(): Promise<Date | null> {
     const matches = await matchService.list();
@@ -123,8 +129,28 @@ export function createGoldenBootService(
       }
 
       try {
-        const events = await espn.fetchFinishedEventGoals(datesBetween(start, now), new Set());
-        const tally = tallyTopScorers(events);
+        const allDates = datesBetween(start, now);
+        // Seed run (cold cache) sweeps the full window; afterwards only re-fetch days that could
+        // still gain a finished event — the recent tail, plus any day with a not-yet-FINISHED match.
+        const dayOf = (iso: string): string => {
+          const d = new Date(iso);
+          return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+        };
+        const matches = await matchService.list();
+        const recent = new Set(allDates.slice(-(ESPN_RECENT_DAYS + 1)));
+        const liveDays = new Set(
+          matches
+            .filter((m) => m.status !== 'FINISHED' && !Number.isNaN(Date.parse(m.kickoff)) && Date.parse(m.kickoff) <= now.getTime())
+            .map((m) => dayOf(m.kickoff)),
+        );
+        const fetchDates = capturedGoals.length === 0 ? allDates : allDates.filter((d) => recent.has(d) || liveDays.has(d));
+        const capturedIds = new Set(capturedGoals.map((e) => e.eventId));
+        const fresh = await espn.fetchFinishedEventGoals(fetchDates, capturedIds);
+        // Merge by eventId (finished events are immutable; a defensive re-fetch just overrides).
+        const byId = new Map(capturedGoals.map((e) => [e.eventId, e]));
+        for (const e of fresh) byId.set(e.eventId, e);
+        capturedGoals = [...byId.values()];
+        const tally = tallyTopScorers(capturedGoals);
         if (tally.length > 0) {
           // tally is sorted by goals desc — element 0 holds the max; on a TIE several scorers share it.
           const maxGoals = tally[0]!.goals;
