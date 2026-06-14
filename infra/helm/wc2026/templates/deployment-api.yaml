@@ -5,7 +5,11 @@ metadata:
   labels:
     {{- include "wc2026.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.hpa.enabled }}
+  # Omit a static replica count when the HPA owns it, otherwise every Helm/ArgoCD sync
+  # would reset replicas and fight the HPA-managed count (thrash under selfHeal).
   replicas: {{ .Values.api.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: wc2026-api

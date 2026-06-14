@@ -29,6 +29,11 @@ spec:
     # host-network/local-node traffic, so probes already pass there even without this rule.
     # This block is the portable safety net for stricter CNIs. Adjust the CIDRs to match the
     # actual pod/host subnet if you deploy on a different network.
+    #
+    # The source CIDRs are broad (the kubelet's source IP varies by setup), so we MUST scope
+    # this rule to the actual app container ports. Without a `ports:` list, an ingress `from`
+    # entry permits ALL ports — and because the pod CIDR sits inside 10.0.0.0/8, that would let
+    # any pod in the cluster reach api/web on every port, defeating the ingress-only isolation.
     - from:
         - ipBlock:
             cidr: 169.254.0.0/16 # link-local (kubelet may source probes from here)
@@ -38,6 +43,11 @@ spec:
             cidr: 172.16.0.0/12
         - ipBlock:
             cidr: 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }} # api readiness/liveness probe
+        - protocol: TCP
+          port: {{ .Values.web.port }} # web readiness/liveness probe
   egress:
     - ports:
         - protocol: UDP
