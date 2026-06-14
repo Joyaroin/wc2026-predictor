@@ -652,6 +652,10 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .gc-rank strong { color: var(--accent); }
 .gc-medal { font-weight: 800; }
 
+.global-card { margin-bottom: 14px; border-color: var(--accent2); background: linear-gradient(180deg, color-mix(in srgb, var(--accent2) 9%, var(--card)), var(--card)); }
+.global-card:hover { border-color: var(--accent2); }
+.global-card .gc-name { color: var(--accent2); }
+
 .group-empty { text-align: center; padding: 28px 16px; border: 1px dashed var(--line); border-radius: 14px; margin: 12px 0; }
 .group-empty .ge-emoji { font-size: 2.6rem; }
 .group-empty h3 { margin: 6px 0; }

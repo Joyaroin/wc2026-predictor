@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-14.3',
+    date: 'June 14, 2026',
+    emoji: '👥',
+    title: 'Groups, levelled up',
+    points: [
+      'Each group now shows your rank, points and the leader at a glance, with member avatars',
+      'One-tap Share invite — send friends a code straight from the group',
+      'A top-3 podium, an "Overall vs This matchday" toggle, and tap any player to see their picks',
+      'The Global leaderboard now lives at the top of the Groups tab',
+    ],
+  },
+  {
     id: '2026-06-14.2',
     date: 'June 14, 2026',
     emoji: '💾',
