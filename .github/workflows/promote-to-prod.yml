@@ -26,8 +26,24 @@ jobs:
 
       - name: Resolve commit to promote
         id: r
+        env:
+          # Pass the workflow_dispatch input via env so the SHELL expands it, not the Actions
+          # template engine — interpolating ${{ inputs.sha }} into a run block is a command
+          # injection sink (it becomes script text before the shell parses it).
+          SHA_INPUT: ${{ inputs.sha }}
         run: |
-          if [ -n "${{ inputs.sha }}" ]; then SHA="${{ inputs.sha }}"; else SHA=$(git rev-parse origin/main); fi
+          if [ -n "$SHA_INPUT" ]; then
+            # Validate it is a 7-40 char lowercase hex commit SHA before using it.
+            case "$SHA_INPUT" in
+              "" | *[!0-9a-f]*) echo "::error::invalid sha input (must be lowercase hex)"; exit 1 ;;
+            esac
+            if [ "${#SHA_INPUT}" -lt 7 ] || [ "${#SHA_INPUT}" -gt 40 ]; then
+              echo "::error::invalid sha input (must be 7-40 hex chars)"; exit 1
+            fi
+            SHA="$SHA_INPUT"
+          else
+            SHA=$(git rev-parse origin/main)
+          fi
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Promoting commit $SHA"
 

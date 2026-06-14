@@ -17,6 +17,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build --workspace @wc2026/shared
+      # Typecheck api/web (+ shared emit) and run the web production build so type/bundle
+      # breakage is caught in PRs, not post-merge. (`npm test` is vitest; it does not typecheck.)
+      - run: npm run build --workspaces --if-present
+      # Validate the esbuild production server bundle for the api.
+      - run: npm run build:server --workspace @wc2026/api
       - run: npm test
       # Fail CI only on high/critical runtime advisories; low/moderate are reported but
       # don't block (avoids flaky CI on transient low-severity advisories).
@@ -66,21 +71,24 @@ jobs:
 
       - name: Auto-deploy to dev (pin values-dev to this SHA)
         if: github.ref_name == 'main'
+        env:
+          SHA: ${{ github.sha }}
         run: |
-          export SHA=${{ github.sha }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main
-          yq -i '.image.api.tag = strenv(SHA) | .image.web.tag = strenv(SHA)' infra/helm/wc2026/values-dev.yaml
-          git add infra/helm/wc2026/values-dev.yaml
-          # [skip ci] avoids re-triggering this workflow on the bot commit.
-          git commit -m "chore(dev): deploy ${SHA} [skip ci]" || { echo "dev already on this SHA"; exit 0; }
-          # Retry loop: even with job-level concurrency, a human push can land between our
-          # commit and push. Rebase onto the latest main and retry rather than failing the run.
+          # Re-derive the bump from a clean, up-to-date main on every attempt. A concurrent
+          # human push that touches values-dev.yaml would leave a `git pull --rebase` mid-rebase
+          # and wedge the loop; resetting to origin/main each time avoids that failure mode.
           for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin main && git push origin main; then
-              echo "Pushed dev deploy on attempt ${attempt}"; exit 0
-            fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git reset --hard origin/main
+            yq -i '.image.api.tag = strenv(SHA) | .image.web.tag = strenv(SHA)' infra/helm/wc2026/values-dev.yaml
+            git add infra/helm/wc2026/values-dev.yaml
+            # [skip ci] avoids re-triggering this workflow on the bot commit.
+            git commit -m "chore(dev): deploy ${SHA} [skip ci]" || { echo "dev already on this SHA"; exit 0; }
+            if git push origin main; then echo "Pushed dev deploy on attempt ${attempt}"; exit 0; fi
             echo "Push attempt ${attempt} lost the race; retrying after backoff..."
             sleep $((attempt * 5))
           done
