@@ -519,6 +519,126 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   --input-empty: #232328; --input-filled: #5c1320; --input-filled-border: #8a2433; --input-filled-ink: #ffffff;
   --on-bg: #1c2f23; --success-bg: #16301f;
 }
+/* Canada — host nation, maple red */
+[data-theme="CAN"] {
+  --bg: #160a0b; --card: #241315; --surface-2: #1b0e10;
+  --ink: #fff0f1; --muted: #caa0a4;
+  --accent: #d52b1e; --accent-contrast: #ffffff;
+  --accent2: #ffffff; --accent2-contrast: #2a0c0e;
+  --danger: #ff8a80; --line: #341c1f; --line-strong: #48272b; --hover: #1f1113;
+  --input-empty: #2c1619; --input-filled: #7a1620; --input-filled-border: #a8444a; --input-filled-ink: #ffffff;
+  --on-bg: #34181c; --success-bg: #16301f;
+}
+/* Croatia — vatreni red & blue */
+[data-theme="CRO"] {
+  --bg: #0c0f1c; --card: #161a2e; --surface-2: #101424;
+  --ink: #eef1ff; --muted: #9aa2c0;
+  --accent: #ff3b30; --accent-contrast: #ffffff;
+  --accent2: #1763c6; --accent2-contrast: #ffffff;
+  --danger: #ff8a80; --line: #272c44; --line-strong: #353c5c; --hover: #141829;
+  --input-empty: #1d2238; --input-filled: #16327a; --input-filled-border: #2c4f9e; --input-filled-ink: #ffffff;
+  --on-bg: #2a1820; --success-bg: #16301f;
+}
+/* Belgium — black, gold & red */
+[data-theme="BEL"] {
+  --bg: #100f0a; --card: #1c1a12; --surface-2: #15130d;
+  --ink: #fdf6e3; --muted: #b8ab86;
+  --accent: #fdda24; --accent-contrast: #2a2300;
+  --accent2: #ef3340; --accent2-contrast: #ffffff;
+  --danger: #ff8a80; --line: #2e2a1c; --line-strong: #403a28; --hover: #181610;
+  --input-empty: #262213; --input-filled: #6b5a12; --input-filled-border: #9a8420; --input-filled-ink: #ffffff;
+  --on-bg: #2c2814; --success-bg: #1f2912;
+}
+/* Colombia — yellow, blue & red */
+[data-theme="COL"] {
+  --bg: #0e0f06; --card: #1b1c0d; --surface-2: #141509;
+  --ink: #fffbe6; --muted: #bdb487;
+  --accent: #fcd116; --accent-contrast: #2a2300;
+  --accent2: #1763c6; --accent2-contrast: #ffffff;
+  --danger: #ce1126; --line: #2d2c16; --line-strong: #3e3c1f; --hover: #17170c;
+  --input-empty: #242313; --input-filled: #16327a; --input-filled-border: #2c4f9e; --input-filled-ink: #ffffff;
+  --on-bg: #2c2a14; --success-bg: #1f2912;
+}
+/* Uruguay — la celeste (light) */
+[data-theme="URY"] {
+  --bg: #eef6fb; --card: #ffffff; --surface-2: #dfeef8;
+  --ink: #16293a; --muted: #577690;
+  --accent: #4f9fd0; --accent-contrast: #06283d;
+  --accent2: #f6b40e; --accent2-contrast: #3a2a00;
+  --danger: #d6453d; --line: #cfe2ef; --line-strong: #aecde2; --hover: #eef7fc;
+  --input-empty: #dceaf5; --input-filled: #2f6f9e; --input-filled-border: #2f6f9e; --input-filled-ink: #ffffff;
+  --on-bg: #d8ecf9; --success-bg: #dcf0e4;
+}
+/* Japan — samurai red on white (light) */
+[data-theme="JPN"] {
+  --bg: #f7f7f8; --card: #ffffff; --surface-2: #efeff1;
+  --ink: #1a1a1f; --muted: #6a6a73;
+  --accent: #bc002d; --accent-contrast: #ffffff;
+  --accent2: #1a1a1f; --accent2-contrast: #ffffff;
+  --danger: #d6453d; --line: #e2e2e6; --line-strong: #cfcfd5; --hover: #f1f1f3;
+  --input-empty: #ececed; --input-filled: #bc002d; --input-filled-border: #bc002d; --input-filled-ink: #ffffff;
+  --on-bg: #fbe7eb; --success-bg: #e3f3e7;
+}
+/* South Korea — taegeuk blue & red (light) */
+[data-theme="KOR"] {
+  --bg: #f6f8fb; --card: #ffffff; --surface-2: #eef2f7;
+  --ink: #16263a; --muted: #5e768f;
+  --accent: #0047a0; --accent-contrast: #ffffff;
+  --accent2: #cd2e3a; --accent2-contrast: #ffffff;
+  --danger: #cd2e3a; --line: #dce4ee; --line-strong: #bccadb; --hover: #eef3f9;
+  --input-empty: #e6ecf4; --input-filled: #0047a0; --input-filled-border: #0047a0; --input-filled-ink: #ffffff;
+  --on-bg: #e3ecf7; --success-bg: #e0f0e6;
+}
+/* Morocco — red with green star */
+[data-theme="MAR"] {
+  --bg: #160a0a; --card: #241312; --surface-2: #1b0e0d;
+  --ink: #fdeeee; --muted: #c8a09e;
+  --accent: #c1272d; --accent-contrast: #ffffff;
+  --accent2: #006233; --accent2-contrast: #ffffff;
+  --danger: #ff8a80; --line: #341b1a; --line-strong: #482726; --hover: #1f1110;
+  --input-empty: #2c1615; --input-filled: #0a4a2c; --input-filled-border: #1f6e48; --input-filled-ink: #ffffff;
+  --on-bg: #163a26; --success-bg: #0e3a20;
+}
+/* Senegal — teranga green, gold & red */
+[data-theme="SEN"] {
+  --bg: #0a1409; --card: #14210f; --surface-2: #0e1a0b;
+  --ink: #f5ffe9; --muted: #9eb98e;
+  --accent: #00853f; --accent-contrast: #ffffff;
+  --accent2: #fdef42; --accent2-contrast: #2a2300;
+  --danger: #e31b23; --line: #1f3218; --line-strong: #2c4623; --hover: #102110;
+  --input-empty: #1a2d14; --input-filled: #0a5a2e; --input-filled-border: #1f7e4a; --input-filled-ink: #ffffff;
+  --on-bg: #163a24; --success-bg: #0e3a20;
+}
+/* Australia — green & gold */
+[data-theme="AUS"] {
+  --bg: #0a1408; --card: #142210; --surface-2: #0e1a0b;
+  --ink: #f3ffe9; --muted: #9bb98e;
+  --accent: #ffcd00; --accent-contrast: #2a2300;
+  --accent2: #00843d; --accent2-contrast: #ffffff;
+  --danger: #ff8a80; --line: #1f3318; --line-strong: #2c4823; --hover: #102110;
+  --input-empty: #1a2e14; --input-filled: #0a5a2c; --input-filled-border: #1f7e48; --input-filled-ink: #ffffff;
+  --on-bg: #163a22; --success-bg: #0e3a20;
+}
+/* Sweden — blågult blue & yellow */
+[data-theme="SWE"] {
+  --bg: #0a0f1c; --card: #141a2e; --surface-2: #0e1424;
+  --ink: #eef3ff; --muted: #9aa6c4;
+  --accent: #fecb00; --accent-contrast: #2a2300;
+  --accent2: #006aa7; --accent2-contrast: #ffffff;
+  --danger: #ff8a80; --line: #26304a; --line-strong: #344063; --hover: #121829;
+  --input-empty: #1c243c; --input-filled: #0a3a7a; --input-filled-border: #2c5a9e; --input-filled-ink: #ffffff;
+  --on-bg: #1a2a4a; --success-bg: #13325a;
+}
+/* Qatar — maroon */
+[data-theme="QAT"] {
+  --bg: #160a0d; --card: #241318; --surface-2: #1b0e12;
+  --ink: #fdeef2; --muted: #c8a0ad;
+  --accent: #8a1538; --accent-contrast: #ffffff;
+  --accent2: #ffffff; --accent2-contrast: #2a0c14;
+  --danger: #ff8a80; --line: #341c24; --line-strong: #482730; --hover: #1f1116;
+  --input-empty: #2c161d; --input-filled: #6b1430; --input-filled-border: #9a3450; --input-filled-ink: #ffffff;
+  --on-bg: #341822; --success-bg: #16301f;
+}
 
 /* Live ticker */
 .ticker { display: flex; align-items: center; gap: 14px; padding: 7px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); color: var(--ink); font-size: 0.88rem; overflow-x: auto; white-space: nowrap; }

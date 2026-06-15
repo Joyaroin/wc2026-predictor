@@ -9,6 +9,16 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-15.2',
+    date: 'June 15, 2026',
+    emoji: '🎨',
+    title: 'More country themes',
+    points: [
+      'Twelve new nation themes — Canada, Croatia, Belgium, Colombia, Uruguay, Japan, South Korea, Morocco, Senegal, Australia, Sweden and Qatar',
+      'Pick yours in Account → Appearance',
+    ],
+  },
+  {
     id: '2026-06-15',
     date: 'June 15, 2026',
     emoji: '✨',

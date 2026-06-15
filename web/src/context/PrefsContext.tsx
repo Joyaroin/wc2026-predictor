@@ -22,6 +22,18 @@ export const THEMES: { id: string; label: string; flag?: string }[] = [
   { id: 'IRN', label: 'Iran', flag: 'IRN' },
   { id: 'EGY', label: 'Egypt', flag: 'EGY' },
   { id: 'IRQ', label: 'Iraq', flag: 'IRQ' },
+  { id: 'CAN', label: 'Canada', flag: 'CAN' },
+  { id: 'CRO', label: 'Croatia', flag: 'CRO' },
+  { id: 'BEL', label: 'Belgium', flag: 'BEL' },
+  { id: 'COL', label: 'Colombia', flag: 'COL' },
+  { id: 'URY', label: 'Uruguay', flag: 'URY' },
+  { id: 'JPN', label: 'Japan', flag: 'JPN' },
+  { id: 'KOR', label: 'South Korea', flag: 'KOR' },
+  { id: 'MAR', label: 'Morocco', flag: 'MAR' },
+  { id: 'SEN', label: 'Senegal', flag: 'SEN' },
+  { id: 'AUS', label: 'Australia', flag: 'AUS' },
+  { id: 'SWE', label: 'Sweden', flag: 'SWE' },
+  { id: 'QAT', label: 'Qatar', flag: 'QAT' },
 ];
 
 function detectedZone(): string {
