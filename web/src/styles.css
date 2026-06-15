@@ -1037,3 +1037,8 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .ms-ev-clock { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
 .ms-ev-icon { flex: none; font-size: 0.8rem; }
 .ms-watch { text-align: center; margin-top: 8px; }
+
+/* Whole live/finished card is tappable to expand full details */
+.match-card.expandable { cursor: pointer; }
+.match-card.expandable:hover { border-color: var(--line-strong); }
+.match-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px rgba(0,0,0,0.3); }

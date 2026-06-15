@@ -86,6 +86,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
     staleTime: 10 * 60_000,
   });
   const canSave = editable && home !== '' && away !== '';
+  // Whole-card click expands full details (only for live/finished cards, which aren't editable).
+  const detailsExpandable = (state === 'Live' || state === 'Played') && !match.placeholder;
   // Edits not yet persisted → show a "Saving…" hint (no Save button — it auto-saves).
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
@@ -233,7 +235,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
     );
 
   return (
-    <div className={`match-card ${prediction?.joker ? 'joker-on' : ''}`} data-testid={`match-${match.id}`}>
+    <div
+      className={`match-card ${prediction?.joker ? 'joker-on' : ''}${detailsExpandable ? ' expandable' : ''}${statsOpen ? ' expanded' : ''}`}
+      onClick={detailsExpandable ? () => setStatsOpen((o) => !o) : undefined}
+      data-testid={`match-${match.id}`}
+    >
       {confetti && <Confetti />}
       <div className="mc-header">
         <span className="mc-round">{stageLabel(match.stage, match.groupName)}</span>
@@ -257,7 +263,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         </div>
 
         {state === 'Live' && (
-          <div className="mc-result live clickable" onClick={() => setStatsOpen((o) => !o)} data-testid={`live-${match.id}`}>
+          <div className="mc-result live" data-testid={`live-${match.id}`}>
             <span className="live-dot">●</span> LIVE
             {minuteLabel && <span className="mc-min" data-testid={`minute-${match.id}`}> {minuteLabel}</span>}
             {' '}<strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
@@ -265,7 +271,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           </div>
         )}
         {state === 'Played' && (
-          <div className="mc-result clickable" onClick={() => setStatsOpen((o) => !o)} data-testid={`ft-${match.id}`}>
+          <div className="mc-result" data-testid={`ft-${match.id}`}>
             FT <strong>{match.homeScore}–{match.awayScore}</strong>
             <span className={`mc-detchev${statsOpen ? ' up' : ''}`} aria-hidden>▾</span>
           </div>
@@ -315,7 +321,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         )}
 
         {(state === 'Live' || state === 'Played') && !match.placeholder && (
-          <div className="mc-stats-wrap">
+          <div className="mc-stats-wrap" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="mc-stats-toggle"
