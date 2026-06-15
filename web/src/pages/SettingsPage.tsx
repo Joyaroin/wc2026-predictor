@@ -6,7 +6,7 @@ import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
 import { Flag } from '../components/Flag';
 import { Avatar, AVATAR_PALETTE } from '../components/Avatar';
 import { ordinal } from '../lib/rank';
-import { pushSupported, pushDeliverable, pushSubscribed, enablePush, disablePush } from '../lib/push';
+import { pushSupported, iosNeedsInstall, pushSubscribed, enablePush, disablePush } from '../lib/push';
 
 export function SettingsPage() {
   const { player, updateName, logout } = usePlayer();
@@ -180,10 +180,10 @@ export function SettingsPage() {
       <div className="card">
         <h4>Match alerts</h4>
         <p className="muted fine">Get a push when a match you predicted kicks off, a goal goes in, or it finishes.</p>
-        {!pushSupported() ? (
-          <p className="muted fine">Not supported on this browser.</p>
-        ) : !pushDeliverable() ? (
+        {iosNeedsInstall() ? (
           <p className="muted fine">📲 On iPhone/iPad: tap <b>Share → Add to Home Screen</b>, open the app from there, then enable alerts.</p>
+        ) : !pushSupported() ? (
+          <p className="muted fine">Not supported on this browser.</p>
         ) : (
           <div className="toggle-row">
             <button

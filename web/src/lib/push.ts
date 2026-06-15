@@ -5,12 +5,22 @@ export function pushSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
-/** True only when push can actually be delivered (iOS Safari needs the PWA installed). */
-export function pushDeliverable(): boolean {
-  if (!pushSupported()) return false;
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const installed = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
-  return isIOS ? installed : true;
+function isIOS(): boolean {
+  const ua = navigator.userAgent;
+  // iPhone/iPod, plus iPadOS which reports as a Mac but has touch.
+  return /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+}
+
+function isStandalone(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+}
+
+/**
+ * On iOS, the Push/Notification APIs only exist once the app is installed to the Home Screen —
+ * so in a normal Safari tab `pushSupported()` is false. Detect that case to show the install hint.
+ */
+export function iosNeedsInstall(): boolean {
+  return isIOS() && !isStandalone();
 }
 
 let swReg: Promise<ServiceWorkerRegistration> | null = null;
