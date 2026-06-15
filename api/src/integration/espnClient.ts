@@ -314,7 +314,7 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         homeMoneyLine: espnHomeAligned ? espnHomeML : espnAwayML,
         awayMoneyLine: espnHomeAligned ? espnAwayML : espnHomeML,
         drawMoneyLine: get<number>(pc, 'drawOdds', 'moneyLine') ?? null,
-        source: get<string>(pc, 'provider', 'name') ?? null,
+        source: null, // source intentionally hidden from clients
       };
     },
   };

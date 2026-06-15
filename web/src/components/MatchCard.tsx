@@ -363,7 +363,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
                       <Flag
                         code={suggestion.data.firstTeam === 'HOME' ? match.homeCode : match.awayCode}
                         name={suggestion.data.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam}
-                      />{' '}· via {suggestion.data.source ?? 'odds'} · tap to use
+                      />{' '}· tap to use
                     </div>
                   </>
                 )}

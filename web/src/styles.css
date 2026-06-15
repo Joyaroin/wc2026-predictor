@@ -831,3 +831,14 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 /* Fill-my-blanks control */
 .fill-blanks { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 14px; font-weight: 700; }
 .fill-blanks:hover:not(:disabled) { background: var(--on-bg); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .statpick-panel { animation: fadeUp 0.22s ease; }
+  .statpick-chip { animation: pop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) backwards; }
+  .statpick-chip:nth-child(1) { animation-delay: 30ms; }
+  .statpick-chip:nth-child(2) { animation-delay: 95ms; }
+  .statpick-chip:nth-child(3) { animation-delay: 160ms; }
+  .statpick-chip:active { transform: scale(0.95); }
+  .statpick-toggle .chev, .fill-blanks { transition: transform 0.12s ease, background-color 0.15s ease; }
+  .fill-blanks:active:not(:disabled) { transform: scale(0.97); }
+}
