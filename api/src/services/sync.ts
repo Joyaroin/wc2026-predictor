@@ -4,6 +4,7 @@ import type { Logger } from '../lib/logger';
 import type { MatchRepo } from '../repos/types';
 import type { FootballApiClient } from '../integration/footballApiClient';
 import type { ScoringService } from './scoring';
+import type { NotificationsService } from './notifications';
 
 export interface SyncReport {
   ok: boolean;
@@ -31,6 +32,7 @@ export function createSyncService(
   footballApi: FootballApiClient,
   matches: MatchRepo,
   scoring: ScoringService,
+  notifications: NotificationsService,
   logger: Logger,
 ): SyncService {
   return {
@@ -69,6 +71,8 @@ export function createSyncService(
           if (resultChanged(prev, next)) {
             report.scored += await scoring.scoreMatch(next.id);
           }
+          // Push alerts to predictors (kickoff/goal/FT) — after scoring so FT points are settled.
+          await notifications.onMatchUpdate(prev, next);
         } catch (err) {
           const message = err instanceof Error ? err.message : 'unknown';
           report.errors.push(`${next.id}: ${message}`);

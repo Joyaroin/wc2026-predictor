@@ -165,6 +165,10 @@ export const api = {
   matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
   matchSuggestions: (ids: string[]) =>
     req<Record<string, ScoreSuggestion | null>>(`/matches/suggestions?ids=${ids.join(',')}`),
+  pushPublicKey: () => req<{ publicKey: string | null }>('/push/public-key'),
+  pushSubscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    req<{ ok: true }>('/push/subscribe', { method: 'POST', body: sub }),
+  pushUnsubscribe: (endpoint: string) => req<{ ok: true }>('/push/unsubscribe', { method: 'POST', body: { endpoint } }),
   flags: () => req<AppFlags>('/flags'),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   submitFeedback: (message: string, page?: string) =>

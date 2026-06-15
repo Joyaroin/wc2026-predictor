@@ -44,6 +44,25 @@ spec:
                     secretKeyRef:
                       name: {{ include "wc2026.secretName" . }}
                       key: FOOTBALL_DATA_TOKEN
+                # Optional — Web Push (VAPID), so the sync job can send match alerts.
+                - name: VAPID_PUBLIC_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "wc2026.secretName" . }}
+                      key: VAPID_PUBLIC_KEY
+                      optional: true
+                - name: VAPID_PRIVATE_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "wc2026.secretName" . }}
+                      key: VAPID_PRIVATE_KEY
+                      optional: true
+                - name: VAPID_SUBJECT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "wc2026.secretName" . }}
+                      key: VAPID_SUBJECT
+                      optional: true
               resources:
                 {{- toYaml .Values.sync.resources | nindent 16 }}
               securityContext:

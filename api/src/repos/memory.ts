@@ -23,6 +23,8 @@ import type {
   TopScorer,
   Winner,
   AppFlags,
+  PushRepo,
+  PushSubRecord,
 } from './types';
 import { DEFAULT_FLAGS } from './types';
 
@@ -274,6 +276,22 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const pushSubs: PushSubRecord[] = [];
+  const pushRepo: PushRepo = {
+    async save(sub) {
+      const i = pushSubs.findIndex((s) => s.playerId === sub.playerId && s.endpoint === sub.endpoint);
+      if (i >= 0) pushSubs[i] = sub;
+      else pushSubs.push(sub);
+    },
+    async listByPlayer(playerId) {
+      return pushSubs.filter((s) => s.playerId === playerId);
+    },
+    async remove(playerId, endpoint) {
+      const i = pushSubs.findIndex((s) => s.playerId === playerId && s.endpoint === endpoint);
+      if (i >= 0) pushSubs.splice(i, 1);
+    },
+  };
+
   return {
     players: playerRepo,
     groups: groupRepo,
@@ -287,5 +305,6 @@ export function createMemoryRepositories(): Repositories {
     pott: pottRepo,
     feedback: feedbackRepo,
     stats: statsRepo,
+    push: pushRepo,
   };
 }

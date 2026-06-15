@@ -5,7 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PlayerProvider } from './context/PlayerContext';
 import { PrefsProvider } from './context/PrefsContext';
 import App from './App';
+import { pushSupported, registerServiceWorker } from './lib/push';
 import './styles.css';
+
+// Register the service worker (enables installability + push). Best-effort.
+if (pushSupported()) {
+  window.addEventListener('load', () => { void registerServiceWorker().catch(() => {}); });
+}
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },

@@ -40,6 +40,11 @@ const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName:
 const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
 const flagsSchema = z.object({ adsEnabled: z.boolean() });
 const avatarColorSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid colour').nullable() });
+const pushSubSchema = z.object({
+  endpoint: z.string().url().max(1000),
+  keys: z.object({ p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100) }),
+});
+const pushUnsubSchema = z.object({ endpoint: z.string().url().max(1000) });
 const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
 
 const wrap =
@@ -124,6 +129,11 @@ export function buildRouter(services: Services, config: Config): Router {
     if (!(await services.feedback.isAdmin(caller(req)))) throw new ForbiddenError('Not authorized');
     return { rescored: await services.scoring.rescoreAll() };
   }));
+
+  // --- Web Push (opt-in notifications) ---
+  r.get('/push/public-key', auth, wrap(async () => ({ publicKey: services.push.publicKey() })));
+  r.post('/push/subscribe', auth, validateBody(pushSubSchema), wrapVoid((req) => services.push.subscribe(caller(req), { endpoint: req.body.endpoint, keys: req.body.keys })));
+  r.post('/push/unsubscribe', auth, validateBody(pushUnsubSchema), wrapVoid((req) => services.push.unsubscribe(caller(req), req.body.endpoint)));
 
   // --- Feature flags (public read; admin toggle) ---
   r.get('/flags', auth, wrap(() => services.flags.get()));

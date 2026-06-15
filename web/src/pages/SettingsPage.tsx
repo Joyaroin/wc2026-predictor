@@ -6,6 +6,7 @@ import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
 import { Flag } from '../components/Flag';
 import { Avatar, AVATAR_PALETTE } from '../components/Avatar';
 import { ordinal } from '../lib/rank';
+import { pushSupported, pushDeliverable, pushSubscribed, enablePush, disablePush } from '../lib/push';
 
 export function SettingsPage() {
   const { player, updateName, logout } = usePlayer();
@@ -67,6 +68,24 @@ export function SettingsPage() {
   };
   const pinValid = /^\d{4}$/.test(currentPin) && /^\d{4}$/.test(newPin) && newPin === confirmPin;
   const pinType = showPin ? 'text' : 'password';
+
+  // Notifications (Web Push)
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushErr, setPushErr] = useState<string | null>(null);
+  useEffect(() => { pushSubscribed().then(setPushOn).catch(() => {}); }, []);
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushErr(null);
+    try {
+      if (pushOn) { await disablePush(); setPushOn(false); flash('Alerts off'); }
+      else { await enablePush(); setPushOn(true); flash('Alerts on ✓'); }
+    } catch (e) {
+      setPushErr(e instanceof Error ? e.message : 'Could not change alerts');
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   // Admin
   const adminMe = useQuery({ queryKey: ['admin-me'], queryFn: api.feedbackAdminMe });
@@ -155,6 +174,33 @@ export function SettingsPage() {
             ))}
           </select>
         </label>
+      </div>
+
+      <h3 className="section-head">Notifications</h3>
+      <div className="card">
+        <h4>Match alerts</h4>
+        <p className="muted fine">Get a push when a match you predicted kicks off, a goal goes in, or it finishes.</p>
+        {!pushSupported() ? (
+          <p className="muted fine">Not supported on this browser.</p>
+        ) : !pushDeliverable() ? (
+          <p className="muted fine">📲 On iPhone/iPad: tap <b>Share → Add to Home Screen</b>, open the app from there, then enable alerts.</p>
+        ) : (
+          <div className="toggle-row">
+            <button
+              type="button"
+              className={`switch ${pushOn ? 'on' : ''}`}
+              role="switch"
+              aria-checked={pushOn}
+              disabled={pushBusy}
+              onClick={togglePush}
+              data-testid="toggle-push"
+            >
+              <span className="switch-knob" />
+            </button>
+            <span className="fine">{pushBusy ? '…' : pushOn ? 'On' : 'Off'}</span>
+          </div>
+        )}
+        {pushErr && <p className="error fine">{pushErr}</p>}
       </div>
 
       <h3 className="section-head">Security</h3>

@@ -192,4 +192,18 @@ export interface Repositories {
   pott: PottRepo;
   feedback: FeedbackRepo;
   stats: StatsRepo;
+  push: PushRepo;
+}
+
+/** A browser Web Push subscription owned by a player. */
+export interface PushSubRecord {
+  playerId: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  createdAt: string;
+}
+export interface PushRepo {
+  save(sub: PushSubRecord): Promise<void>;
+  listByPlayer(playerId: string): Promise<PushSubRecord[]>;
+  remove(playerId: string, endpoint: string): Promise<void>;
 }

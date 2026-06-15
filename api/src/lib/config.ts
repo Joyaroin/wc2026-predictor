@@ -13,6 +13,8 @@ export interface Config {
   adminToken: string;
   /** Player name (lower-cased) treated as the owner/admin — sees the feedback inbox when logged in. */
   adminPlayer: string;
+  /** Web Push (VAPID) keys. Null when not configured — push notifications are then disabled. */
+  vapid: { publicKey: string; privateKey: string; subject: string } | null;
 }
 
 export class ConfigError extends Error {}
@@ -41,5 +43,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     persistence,
     adminToken: (env.ADMIN_TOKEN ?? '').trim(),
     adminPlayer: (env.ADMIN_PLAYER ?? 'adham').trim().toLowerCase(),
+    vapid:
+      env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
+        ? {
+            publicKey: env.VAPID_PUBLIC_KEY.trim(),
+            privateKey: env.VAPID_PRIVATE_KEY.trim(),
+            subject: (env.VAPID_SUBJECT ?? 'mailto:notifications@wc-predictions-2026.com').trim(),
+          }
+        : null,
   };
 }

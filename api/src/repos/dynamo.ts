@@ -30,6 +30,7 @@ import type {
   PottPick,
   FeedbackRepo,
   StatsRepo,
+  PushRepo,
 } from './types';
 import { DEFAULT_FLAGS } from './types';
 import {
@@ -553,5 +554,33 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats };
+  const push: PushRepo = {
+    async save(sub) {
+      await doc.send(new PutCommand({
+        TableName: Table,
+        Item: {
+          PK: keys.playerPk(sub.playerId), SK: `PUSH#${sub.endpoint}`,
+          playerId: sub.playerId, endpoint: sub.endpoint,
+          p256dh: sub.keys.p256dh, auth: sub.keys.auth, createdAt: sub.createdAt,
+        },
+      }));
+    },
+    async listByPlayer(playerId) {
+      const r = await doc.send(new QueryCommand({
+        TableName: Table,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :s)',
+        ExpressionAttributeValues: { ':pk': keys.playerPk(playerId), ':s': 'PUSH#' },
+      }));
+      return (r.Items ?? []).map((i) => ({
+        playerId, endpoint: i.endpoint as string,
+        keys: { p256dh: i.p256dh as string, auth: i.auth as string },
+        createdAt: i.createdAt as string,
+      }));
+    },
+    async remove(playerId, endpoint) {
+      await doc.send(new DeleteCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: `PUSH#${endpoint}` } }));
+    },
+  };
+
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats, push };
 }
