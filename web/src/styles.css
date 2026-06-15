@@ -671,6 +671,14 @@ button.danger { background: var(--danger); color: #2a0a0a; }
 .standing-table .t-pts { font-weight: 800; color: var(--accent); }
 .standing-table tr.adv td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
 .standing-table tr.adv .t-team { border-left: 3px solid var(--accent); }
+.standing-table tr.adv-third td { background: color-mix(in srgb, var(--accent2) 9%, transparent); }
+.standing-table tr.adv-third .t-team { border-left: 3px solid var(--accent2); }
+.standing-table tr.adv-third .t-pts { color: var(--accent2); }
+
+.standings-key { display: flex; align-items: center; gap: 4px; margin-top: -4px; }
+.key-swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: middle; }
+.key-swatch.adv { background: var(--accent); }
+.key-swatch.third { background: var(--accent2); }
 
 /* What's new timeline */
 .menu { position: relative; }
