@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 const STORAGE_KEY = 'wc2026.tz';
 const THEME_KEY = 'wc2026.theme';
-const LIVEFEED_KEY = 'wc2026.liveFeed';
 export const AUTO = 'auto';
 export const DEFAULT_THEME = 'default';
 
@@ -54,9 +53,6 @@ interface PrefsValue {
   /** Active theme id (see THEMES). */
   theme: string;
   setTheme: (id: string) => void;
-  /** Show the in-app live-score notifications bell (separate from browser push). */
-  liveFeed: boolean;
-  setLiveFeed: (on: boolean) => void;
 }
 
 const Ctx = createContext<PrefsValue | null>(null);
@@ -64,13 +60,7 @@ const Ctx = createContext<PrefsValue | null>(null);
 export function PrefsProvider({ children }: { children: ReactNode }): ReactNode {
   const [tzPref, setStored] = useState<string>(() => localStorage.getItem(STORAGE_KEY) ?? AUTO);
   const [theme, setThemeState] = useState<string>(() => localStorage.getItem(THEME_KEY) ?? DEFAULT_THEME);
-  const [liveFeed, setLiveFeedState] = useState<boolean>(() => localStorage.getItem(LIVEFEED_KEY) !== '0');
   const timeZone = tzPref === AUTO ? detectedZone() : tzPref;
-
-  const setLiveFeed = (on: boolean): void => {
-    localStorage.setItem(LIVEFEED_KEY, on ? '1' : '0');
-    setLiveFeedState(on);
-  };
 
   const setTzPref = (value: string): void => {
     localStorage.setItem(STORAGE_KEY, value);
@@ -87,7 +77,7 @@ export function PrefsProvider({ children }: { children: ReactNode }): ReactNode 
     else root.dataset.theme = theme;
   }, [theme]);
 
-  return <Ctx.Provider value={{ timeZone, tzPref, setTzPref, theme, setTheme, liveFeed, setLiveFeed }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ timeZone, tzPref, setTzPref, theme, setTheme }}>{children}</Ctx.Provider>;
 }
 
 export function usePrefs(): PrefsValue {

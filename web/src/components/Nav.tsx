@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext';
-import { usePrefs } from '../context/PrefsContext';
-import { NotificationsBell } from './NotificationsBell';
 import { hasUnseenUpdates } from '../updates';
 
 export function Nav() {
   const { player, logout } = usePlayer();
-  const { liveFeed } = usePrefs();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unseen, setUnseen] = useState(hasUnseenUpdates());
 
@@ -26,7 +23,6 @@ export function Nav() {
 
       <div className="nav-user">
         <span className="nav-name">{player?.name}</span>
-        {liveFeed && <NotificationsBell />}
         <div className="menu">
           <button
             className="menu-btn"

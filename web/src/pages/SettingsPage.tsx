@@ -10,7 +10,7 @@ import { pushSupported, iosNeedsInstall, pushSubscribed, enablePush, disablePush
 
 export function SettingsPage() {
   const { player, updateName, logout } = usePlayer();
-  const { tzPref, timeZone, setTzPref, liveFeed, setLiveFeed } = usePrefs();
+  const { tzPref, timeZone, setTzPref } = usePrefs();
   const qc = useQueryClient();
 
   const [toast, setToast] = useState<string | null>(null);
@@ -188,23 +188,6 @@ export function SettingsPage() {
           </div>
         )}
         {pushErr && <p className="error fine">{pushErr}</p>}
-      </div>
-      <div className="card">
-        <h4>Live score feed</h4>
-        <p className="muted fine">Show the 🔔 live-scores bell in the top bar while matches are on (in-app, no permission needed).</p>
-        <div className="toggle-row">
-          <button
-            type="button"
-            className={`switch ${liveFeed ? 'on' : ''}`}
-            role="switch"
-            aria-checked={liveFeed}
-            onClick={() => { setLiveFeed(!liveFeed); flash('Saved ✓'); }}
-            data-testid="toggle-livefeed"
-          >
-            <span className="switch-knob" />
-          </button>
-          <span className="fine">{liveFeed ? 'On' : 'Off'}</span>
-        </div>
       </div>
 
       <h3 className="section-head">Security</h3>

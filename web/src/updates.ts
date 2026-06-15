@@ -11,10 +11,9 @@ export const UPDATES: UpdateEntry[] = [
   {
     id: '2026-06-15.4',
     date: 'June 15, 2026',
-    emoji: '📺',
-    title: 'Live-score bell + tidier themes',
+    emoji: '🎨',
+    title: 'Tidier theme picker',
     points: [
-      'A 🔔 bell in the top bar opens a live-scores feed while matches are on — flick it on/off in Account → Notifications',
       'The theme picker is now a compact dropdown, so the Account page is far less cluttered',
     ],
   },
