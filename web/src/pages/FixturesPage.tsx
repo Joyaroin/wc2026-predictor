@@ -168,11 +168,57 @@ export function FixturesPage() {
     ...common,
   });
 
+  // Apply a statistical suggestion: scoreline + first team, in one save.
+  const statPick = useMutation({
+    mutationFn: ({ matchId, home, away, firstTeam }: { matchId: string; home: number; away: number; firstTeam: 'HOME' | 'AWAY' }) =>
+      api.upsertPrediction(matchId, { home, away, firstTeam }),
+    onMutate: async ({ matchId, home, away, firstTeam }) => {
+      await qc.cancelQueries({ queryKey: [...PREDS] });
+      const now = new Date().toISOString();
+      const prev = patchPreds(qc, (old) => {
+        const ex = old.find((p) => p.matchId === matchId);
+        const next: Prediction = ex
+          ? { ...ex, home, away, firstTeam, updatedAt: now }
+          : { playerId: 'me', matchId, home, away, firstTeam, points: 0, joker: false, createdAt: now, updatedAt: now };
+        return [...old.filter((p) => p.matchId !== matchId), next];
+      });
+      return { prev };
+    },
+    ...common,
+  });
+
   const predByMatch = useMemo(() => {
     const map = new Map<string, Prediction>();
     for (const p of predictions.data ?? []) map.set(p.matchId, p);
     return map;
   }, [predictions.data]);
+
+  // "Fill my blanks": fetch odds-based suggestions for open, un-predicted matches and apply them.
+  const [filling, setFilling] = useState(false);
+  const fillBlanks = async () => {
+    const open = (matches.data ?? []).filter((m) => !m.locked && !m.placeholder && !predByMatch.has(m.id));
+    if (open.length === 0) {
+      setToast('Nothing to fill — every open match is predicted ✓');
+      return;
+    }
+    setFilling(true);
+    try {
+      const sugs = await api.matchSuggestions(open.map((m) => m.id));
+      let n = 0;
+      for (const m of open) {
+        const s = sugs[m.id];
+        if (s && s.scores[0]) {
+          statPick.mutate({ matchId: m.id, home: s.scores[0].home, away: s.scores[0].away, firstTeam: s.firstTeam });
+          n++;
+        }
+      }
+      setToast(n ? `Filled ${n} pick${n === 1 ? '' : 's'} from the odds ✨` : 'No odds available for your open matches yet');
+    } catch {
+      setToast('⚠️ Could not fetch stat picks — try again');
+    } finally {
+      setFilling(false);
+    }
+  };
 
   const sections = useMemo(() => {
     const all = matches.data ?? [];
@@ -219,6 +265,12 @@ export function FixturesPage() {
           </Link>
         )}
       </div>
+      <div className="fixtures-controls">
+        <button type="button" className="ghost fill-blanks" onClick={fillBlanks} disabled={filling} data-testid="fill-blanks">
+          {filling ? 'Fetching odds…' : '✨ Fill my blanks with stat picks'}
+        </button>
+        <span className="muted fine">Suggestions come from live bookmaker odds — opt-in, fully editable after.</span>
+      </div>
 
       {sections.length === 0 && (
         <p className="muted" data-testid="fixtures-empty">
@@ -262,6 +314,7 @@ export function FixturesPage() {
                           const p = predByMatch.get(matchId);
                           if (p) firstScorer.mutate({ matchId, home: p.home, away: p.away, scorerId, scorerName });
                         }}
+                        onStatPick={(matchId, home, away, ft) => statPick.mutate({ matchId, home, away, firstTeam: ft })}
                       />
                     ))}
                   </div>

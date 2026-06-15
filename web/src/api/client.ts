@@ -1,4 +1,6 @@
-import type { Match, Group, Prediction, BracketPick, BracketSide } from '@wc2026/shared';
+import type { Match, Group, Prediction, BracketPick, BracketSide, ScoreSuggestion } from '@wc2026/shared';
+
+export type { ScoreSuggestion } from '@wc2026/shared';
 
 export interface AuthResult {
   playerId: string;
@@ -161,6 +163,8 @@ export const api = {
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
   matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
+  matchSuggestions: (ids: string[]) =>
+    req<Record<string, ScoreSuggestion | null>>(`/matches/suggestions?ids=${ids.join(',')}`),
   flags: () => req<AppFlags>('/flags'),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   submitFeedback: (message: string, page?: string) =>

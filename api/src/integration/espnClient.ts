@@ -2,6 +2,7 @@
 // Endpoints under site.api.espn.com/apis/site/v2/sports/soccer/fifa.world.
 import type { Logger } from '../lib/logger';
 import { canonTeam } from './teamNames';
+import type { MatchOdds } from '@wc2026/shared';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world';
 
@@ -104,6 +105,8 @@ export interface EspnClient {
   fetchMatchFirstGoals(dates: string[]): Promise<MatchFirstGoal[]>;
   /** Box-score stats for one match, located by date + team names. Null if not found. */
   fetchMatchStats(dates: string[], homeName: string, awayName: string): Promise<MatchStats | null>;
+  /** Bookmaker odds for one match (over/under + moneylines), oriented to our home/away. Null if none. */
+  fetchMatchOdds(dates: string[], homeName: string, awayName: string): Promise<MatchOdds | null>;
 }
 
 // ESPN box-score stat keys we surface, in display order, with friendly labels.
@@ -265,6 +268,54 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         ?? null;
 
       return { venue, status, stats };
+    },
+
+    async fetchMatchOdds(dates, homeName, awayName) {
+      const want = new Set([canonTeam(homeName), canonTeam(awayName)]);
+      // Locate the event and note which ESPN competitor is the home side.
+      let eventId: string | null = null;
+      let espnHomeAligned = true;
+      for (const date of dates) {
+        let board: Json;
+        try {
+          board = await json(`${BASE}/scoreboard?dates=${date}`);
+        } catch {
+          continue;
+        }
+        for (const e of get<Json[]>(board, 'events') ?? []) {
+          const comp = (get<Json[]>(e, 'competitions') ?? [])[0];
+          const competitors = get<Json[]>(comp ?? {}, 'competitors') ?? [];
+          const names = competitors.map((c) => canonTeam(get<string>(c, 'team', 'displayName') ?? ''));
+          if (names.length >= 2 && want.has(names[0]!) && want.has(names[1]!)) {
+            eventId = String(get<string | number>(e, 'id') ?? '');
+            const espnHome = competitors.find((c) => get<string>(c, 'homeAway') === 'home');
+            espnHomeAligned = canonTeam(get<string>(espnHome ?? {}, 'team', 'displayName') ?? '') === canonTeam(homeName);
+            break;
+          }
+        }
+        if (eventId) break;
+      }
+      if (!eventId) return null;
+
+      let summary: Json;
+      try {
+        summary = await json(`${BASE}/summary?event=${eventId}`);
+      } catch {
+        return null;
+      }
+      const pc = (get<Json[]>(summary, 'pickcenter') ?? [])[0];
+      if (!pc) return null;
+
+      const espnHomeML = get<number>(pc, 'homeTeamOdds', 'moneyLine') ?? null;
+      const espnAwayML = get<number>(pc, 'awayTeamOdds', 'moneyLine') ?? null;
+      return {
+        overUnder: get<number>(pc, 'overUnder') ?? null,
+        // Re-orient to OUR home/away if ESPN lists the teams the other way round.
+        homeMoneyLine: espnHomeAligned ? espnHomeML : espnAwayML,
+        awayMoneyLine: espnHomeAligned ? espnAwayML : espnHomeML,
+        drawMoneyLine: get<number>(pc, 'drawOdds', 'moneyLine') ?? null,
+        source: get<string>(pc, 'provider', 'name') ?? null,
+      };
     },
   };
 }

@@ -53,6 +53,9 @@ describe('golden boot refresh', () => {
       async fetchMatchStats() {
         return null;
       },
+      async fetchMatchOdds() {
+        return null;
+      },
       async fetchFinishedEventGoals() {
         return [
           {

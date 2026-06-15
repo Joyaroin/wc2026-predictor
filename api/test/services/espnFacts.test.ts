@@ -24,6 +24,7 @@ describe('espnFacts.ingest', () => {
       async fetchPlayerPool() { return []; },
       async fetchFinishedEventGoals() { return []; },
       async fetchMatchStats() { return null; },
+      async fetchMatchOdds() { return null; },
       async fetchMatchFirstGoals() {
         return [{ date: '2026-06-15T18:00:00.000Z', homeName: 'Brazil', awayName: 'South Korea', first: { side: 'HOME', scorerId: '7', scorerName: 'Neymar' }, minute: null, finished: true }];
       },
@@ -54,6 +55,7 @@ describe('espnFacts.ingest', () => {
       async fetchPlayerPool() { return []; },
       async fetchFinishedEventGoals() { return []; },
       async fetchMatchStats() { return null; },
+      async fetchMatchOdds() { return null; },
       async fetchMatchFirstGoals() {
         return [{ date: '2026-06-13T19:00:00.000Z', homeName: 'Qatar', awayName: 'Switzerland', first: { side: 'AWAY', scorerId: '9', scorerName: 'Embolo' }, minute: 50, finished: false }];
       },
@@ -79,6 +81,7 @@ describe('espnFacts.ingest', () => {
       async fetchPlayerPool() { return []; },
       async fetchFinishedEventGoals() { return []; },
       async fetchMatchStats() { return null; },
+      async fetchMatchOdds() { return null; },
       async fetchMatchFirstGoals() {
         return [{ date: '2026-06-13T19:00:00.000Z', homeName: 'Qatar', awayName: 'Switzerland', first: null, minute: 20, finished: false }];
       },

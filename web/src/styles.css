@@ -813,3 +813,21 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .mc-pred-cap { text-align: center; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
 .mc-pred.is-prediction .mc-box { width: 38px; height: 38px; font-size: 1.05rem; background: var(--surface-2); color: var(--ink); border-color: var(--line); }
 .mc-pred.is-prediction .mc-flag-big, .mc-pred.is-prediction .flag-big { opacity: 0.9; }
+
+/* Stat pick (odds-based suggestion) */
+.mc-statpick { display: flex; flex-direction: column; gap: 8px; }
+.statpick-toggle { width: 100%; background: transparent; color: var(--accent); border: 1px dashed var(--line-strong); border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.statpick-toggle:hover { border-color: var(--accent); }
+.statpick-toggle .chev { transition: transform 0.15s ease; }
+.statpick-toggle .chev.up { transform: rotate(180deg); }
+.statpick-panel { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.statpick-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.statpick-chip { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
+.statpick-chip:hover { border-color: var(--accent); }
+.statpick-chip.top { border-color: var(--accent); background: var(--on-bg); }
+.statpick-chip .sp-pct { font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+.statpick-meta { display: flex; align-items: center; gap: 4px; }
+
+/* Fill-my-blanks control */
+.fill-blanks { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 14px; font-weight: 700; }
+.fill-blanks:hover:not(:disabled) { background: var(--on-bg); }

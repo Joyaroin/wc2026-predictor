@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-15',
+    date: 'June 15, 2026',
+    emoji: '✨',
+    title: 'Stat picks from the odds',
+    points: [
+      'Tap "✨ Stat pick" on a match to see the most likely scorelines, straight from live bookmaker odds',
+      'One tap applies the scoreline + first team to score — fully editable after',
+      'Short on time? "Fill my blanks with stat picks" predicts all your open matches at once',
+      'Totally opt-in — your typed predictions are never changed unless you ask',
+    ],
+  },
+  {
     id: '2026-06-14.5',
     date: 'June 14, 2026',
     emoji: '🧾',

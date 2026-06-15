@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   effectivePoints,
   scoreBreakdown,
@@ -8,7 +9,7 @@ import {
   FIRST_PLAYER_POINTS,
   type Prediction,
 } from '@wc2026/shared';
-import type { MatchView } from '../api/client';
+import { api, type MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
 import { matchState, formatKickoff, stageLabel, liveMinute } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
@@ -48,11 +49,12 @@ interface Props {
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
+  onStatPick: (matchId: string, home: number, away: number, firstTeam: 'HOME' | 'AWAY') => void;
   squad: { id: string; name: string; position: string; team: string }[];
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirstTeam, onFirstScorer, squad, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirstTeam, onFirstScorer, onStatPick, squad, saving }: Props) {
   const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
@@ -68,6 +70,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   }, [prediction?.updatedAt]);
   const [scorerOpen, setScorerOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [statPickOpen, setStatPickOpen] = useState(false);
   const [scorerQ, setScorerQ] = useState('');
   const scorerQuery = fold(scorerQ.trim());
   const scorerMatches = scorerQuery.length < 1
@@ -75,6 +78,13 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
     : squad.filter((p) => fold(p.name).includes(scorerQuery));
 
   const editable = state === 'Open' && !match.placeholder;
+  // Opt-in statistical suggestion from bookmaker odds — only fetched when the panel is opened.
+  const suggestion = useQuery({
+    queryKey: ['suggestion', match.id],
+    queryFn: async () => (await api.matchSuggestions([match.id]))[match.id] ?? null,
+    enabled: statPickOpen,
+    staleTime: 10 * 60_000,
+  });
   const canSave = editable && home !== '' && away !== '';
   // Edits not yet persisted → show a "Saving…" hint (no Save button — it auto-saves).
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
@@ -312,6 +322,53 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               📊 Match stats <span className={`chev ${statsOpen ? 'up' : ''}`} aria-hidden>▾</span>
             </button>
             {statsOpen && <MatchStatsPanel match={match} />}
+          </div>
+        )}
+
+        {editable && (
+          <div className="mc-statpick">
+            <button
+              type="button"
+              className="statpick-toggle"
+              onClick={() => setStatPickOpen((o) => !o)}
+              aria-expanded={statPickOpen}
+              data-testid={`statpick-${match.id}`}
+            >
+              ✨ Stat pick <span className={`chev ${statPickOpen ? 'up' : ''}`} aria-hidden>▾</span>
+            </button>
+            {statPickOpen && (
+              <div className="statpick-panel">
+                {suggestion.isLoading ? (
+                  <span className="muted fine">Crunching the odds…</span>
+                ) : !suggestion.data ? (
+                  <span className="muted fine">No odds available for this match yet.</span>
+                ) : (
+                  <>
+                    <div className="statpick-chips">
+                      {suggestion.data.scores.map((s, i) => (
+                        <button
+                          key={`${s.home}-${s.away}`}
+                          type="button"
+                          className={`statpick-chip${i === 0 ? ' top' : ''}`}
+                          onClick={() => { onStatPick(match.id, s.home, s.away, suggestion.data!.firstTeam); setStatPickOpen(false); }}
+                          data-testid={`statpick-chip-${match.id}-${i}`}
+                        >
+                          {s.home}–{s.away}
+                          {i === 0 && <span className="sp-pct">{Math.round(s.prob * 100)}%</span>}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="statpick-meta muted fine">
+                      1st to score:{' '}
+                      <Flag
+                        code={suggestion.data.firstTeam === 'HOME' ? match.homeCode : match.awayCode}
+                        name={suggestion.data.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam}
+                      />{' '}· via {suggestion.data.source ?? 'odds'} · tap to use
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 
