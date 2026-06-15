@@ -1042,3 +1042,10 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .match-card.expandable { cursor: pointer; }
 .match-card.expandable:hover { border-color: var(--line-strong); }
 .match-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px rgba(0,0,0,0.3); }
+
+/* Match details modal (opens on card tap) */
+.match-modal { max-width: 460px; width: 100%; }
+.mm-title { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; font-size: 1rem; flex-wrap: wrap; }
+.mm-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.match-modal .ms-panel { margin-top: 8px; max-height: 62vh; overflow-y: auto; }
+.match-modal .ms-state { padding: 24px 8px; }

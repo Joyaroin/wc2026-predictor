@@ -236,8 +236,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
 
   return (
     <div
-      className={`match-card ${prediction?.joker ? 'joker-on' : ''}${detailsExpandable ? ' expandable' : ''}${statsOpen ? ' expanded' : ''}`}
-      onClick={detailsExpandable ? () => setStatsOpen((o) => !o) : undefined}
+      className={`match-card ${prediction?.joker ? 'joker-on' : ''}${detailsExpandable ? ' expandable' : ''}`}
+      onClick={detailsExpandable ? () => setStatsOpen(true) : undefined}
       data-testid={`match-${match.id}`}
     >
       {confetti && <Confetti />}
@@ -267,13 +267,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             <span className="live-dot">●</span> LIVE
             {minuteLabel && <span className="mc-min" data-testid={`minute-${match.id}`}> {minuteLabel}</span>}
             {' '}<strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
-            <span className={`mc-detchev${statsOpen ? ' up' : ''}`} aria-hidden>▾</span>
           </div>
         )}
         {state === 'Played' && (
           <div className="mc-result" data-testid={`ft-${match.id}`}>
             FT <strong>{match.homeScore}–{match.awayScore}</strong>
-            <span className={`mc-detchev${statsOpen ? ' up' : ''}`} aria-hidden>▾</span>
           </div>
         )}
         {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
@@ -325,13 +323,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             <button
               type="button"
               className="mc-stats-toggle"
-              onClick={() => setStatsOpen((o) => !o)}
-              aria-expanded={statsOpen}
+              onClick={() => setStatsOpen(true)}
               data-testid={`stats-toggle-${match.id}`}
             >
-              📊 Match details <span className={`chev ${statsOpen ? 'up' : ''}`} aria-hidden>▾</span>
+              📊 Match details ›
             </button>
-            {statsOpen && <MatchStatsPanel match={match} />}
           </div>
         )}
 
@@ -494,6 +490,22 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           )}
         </div>
       </div>
+
+      {statsOpen && (
+        <div className="modal-backdrop" onClick={(e) => { e.stopPropagation(); setStatsOpen(false); }}>
+          <div className="modal match-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Match details" data-testid={`match-modal-${match.id}`}>
+            <div className="modal-head">
+              <h3 className="mm-title">
+                <Flag code={match.homeCode} name={match.homeTeam} /> {match.homeCode ?? 'Home'}
+                <span className="mm-score">{match.homeScore ?? 0}–{match.awayScore ?? 0}</span>
+                {match.awayCode ?? 'Away'} <Flag code={match.awayCode} name={match.awayTeam} />
+              </h3>
+              <button className="modal-close" onClick={() => setStatsOpen(false)} aria-label="Close">✕</button>
+            </div>
+            <MatchStatsPanel match={match} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
