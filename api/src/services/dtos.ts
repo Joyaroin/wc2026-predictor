@@ -68,3 +68,9 @@ export interface BreakdownRow {
   locked: boolean;
   breakdown?: PointsBreakdown | null;
 }
+/** A player's full results: per-match rows plus the bracket/award points, reconciling to the leaderboard total. */
+export interface BreakdownView {
+  rows: BreakdownRow[];
+  awardPoints: number; // bracket advancement + golden boot + dark horse + tournament winner + POTT
+  total: number; // joker-adjusted match points + awardPoints — equals the leaderboard total
+}

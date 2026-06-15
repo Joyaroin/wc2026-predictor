@@ -40,6 +40,30 @@ describe('leaderboard flow (US-2.x / US-5.x)', () => {
     expect(week.body.map((r: { name: string }) => r.name).sort()).toEqual(['Mia', 'Sam']);
   });
 
+  it('player breakdown total reconciles with the leaderboard (joker doubled)', async () => {
+    const t = makeTestApp({ now: new Date('2026-06-16T00:00:00.000Z') });
+    const sam = await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' });
+    const tok = sam.body.token as string;
+    const pid = sam.body.playerId as string;
+
+    await t.repos.matches.upsert(sampleMatch({ id: 'm1', status: 'FINISHED', homeScore: 2, awayScore: 1 }));
+    const now = new Date().toISOString();
+    // Exact 2–1 with a Joker → 12 base, doubled to 24 on the leaderboard.
+    await t.repos.predictions.put({ playerId: pid, matchId: 'm1', home: 2, away: 1, points: 0, joker: true, createdAt: now, updatedAt: now });
+    await t.services.scoring.scoreMatch('m1');
+
+    const global = await request(t.app).get('/api/leaderboard/global').set('Authorization', `Bearer ${tok}`);
+    expect(global.status).toBe(200);
+    const lbTotal = global.body.me.points as number;
+    expect(lbTotal).toBe(24);
+
+    const bd = await request(t.app).get(`/api/players/${pid}/breakdown`).set('Authorization', `Bearer ${tok}`);
+    expect(bd.status).toBe(200);
+    expect(bd.body.total).toBe(lbTotal); // profile header now matches the leaderboard
+    expect(bd.body.rows[0].points).toBe(24); // per-match row is joker-adjusted, not the base 12
+    expect(bd.body.awardPoints).toBe(0);
+  });
+
   it('forbids non-members from reading a group leaderboard', async () => {
     const t = makeTestApp();
     const sam = await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' });

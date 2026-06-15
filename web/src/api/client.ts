@@ -39,6 +39,11 @@ export interface BreakdownRow {
   locked: boolean;
   breakdown?: PointsBreakdown | null;
 }
+export interface BreakdownView {
+  rows: BreakdownRow[];
+  awardPoints: number;
+  total: number;
+}
 export interface MatchView extends Match {
   locked: boolean;
 }
@@ -150,8 +155,8 @@ export const api = {
   leaderboard: (id: string, scope?: 'week') =>
     req<LeaderboardRow[]>(`/groups/${id}/leaderboard${scope ? `?scope=${scope}` : ''}`),
   groupBreakdown: (groupId: string, playerId: string) =>
-    req<BreakdownRow[]>(`/groups/${groupId}/players/${playerId}/breakdown`),
-  playerBreakdown: (playerId: string) => req<BreakdownRow[]>(`/players/${playerId}/breakdown`),
+    req<BreakdownView>(`/groups/${groupId}/players/${playerId}/breakdown`),
+  playerBreakdown: (playerId: string) => req<BreakdownView>(`/players/${playerId}/breakdown`),
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),

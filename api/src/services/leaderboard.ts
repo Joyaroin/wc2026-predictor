@@ -2,7 +2,7 @@
 import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, scoreBreakdown, firstGoalPoints, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { BracketRepo, GoldenBootRepo, DarkHorseRepo, TournamentWinnerRepo, PottRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
-import type { LeaderboardRow, BreakdownRow, GlobalLeaderboardView } from './dtos';
+import type { LeaderboardRow, BreakdownRow, BreakdownView, GlobalLeaderboardView } from './dtos';
 import { ForbiddenError } from '../lib/errors';
 
 const GLOBAL_TOP = 100;
@@ -21,8 +21,8 @@ function aggregate(playerId: string, name: string, preds: Prediction[], extraPoi
 
 export interface LeaderboardService {
   getLeaderboard(callerId: string, groupId: string, scope?: 'week'): Promise<LeaderboardRow[]>;
-  getBreakdown(callerId: string, groupId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
-  getPlayerBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownRow[]>;
+  getBreakdown(callerId: string, groupId: string, targetPlayerId: string): Promise<BreakdownView>;
+  getPlayerBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownView>;
   getGlobal(callerId: string): Promise<GlobalLeaderboardView>;
 }
 
@@ -57,10 +57,12 @@ export function createLeaderboardService(
   }
 
   // A player's picks vs results. Others' picks stay hidden until each match locks (kickoff).
-  async function buildBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownRow[]> {
+  // Returns rows + the same award/bracket bonus the leaderboard adds, so the total reconciles exactly.
+  async function buildBreakdown(callerId: string, targetPlayerId: string): Promise<BreakdownView> {
     const now = clock.now().getTime();
     const all = await matches.listAll();
-    const preds = new Map((await predictions.listByPlayer(targetPlayerId)).map((p) => [p.matchId, p]));
+    const predList = await predictions.listByPlayer(targetPlayerId);
+    const preds = new Map(predList.map((p) => [p.matchId, p]));
     const rows: BreakdownRow[] = [];
     for (const m of all) {
       const pred = preds.get(m.id);
@@ -93,12 +95,21 @@ export function createLeaderboardService(
         away: hide ? null : pred.away,
         actualHome: m.homeScore,
         actualAway: m.awayScore,
-        points: pred.points,
+        points: effectivePoints(pred), // joker-adjusted, matching the leaderboard's per-match contribution
         locked,
         breakdown,
       });
     }
-    return rows;
+
+    // Season-long bonus the leaderboard adds (not tied to a single match) — keep the total reconciled.
+    const awardPoints =
+      sumPoints(await bracket.listByPlayer(targetPlayerId)) +
+      ((await goldenBoot.get(targetPlayerId))?.points ?? 0) +
+      ((await darkHorse.get(targetPlayerId))?.points ?? 0) +
+      ((await tournamentWinner.get(targetPlayerId))?.points ?? 0) +
+      ((await pott.get(targetPlayerId))?.points ?? 0);
+    const matchPoints = predList.reduce((s, p) => s + effectivePoints(p), 0);
+    return { rows, awardPoints, total: matchPoints + awardPoints };
   }
 
   return {

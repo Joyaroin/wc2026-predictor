@@ -49,7 +49,7 @@ function Receipt({ bd, m }: { bd: PointsBreakdown; m: MatchView | undefined }) {
 }
 
 /** A player's picks vs results (read-only). Tap a played row to see its points breakdown. */
-export function PlayerResults({ name, rows, loading, color }: { name: string; rows: BreakdownRow[]; loading?: boolean; color?: string | null }) {
+export function PlayerResults({ name, rows, total, awardPoints = 0, loading, color }: { name: string; rows: BreakdownRow[]; total: number; awardPoints?: number; loading?: boolean; color?: string | null }) {
   const matches = useQuery({ queryKey: ['matches'], queryFn: api.matches });
   const matchById = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.id, m])),
@@ -60,7 +60,6 @@ export function PlayerResults({ name, rows, loading, color }: { name: string; ro
     () => rows.slice().sort((a, b) => (matchById.get(b.matchId)?.kickoff ?? '').localeCompare(matchById.get(a.matchId)?.kickoff ?? '')),
     [rows, matchById],
   );
-  const total = sorted.reduce((s, r) => s + r.points, 0);
 
   const [open, setOpen] = useState<string | null>(null);
 
@@ -69,11 +68,17 @@ export function PlayerResults({ name, rows, loading, color }: { name: string; ro
       <div className="member-head">
         <Avatar name={name} size={40} ring color={color} />
         <h2>{name}</h2>
+        {/* Authoritative leaderboard total: joker-adjusted match points + bracket/award bonus. */}
         <span className="member-total">{total} pts</span>
       </div>
 
       {loading && <p>Loading…</p>}
       {!loading && sorted.length === 0 && <p className="muted">No predictions yet.</p>}
+      {awardPoints > 0 && (
+        <p className="mr-awards muted fine" data-testid="award-points">
+          + {awardPoints} pts from bracket &amp; awards (included in your total)
+        </p>
+      )}
 
       <div className="member-results">
         {sorted.map((r) => {

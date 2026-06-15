@@ -14,7 +14,14 @@ export function PlayerResultsPage() {
   return (
     <div className="member-page">
       <p><button className="linklike" onClick={() => navigate(-1)}>← Back</button></p>
-      <PlayerResults name={state?.name ?? 'Player'} color={state?.color ?? null} rows={breakdown.data ?? []} loading={breakdown.isLoading} />
+      <PlayerResults
+        name={state?.name ?? 'Player'}
+        color={state?.color ?? null}
+        rows={breakdown.data?.rows ?? []}
+        total={breakdown.data?.total ?? 0}
+        awardPoints={breakdown.data?.awardPoints ?? 0}
+        loading={breakdown.isLoading}
+      />
     </div>
   );
 }
