@@ -25,6 +25,7 @@ import type {
   AppFlags,
   PushRepo,
   PushSubRecord,
+  ReminderRepo,
 } from './types';
 import { DEFAULT_FLAGS } from './types';
 
@@ -290,6 +291,19 @@ export function createMemoryRepositories(): Repositories {
       const i = pushSubs.findIndex((s) => s.playerId === playerId && s.endpoint === endpoint);
       if (i >= 0) pushSubs.splice(i, 1);
     },
+    async listSubscribers() {
+      return [...new Set(pushSubs.map((s) => s.playerId))];
+    },
+  };
+
+  const remindedSet = new Set<string>();
+  const reminderRepo: ReminderRepo = {
+    async wasSent(playerId, matchId) {
+      return remindedSet.has(`${playerId}:${matchId}`);
+    },
+    async markSent(playerId, matchId) {
+      remindedSet.add(`${playerId}:${matchId}`);
+    },
   };
 
   return {
@@ -306,5 +320,6 @@ export function createMemoryRepositories(): Repositories {
     feedback: feedbackRepo,
     stats: statsRepo,
     push: pushRepo,
+    reminders: reminderRepo,
   };
 }

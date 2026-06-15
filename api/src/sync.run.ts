@@ -28,6 +28,10 @@ services.sync
     await services.tournamentWinner.refresh().catch((err) => {
       logger.warn('tournament winner refresh failed', { error: err instanceof Error ? err.message : 'unknown' });
     });
+    // Remind opted-in players who haven't predicted a match that's about to kick off.
+    await services.notifications.sendKickoffReminders().catch((err) => {
+      logger.warn('kickoff reminders failed', { error: err instanceof Error ? err.message : 'unknown' });
+    });
     process.exit(report.ok ? 0 : 1);
   })
   .catch((err) => {

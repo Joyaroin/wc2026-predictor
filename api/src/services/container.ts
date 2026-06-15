@@ -21,7 +21,7 @@ import { createMatchStatsService, type MatchStatsService } from './matchStats';
 import { createSuggestionsService, type SuggestionsService } from './suggestions';
 import { createFlagsService, type FlagsService } from './flags';
 import { createPushService, type PushService } from './push';
-import { createNotificationsService } from './notifications';
+import { createNotificationsService, type NotificationsService } from './notifications';
 import { createSyncService, type SyncService } from './sync';
 import { createEspnClient } from '../integration/espnClient';
 
@@ -44,6 +44,7 @@ export interface Services {
   suggestions: SuggestionsService;
   flags: FlagsService;
   push: PushService;
+  notifications: NotificationsService;
   sync: SyncService;
 }
 
@@ -59,7 +60,7 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
   const matches = createMatchService(repos.matches, clock);
   const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
   const espn = createEspnClient(logger);
-  const notifications = createNotificationsService(repos.push, repos.predictions, config, logger);
+  const notifications = createNotificationsService(repos.push, repos.predictions, repos.matches, repos.reminders, clock, config, logger);
   return {
     auth: createAuthService(repos.players, config, clock),
     players: createPlayerService(repos.players),
@@ -79,6 +80,7 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     suggestions: createSuggestionsService(espn, repos.matches, clock, logger),
     flags: createFlagsService(repos.stats),
     push: createPushService(repos.push, config, clock),
+    notifications,
     sync: createSyncService(footballApi, repos.matches, scoring, notifications, logger),
   };
 }

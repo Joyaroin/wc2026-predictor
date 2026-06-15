@@ -193,6 +193,7 @@ export interface Repositories {
   feedback: FeedbackRepo;
   stats: StatsRepo;
   push: PushRepo;
+  reminders: ReminderRepo;
 }
 
 /** A browser Web Push subscription owned by a player. */
@@ -206,4 +207,12 @@ export interface PushRepo {
   save(sub: PushSubRecord): Promise<void>;
   listByPlayer(playerId: string): Promise<PushSubRecord[]>;
   remove(playerId: string, endpoint: string): Promise<void>;
+  /** Distinct player ids that have at least one push subscription. */
+  listSubscribers(): Promise<string[]>;
+}
+
+/** De-dupe marker so a "predict before kickoff" reminder is sent at most once per player+match. */
+export interface ReminderRepo {
+  wasSent(playerId: string, matchId: string): Promise<boolean>;
+  markSent(playerId: string, matchId: string): Promise<void>;
 }

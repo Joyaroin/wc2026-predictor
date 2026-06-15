@@ -2,15 +2,21 @@
 // No-ops when VAPID isn't configured, so the app runs fine without push.
 import webpush from 'web-push';
 import type { Match, Prediction } from '@wc2026/shared';
-import type { PushRepo, PredictionRepo } from '../repos/types';
+import type { PushRepo, PredictionRepo, MatchRepo, ReminderRepo } from '../repos/types';
 import type { Config } from '../lib/config';
+import type { Clock } from '../lib/clock';
 import type { Logger } from '../lib/logger';
 
 export interface NotificationsService {
   enabled: boolean;
   /** Decide + send any push for a match transition. Never throws. */
   onMatchUpdate(prev: Match | null, next: Match): Promise<void>;
+  /** Remind opted-in players who haven't predicted a match that's about to kick off. Never throws. */
+  sendKickoffReminders(): Promise<void>;
 }
+
+/** How close to kickoff a "you haven't predicted this" reminder fires. */
+const REMINDER_LEAD_MS = 60 * 60_000;
 
 interface PushPayload {
   title: string;
@@ -26,6 +32,9 @@ function isLive(s: Match['status']): boolean {
 export function createNotificationsService(
   push: PushRepo,
   predictions: PredictionRepo,
+  matches: MatchRepo,
+  reminders: ReminderRepo,
+  clock: Clock,
   config: Config,
   logger: Logger,
 ): NotificationsService {
@@ -94,6 +103,43 @@ export function createNotificationsService(
         );
       } catch (err) {
         logger.warn('notify failed', { matchId: next.id, error: err instanceof Error ? err.message : 'unknown' });
+      }
+    },
+
+    async sendKickoffReminders() {
+      if (!enabled) return;
+      try {
+        const now = clock.now().getTime();
+        const all = await matches.listAll();
+        const upcoming = all.filter((m) => {
+          if (m.placeholder || (m.status !== 'SCHEDULED' && m.status !== 'TIMED')) return false;
+          const k = new Date(m.kickoff).getTime();
+          return k > now && k - now <= REMINDER_LEAD_MS; // about to start, not yet kicked off
+        });
+        if (upcoming.length === 0) return;
+
+        const subscribers = await push.listSubscribers();
+        if (subscribers.length === 0) return;
+
+        for (const m of upcoming) {
+          const predictors = new Set((await predictions.listByMatch(m.id)).map((p) => p.playerId));
+          const mins = Math.max(1, Math.round((new Date(m.kickoff).getTime() - now) / 60_000));
+          const H = m.homeCode ?? 'Home';
+          const A = m.awayCode ?? 'Away';
+          for (const playerId of subscribers) {
+            if (predictors.has(playerId)) continue; // already predicted
+            if (await reminders.wasSent(playerId, m.id)) continue; // already nudged
+            await sendToPlayer(playerId, {
+              title: '⏰ Predict before kick-off',
+              body: `${H} v ${A} starts in ${mins} min — you haven't picked it yet`,
+              url: '/fixtures',
+              tag: `${m.id}:REMINDER`,
+            });
+            await reminders.markSent(playerId, m.id);
+          }
+        }
+      } catch (err) {
+        logger.warn('kickoff reminders failed', { error: err instanceof Error ? err.message : 'unknown' });
       }
     },
   };

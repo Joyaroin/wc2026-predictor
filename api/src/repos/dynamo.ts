@@ -31,6 +31,7 @@ import type {
   FeedbackRepo,
   StatsRepo,
   PushRepo,
+  ReminderRepo,
 } from './types';
 import { DEFAULT_FLAGS } from './types';
 import {
@@ -580,7 +581,21 @@ export function createDynamoRepositories(config: Config): Repositories {
     async remove(playerId, endpoint) {
       await doc.send(new DeleteCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: `PUSH#${endpoint}` } }));
     },
+    async listSubscribers() {
+      const items = await scanItems('begins_with(SK, :s)', { ':s': 'PUSH#' });
+      return [...new Set(items.map((i) => i.playerId as string))];
+    },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats, push };
+  const reminders: ReminderRepo = {
+    async wasSent(playerId, matchId) {
+      const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: `REMIND#${matchId}` } }));
+      return !!r.Item;
+    },
+    async markSent(playerId, matchId) {
+      await doc.send(new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(playerId), SK: `REMIND#${matchId}`, at: new Date().toISOString() } }));
+    },
+  };
+
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats, push, reminders };
 }
