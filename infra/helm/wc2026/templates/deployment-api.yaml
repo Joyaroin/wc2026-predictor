@@ -47,6 +47,25 @@ spec:
                   name: {{ include "wc2026.secretName" . }}
                   key: ADMIN_TOKEN
                   optional: true
+            # Optional — Web Push (VAPID). Absent = push notifications disabled.
+            - name: VAPID_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: VAPID_PUBLIC_KEY
+                  optional: true
+            - name: VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: VAPID_PRIVATE_KEY
+                  optional: true
+            - name: VAPID_SUBJECT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: VAPID_SUBJECT
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health
