@@ -1000,3 +1000,24 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 @media (prefers-reduced-motion: no-preference) {
   .theme-menu, .bell-dropdown { animation: fadeUp 0.16s ease; }
 }
+
+/* Smoother entrances for pages/areas that previously appeared instantly. */
+@media (prefers-reduced-motion: no-preference) {
+  .help, .feedback, .landing, .match-detail, .results { animation: fadeUp 0.34s ease; }
+  .member-head { animation: fadeUp 0.3s ease; }
+  .member-results .mr-item { animation: fadeUp 0.3s ease backwards; }
+  .member-results .mr-item:nth-child(1) { animation-delay: 25ms; }
+  .member-results .mr-item:nth-child(2) { animation-delay: 65ms; }
+  .member-results .mr-item:nth-child(3) { animation-delay: 105ms; }
+  .member-results .mr-item:nth-child(4) { animation-delay: 145ms; }
+  .member-results .mr-item:nth-child(n+5) { animation-delay: 185ms; }
+  .mr-breakdown { animation: fadeUp 0.2s ease; }
+  /* Account: stat strip + colour swatches feel alive */
+  .profile-stats { animation: fadeUp 0.4s ease backwards; animation-delay: 60ms; }
+  .color-dot { transition: transform 0.12s ease, box-shadow 0.15s ease; }
+  .color-dot:hover { transform: scale(1.12); }
+  .color-dot:active { transform: scale(0.95); }
+  /* Global leaderboard "your rank" footer row + golden-boot award card */
+  .global-leaderboard .lb { animation: fadeUp 0.3s ease; }
+  .card.award { animation: fadeUp 0.34s ease; }
+}
