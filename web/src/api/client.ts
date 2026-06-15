@@ -81,10 +81,18 @@ export interface MatchStatRow {
   home: string;
   away: string;
 }
+export interface MatchEvent {
+  clock: string;
+  kind: 'goal' | 'pen' | 'yellow' | 'red' | 'sub';
+  side: 'HOME' | 'AWAY' | null;
+  text: string;
+}
 export interface MatchStats {
   venue: string | null;
   status: string | null;
   stats: MatchStatRow[];
+  timeline: MatchEvent[];
+  broadcasts: string[];
 }
 /** Runtime feature flags. `adsEnabled` controls the bottom-right pop-up. */
 export interface AppFlags {

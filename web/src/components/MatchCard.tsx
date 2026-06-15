@@ -257,14 +257,18 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         </div>
 
         {state === 'Live' && (
-          <div className="mc-result live" data-testid={`live-${match.id}`}>
+          <div className="mc-result live clickable" onClick={() => setStatsOpen((o) => !o)} data-testid={`live-${match.id}`}>
             <span className="live-dot">●</span> LIVE
             {minuteLabel && <span className="mc-min" data-testid={`minute-${match.id}`}> {minuteLabel}</span>}
             {' '}<strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
+            <span className={`mc-detchev${statsOpen ? ' up' : ''}`} aria-hidden>▾</span>
           </div>
         )}
         {state === 'Played' && (
-          <div className="mc-result">FT <strong>{match.homeScore}–{match.awayScore}</strong></div>
+          <div className="mc-result clickable" onClick={() => setStatsOpen((o) => !o)} data-testid={`ft-${match.id}`}>
+            FT <strong>{match.homeScore}–{match.awayScore}</strong>
+            <span className={`mc-detchev${statsOpen ? ' up' : ''}`} aria-hidden>▾</span>
+          </div>
         )}
         {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
 
@@ -319,7 +323,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               aria-expanded={statsOpen}
               data-testid={`stats-toggle-${match.id}`}
             >
-              📊 Match stats <span className={`chev ${statsOpen ? 'up' : ''}`} aria-hidden>▾</span>
+              📊 Match details <span className={`chev ${statsOpen ? 'up' : ''}`} aria-hidden>▾</span>
             </button>
             {statsOpen && <MatchStatsPanel match={match} />}
           </div>

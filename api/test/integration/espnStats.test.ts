@@ -27,8 +27,21 @@ describe('espnClient.fetchMatchStats', () => {
         { team: { displayName: 'Qatar' }, formation: '4-3-3', roster: [{ starter: true, jersey: '1', athlete: { displayName: 'Keeper Q' }, position: { abbreviation: 'G' } }] },
         { team: { displayName: 'Switzerland' }, formation: '4-4-2', roster: [{ starter: true, jersey: '9', athlete: { displayName: 'Striker S' }, position: { abbreviation: 'F' } }, { starter: false, athlete: { displayName: 'Sub S' } }] },
       ],
-      header: { competitions: [{ status: { type: { shortDetail: "67'" } } }] },
+      header: { competitions: [{
+        status: { type: { shortDetail: "67'" } },
+        competitors: [
+          { homeAway: 'home', team: { id: '1', displayName: 'Qatar' } },
+          { homeAway: 'away', team: { id: '2', displayName: 'Switzerland' } },
+        ],
+      }] },
       gameInfo: { venue: { fullName: 'Lusail Stadium' } },
+      keyEvents: [
+        { type: { text: 'Kickoff' }, clock: { displayValue: '' } },
+        { type: { text: 'Goal' }, clock: { displayValue: "23'" }, team: { id: '2' }, participants: [{ athlete: { displayName: 'Embolo' } }] },
+        { type: { text: 'Yellow Card' }, clock: { displayValue: "55'" }, team: { id: '1' }, participants: [{ athlete: { displayName: 'Hassan' } }] },
+        { type: { text: 'Substitution' }, clock: { displayValue: "70'" }, team: { id: '1' }, participants: [{ athlete: { displayName: 'In Guy' } }, { athlete: { displayName: 'Out Guy' } }] },
+      ],
+      broadcasts: [{ media: { shortName: 'FS1' } }, { shortName: 'Telemundo' }],
     };
 
     const fakeFetch = (async (url: string) => {
@@ -46,6 +59,14 @@ describe('espnClient.fetchMatchStats', () => {
     const possession = stats!.stats.find((s) => s.label === 'Possession');
     expect(possession).toEqual({ label: 'Possession', home: '40%', away: '60%' });
     expect(stats!.stats.find((s) => s.label === 'Shots')).toEqual({ label: 'Shots', home: '8', away: '12' });
+    // Timeline: Kickoff filtered out; goal/card/sub kept and oriented to our home/away.
+    expect(stats!.timeline.map((e) => [e.clock, e.kind, e.side])).toEqual([
+      ["23'", 'goal', 'AWAY'],
+      ["55'", 'yellow', 'HOME'],
+      ["70'", 'sub', 'HOME'],
+    ]);
+    expect(stats!.timeline[2]!.text).toBe('In Guy (for Out Guy)');
+    expect(stats!.broadcasts).toEqual(['FS1', 'Telemundo']);
   });
 
   it('returns null when no event matches', async () => {

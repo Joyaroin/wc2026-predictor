@@ -92,11 +92,30 @@ export interface MatchStatRow {
   home: string;
   away: string;
 }
+/** A notable in-match event (goal, card, substitution), oriented to our home/away. */
+export interface MatchEvent {
+  clock: string; // e.g. "27'", "45'+5'"
+  kind: 'goal' | 'pen' | 'yellow' | 'red' | 'sub';
+  side: 'HOME' | 'AWAY' | null;
+  text: string; // scorer / booked player / "In (for Out)"
+}
 /** Box-score details from ESPN's summary endpoint (best-effort; coverage varies). */
 export interface MatchStats {
   venue: string | null;
   status: string | null; // ESPN short detail, e.g. "FT", "67'"
   stats: MatchStatRow[];
+  timeline: MatchEvent[]; // chronological
+  broadcasts: string[]; // where to watch, e.g. ["FS1", "Telemundo"]
+}
+
+function eventKind(typeText: string): MatchEvent['kind'] | null {
+  const s = typeText.toLowerCase();
+  if (s.includes('goal')) return 'goal';
+  if (s.includes('penalty')) return 'pen';
+  if (s.includes('red card') || s.includes('second yellow')) return 'red';
+  if (s.includes('yellow card')) return 'yellow';
+  if (s.includes('substitution')) return 'sub';
+  return null;
 }
 
 export interface EspnClient {
@@ -267,7 +286,38 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         ?? get<string>(summary, 'gameInfo', 'venue', 'address', 'city')
         ?? null;
 
-      return { venue, status, stats };
+      // Map ESPN team ids → our home/away (handles either ordering).
+      const idToSide = new Map<string, 'HOME' | 'AWAY'>();
+      for (const c of get<Json[]>(comp0 ?? {}, 'competitors') ?? []) {
+        const tid = String(get<string | number>(c, 'team', 'id') ?? '');
+        if (tid) idToSide.set(tid, canonTeam(get<string>(c, 'team', 'displayName') ?? '') === canonTeam(homeName) ? 'HOME' : 'AWAY');
+      }
+      const timeline: MatchEvent[] = [];
+      for (const e of get<Json[]>(summary, 'keyEvents') ?? []) {
+        const kind = eventKind(get<string>(e, 'type', 'text') ?? '');
+        if (!kind) continue;
+        const players = (get<Json[]>(e, 'participants') ?? [])
+          .map((p) => get<string>(p, 'athlete', 'displayName') ?? '')
+          .filter(Boolean);
+        let text = players[0] ?? get<string>(e, 'shortText') ?? get<string>(e, 'type', 'text') ?? '';
+        if (kind === 'sub' && players.length >= 2) text = `${players[0]} (for ${players[1]})`;
+        timeline.push({
+          clock: get<string>(e, 'clock', 'displayValue') ?? '',
+          kind,
+          side: idToSide.get(String(get<string | number>(e, 'team', 'id') ?? '')) ?? null,
+          text,
+        });
+      }
+
+      const broadcasts = [
+        ...new Set(
+          (get<Json[]>(summary, 'broadcasts') ?? [])
+            .map((b) => get<string>(b, 'media', 'shortName') ?? get<string>(b, 'shortName') ?? '')
+            .filter(Boolean),
+        ),
+      ];
+
+      return { venue, status, stats, timeline, broadcasts };
     },
 
     async fetchMatchOdds(dates, homeName, awayName) {

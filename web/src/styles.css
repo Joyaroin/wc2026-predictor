@@ -1021,3 +1021,19 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
   .global-leaderboard .lb { animation: fadeUp 0.3s ease; }
   .card.award { animation: fadeUp 0.34s ease; }
 }
+
+/* Click the score to expand full match details */
+.mc-result.clickable { cursor: pointer; }
+.mc-result.clickable:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.mc-detchev { color: var(--muted); font-size: 0.78rem; margin-left: 4px; display: inline-block; transition: transform 0.15s ease; }
+.mc-detchev.up { transform: rotate(180deg); }
+
+/* Match timeline (goals / cards / subs) */
+.ms-timeline { display: flex; flex-direction: column; gap: 3px; max-height: 280px; overflow-y: auto; margin-bottom: 4px; }
+.ms-ev { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; font-size: 0.82rem; padding: 1px 0; }
+.ms-ev-home { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-width: 0; }
+.ms-ev-away { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; }
+.ms-ev-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-ev-clock { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
+.ms-ev-icon { flex: none; font-size: 0.8rem; }
+.ms-watch { text-align: center; margin-top: 8px; }
