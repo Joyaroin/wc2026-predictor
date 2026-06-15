@@ -354,7 +354,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
                           data-testid={`statpick-chip-${match.id}-${i}`}
                         >
                           {s.home}–{s.away}
-                          {i === 0 && <span className="sp-pct">{Math.round(s.prob * 100)}%</span>}
+                          <span className="sp-pct">{Math.round(s.prob * 100)}%</span>
                         </button>
                       ))}
                     </div>

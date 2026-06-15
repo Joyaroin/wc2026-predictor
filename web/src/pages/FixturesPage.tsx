@@ -193,45 +193,6 @@ export function FixturesPage() {
     return map;
   }, [predictions.data]);
 
-  // "Fill my blanks": fetch odds-based suggestions for open, un-predicted matches and apply them.
-  const [filling, setFilling] = useState(false);
-  const fillBlanks = async () => {
-    const open = (matches.data ?? []).filter((m) => !m.locked && !m.placeholder && !predByMatch.has(m.id));
-    if (open.length === 0) {
-      setToast('Nothing to fill — every open match is predicted ✓');
-      return;
-    }
-    setFilling(true);
-    try {
-      // Fetch in chunks so we can cover *every* open match (the API caps ids per request).
-      const CHUNK = 20;
-      let filled = 0;
-      let noOdds = 0;
-      for (let i = 0; i < open.length; i += CHUNK) {
-        const batch = open.slice(i, i + CHUNK);
-        const sugs = await api.matchSuggestions(batch.map((m) => m.id));
-        for (const m of batch) {
-          const s = sugs[m.id];
-          if (s && s.scores[0]) {
-            statPick.mutate({ matchId: m.id, home: s.scores[0].home, away: s.scores[0].away, firstTeam: s.firstTeam });
-            filled++;
-          } else {
-            noOdds++;
-          }
-        }
-        setToast(`Filling… ${filled} done`);
-      }
-      setToast(
-        filled
-          ? `Filled ${filled} pick${filled === 1 ? '' : 's'} from the odds ✨${noOdds ? ` · ${noOdds} had no odds yet` : ''}`
-          : 'No odds available for your open matches yet',
-      );
-    } catch {
-      setToast('⚠️ Could not fetch stat picks — try again');
-    } finally {
-      setFilling(false);
-    }
-  };
 
   const sections = useMemo(() => {
     const all = matches.data ?? [];
@@ -277,12 +238,6 @@ export function FixturesPage() {
             {finishedCount} finished → My results
           </Link>
         )}
-      </div>
-      <div className="fixtures-controls">
-        <button type="button" className="ghost fill-blanks" onClick={fillBlanks} disabled={filling} data-testid="fill-blanks">
-          {filling ? 'Fetching odds…' : '✨ Fill my blanks with stat picks'}
-        </button>
-        <span className="muted fine">Statistical scoreline suggestions — opt-in, fully editable after.</span>
       </div>
 
       {sections.length === 0 && (

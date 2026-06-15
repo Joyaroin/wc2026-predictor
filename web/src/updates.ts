@@ -14,9 +14,8 @@ export const UPDATES: UpdateEntry[] = [
     emoji: '✨',
     title: 'Stat picks',
     points: [
-      'Tap "✨ Stat pick" on a match to see the most likely scorelines from a statistical model',
+      'Tap "✨ Stat pick" on a match to see the most likely scorelines, each with its probability',
       'One tap applies the scoreline + first team to score — fully editable after',
-      'Short on time? "Fill my blanks with stat picks" predicts all your open matches at once',
       'Totally opt-in — your typed predictions are never changed unless you ask',
     ],
   },
