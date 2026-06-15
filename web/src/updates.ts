@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-15.3',
+    date: 'June 15, 2026',
+    emoji: '🔔',
+    title: 'Match alerts',
+    points: [
+      'Opt in under Account → Notifications to get a push when a match you predicted kicks off, a goal goes in, or it ends',
+      'A friendly nudge before kick-off if you haven\'t predicted a game yet',
+      'iPhone/iPad: add the app to your Home Screen first (Share → Add to Home Screen), then enable alerts',
+    ],
+  },
+  {
     id: '2026-06-15.2',
     date: 'June 15, 2026',
     emoji: '🎨',
