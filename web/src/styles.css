@@ -970,3 +970,33 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
   .statpick-toggle .chev, .fill-blanks { transition: transform 0.12s ease, background-color 0.15s ease; }
   .fill-blanks:active:not(:disabled) { transform: scale(0.97); }
 }
+
+/* Live-score notifications bell */
+.bell { position: relative; }
+.bell .menu-btn { position: relative; }
+.bell-badge { position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.64rem; font-weight: 800; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.bell-dropdown { min-width: 232px; }
+.bell-head { font-weight: 800; font-size: 0.8rem; padding: 4px 8px 8px; display: flex; align-items: center; gap: 6px; }
+.bell-empty { padding: 4px 8px 10px; }
+.bell-row { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; color: var(--ink); }
+.bell-row:hover { background: var(--hover); }
+.bell-code { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.02em; }
+.bell-score { font-variant-numeric: tabular-nums; }
+.bell-min { margin-left: auto; color: var(--danger); font-weight: 800; font-size: 0.74rem; }
+
+/* Theme picker (compact dropdown) */
+.theme-picker { position: relative; max-width: 260px; }
+.theme-select { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font: inherit; font-weight: 700; }
+.theme-select:hover { border-color: var(--accent); }
+.theme-select .tp-label { flex: 1; text-align: left; }
+.theme-select .tp-chev { color: var(--muted); transition: transform 0.15s ease; }
+.theme-select .tp-chev.up { transform: rotate(180deg); }
+.theme-menu { position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right: 0; max-height: 320px; overflow-y: auto; background: var(--card); border: 1px solid var(--line-strong); border-radius: 10px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 2px; }
+.theme-opt { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; color: var(--ink); border: none; border-radius: 8px; padding: 8px 10px; font: inherit; text-align: left; }
+.theme-opt:hover { background: var(--hover); }
+.theme-opt.on { background: var(--on-bg); }
+.theme-opt .tp-opt-label { flex: 1; }
+.theme-opt .tp-check { color: var(--accent); font-weight: 800; }
+@media (prefers-reduced-motion: no-preference) {
+  .theme-menu, .bell-dropdown { animation: fadeUp 0.16s ease; }
+}

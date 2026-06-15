@@ -2,15 +2,15 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
-import { usePrefs, AUTO, listTimeZones, THEMES } from '../context/PrefsContext';
-import { Flag } from '../components/Flag';
+import { usePrefs, AUTO, listTimeZones } from '../context/PrefsContext';
+import { ThemePicker } from '../components/ThemePicker';
 import { Avatar, AVATAR_PALETTE } from '../components/Avatar';
 import { ordinal } from '../lib/rank';
 import { pushSupported, iosNeedsInstall, pushSubscribed, enablePush, disablePush } from '../lib/push';
 
 export function SettingsPage() {
   const { player, updateName, logout } = usePlayer();
-  const { tzPref, timeZone, setTzPref, theme, setTheme } = usePrefs();
+  const { tzPref, timeZone, setTzPref, liveFeed, setLiveFeed } = usePrefs();
   const qc = useQueryClient();
 
   const [toast, setToast] = useState<string | null>(null);
@@ -147,20 +147,7 @@ export function SettingsPage() {
       <div className="card">
         <h4>Theme</h4>
         <p className="muted fine">Pick a look — dark, light, or one inspired by a World Cup nation.</p>
-        <div className="theme-grid">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={theme === t.id ? 'theme-chip on' : 'theme-chip'}
-              onClick={() => { setTheme(t.id); flash('Saved ✓'); }}
-              data-testid={`theme-${t.id}`}
-            >
-              {t.flag ? <Flag code={t.flag} name={t.label} /> : <span aria-hidden>{t.id === 'light' ? '☀️' : '🌙'}</span>}
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <ThemePicker onPick={() => flash('Saved ✓')} />
       </div>
       <div className="card">
         <h4>Timezone</h4>
@@ -201,6 +188,23 @@ export function SettingsPage() {
           </div>
         )}
         {pushErr && <p className="error fine">{pushErr}</p>}
+      </div>
+      <div className="card">
+        <h4>Live score feed</h4>
+        <p className="muted fine">Show the 🔔 live-scores bell in the top bar while matches are on (in-app, no permission needed).</p>
+        <div className="toggle-row">
+          <button
+            type="button"
+            className={`switch ${liveFeed ? 'on' : ''}`}
+            role="switch"
+            aria-checked={liveFeed}
+            onClick={() => { setLiveFeed(!liveFeed); flash('Saved ✓'); }}
+            data-testid="toggle-livefeed"
+          >
+            <span className="switch-knob" />
+          </button>
+          <span className="fine">{liveFeed ? 'On' : 'Off'}</span>
+        </div>
       </div>
 
       <h3 className="section-head">Security</h3>
