@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   effectivePoints,
@@ -71,6 +72,15 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const [scorerOpen, setScorerOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [statPickOpen, setStatPickOpen] = useState(false);
+  // Details modal: close on Escape, and lock background scroll while open.
+  useEffect(() => {
+    if (!statsOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setStatsOpen(false); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
+  }, [statsOpen]);
   const [scorerQ, setScorerQ] = useState('');
   const scorerQuery = fold(scorerQ.trim());
   const scorerMatches = scorerQuery.length < 1
@@ -491,7 +501,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         </div>
       </div>
 
-      {statsOpen && (
+      {statsOpen && createPortal(
         <div className="modal-backdrop" onClick={(e) => { e.stopPropagation(); setStatsOpen(false); }}>
           <div className="modal match-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Match details" data-testid={`match-modal-${match.id}`}>
             <div className="modal-head">
@@ -504,7 +514,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             </div>
             <MatchStatsPanel match={match} />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

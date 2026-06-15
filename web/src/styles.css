@@ -1047,5 +1047,6 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .match-modal { max-width: 460px; width: 100%; }
 .mm-title { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; font-size: 1rem; flex-wrap: wrap; }
 .mm-score { font-weight: 800; font-variant-numeric: tabular-nums; }
-.match-modal .ms-panel { margin-top: 8px; max-height: 62vh; overflow-y: auto; }
+.match-modal .ms-panel { margin-top: 8px; }
+.match-modal .ms-timeline { max-height: none; overflow: visible; }
 .match-modal .ms-state { padding: 24px 8px; }
