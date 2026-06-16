@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, type MatchView, type MatchEvent, type TeamLineup } from '../api/client';
+import { api, type MatchView, type MatchEvent, type TeamLineup, type LineupPlayer } from '../api/client';
 import { Flag } from './Flag';
 
 function num(v: string): number {
@@ -41,6 +41,57 @@ function LineupCol({ code, name, lineup }: { code: string | null; name: string; 
           </ul>
         </>
       )}
+    </div>
+  );
+}
+
+function lastName(n: string): string {
+  const parts = n.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1]! : n;
+}
+
+/** Place the starting XI on a vertical pitch from the formation string (GK + lines). [] if it doesn't fit. */
+function teamLayout(lineup: TeamLineup, side: 'home' | 'away'): { p: LineupPlayer; top: number; left: number }[] {
+  const nums = (lineup.formation ?? '').split('-').map((n) => parseInt(n, 10)).filter((n) => n > 0);
+  if (nums.length === 0) return [];
+  const lines = [1, ...nums]; // goalkeeper + outfield lines
+  if (lines.reduce((a, b) => a + b, 0) !== lineup.starters.length) return [];
+  const out: { p: LineupPlayer; top: number; left: number }[] = [];
+  let idx = 0;
+  for (let li = 0; li < lines.length; li++) {
+    const n = lines[li]!;
+    const t = lines.length > 1 ? li / (lines.length - 1) : 0;
+    const top = side === 'home' ? 92 - t * 36 : 8 + t * 36; // home goal at bottom, away at top
+    for (let j = 0; j < n; j++) out.push({ p: lineup.starters[idx++]!, top, left: ((j + 1) / (n + 1)) * 100 });
+  }
+  return out;
+}
+
+function Pitch({ home, away }: { home: TeamLineup; away: TeamLineup }) {
+  return (
+    <div className="pitch" data-testid="lineup-pitch">
+      <div className="pitch-box top" />
+      <div className="pitch-box bottom" />
+      {[...teamLayout(away, 'away').map((x) => ({ ...x, side: 'away' as const })), ...teamLayout(home, 'home').map((x) => ({ ...x, side: 'home' as const }))].map((x, i) => (
+        <div className={`pitch-player ${x.side}`} key={i} style={{ top: `${x.top}%`, left: `${x.left}%` }}>
+          <span className="pitch-jersey">{x.p.number ?? '–'}</span>
+          <span className="pitch-name">{lastName(x.p.name)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Bench({ code, lineup }: { code: string | null; lineup: TeamLineup }) {
+  if (lineup.bench.length === 0) return null;
+  return (
+    <div className="lu-col">
+      <div className="lu-sub">{code ?? ''} bench</div>
+      <ul className="lu-list bench">
+        {lineup.bench.map((p, i) => (
+          <li key={i}><span className="lu-num">{p.number ?? '–'}</span><span className="lu-name">{p.name}</span></li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -129,16 +180,34 @@ export function MatchStatsPanel({ match }: { match: MatchView }) {
         )
       )}
 
-      {tab === 'lineups' && (
-        !hasLineups ? (
-          <div className="ms-state muted fine">Lineups drop ~1 hour before kick-off — check back soon.</div>
-        ) : (
+      {tab === 'lineups' && (() => {
+        if (!hasLineups) return <div className="ms-state muted fine">Lineups drop ~1 hour before kick-off — check back soon.</div>;
+        const h = s.lineups.home;
+        const a = s.lineups.away;
+        const pitchReady = !!h && !!a && teamLayout(h, 'home').length > 0 && teamLayout(a, 'away').length > 0;
+        if (pitchReady) {
+          return (
+            <>
+              <div className="pitch-head fine">
+                <span><Flag code={match.awayCode} name={match.awayTeam} /> {match.awayCode} <b>{a!.formation}</b></span>
+                <span className="pitch-vs">vs</span>
+                <span><b>{h!.formation}</b> {match.homeCode} <Flag code={match.homeCode} name={match.homeTeam} /></span>
+              </div>
+              <Pitch home={h!} away={a!} />
+              <div className="ms-lineups bench-only">
+                <Bench code={match.homeCode} lineup={h!} />
+                <Bench code={match.awayCode} lineup={a!} />
+              </div>
+            </>
+          );
+        }
+        return (
           <div className="ms-lineups">
-            {s.lineups.home && <LineupCol code={match.homeCode} name={match.homeTeam} lineup={s.lineups.home} />}
-            {s.lineups.away && <LineupCol code={match.awayCode} name={match.awayTeam} lineup={s.lineups.away} />}
+            {h && <LineupCol code={match.homeCode} name={match.homeTeam} lineup={h} />}
+            {a && <LineupCol code={match.awayCode} name={match.awayTeam} lineup={a} />}
           </div>
-        )
-      )}
+        );
+      })()}
     </div>
   );
 }

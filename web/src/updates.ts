@@ -14,7 +14,7 @@ export const UPDATES: UpdateEntry[] = [
     emoji: '👥',
     title: 'Lineups & match details',
     points: [
-      'Tap a match to open details — now with a Lineups tab: formations, starting XI and bench',
+      'Tap a match to open details — a Lineups tab lays the XI out on a football pitch (formation + bench)',
       'Lineups appear about an hour before kick-off (a Lineups button shows up near kick-off)',
       'Live & finished matches also show a timeline of goals, cards and subs, plus where to watch',
     ],
