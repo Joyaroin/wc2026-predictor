@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-16',
+    date: 'June 16, 2026',
+    emoji: '👥',
+    title: 'Lineups & match details',
+    points: [
+      'Tap a match to open details — now with a Lineups tab: formations, starting XI and bench',
+      'Lineups appear about an hour before kick-off (a Lineups button shows up near kick-off)',
+      'Live & finished matches also show a timeline of goals, cards and subs, plus where to watch',
+    ],
+  },
+  {
     id: '2026-06-15.4',
     date: 'June 15, 2026',
     emoji: '🎨',

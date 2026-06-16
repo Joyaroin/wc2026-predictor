@@ -67,6 +67,11 @@ describe('espnClient.fetchMatchStats', () => {
     ]);
     expect(stats!.timeline[2]!.text).toBe('In Guy (for Out Guy)');
     expect(stats!.broadcasts).toEqual(['FS1', 'Telemundo']);
+    // Lineups oriented to our home/away.
+    expect(stats!.lineups.home?.formation).toBe('4-3-3');
+    expect(stats!.lineups.home?.starters).toEqual([{ name: 'Keeper Q', number: '1', position: 'G' }]);
+    expect(stats!.lineups.away?.formation).toBe('4-4-2');
+    expect(stats!.lineups.away?.bench).toEqual([{ name: 'Sub S', number: null, position: null }]);
   });
 
   it('returns null when no event matches', async () => {

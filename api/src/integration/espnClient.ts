@@ -99,6 +99,21 @@ export interface MatchEvent {
   side: 'HOME' | 'AWAY' | null;
   text: string; // scorer / booked player / "In (for Out)"
 }
+export interface LineupPlayer {
+  name: string;
+  number: string | null;
+  position: string | null;
+}
+export interface TeamLineup {
+  formation: string | null;
+  starters: LineupPlayer[];
+  bench: LineupPlayer[];
+}
+/** Both teams' lineups; a side is null until announced (~1h before kickoff). */
+export interface MatchLineups {
+  home: TeamLineup | null;
+  away: TeamLineup | null;
+}
 /** Box-score details from ESPN's summary endpoint (best-effort; coverage varies). */
 export interface MatchStats {
   venue: string | null;
@@ -106,6 +121,7 @@ export interface MatchStats {
   stats: MatchStatRow[];
   timeline: MatchEvent[]; // chronological
   broadcasts: string[]; // where to watch, e.g. ["FS1", "Telemundo"]
+  lineups: MatchLineups;
 }
 
 function eventKind(typeText: string): MatchEvent['kind'] | null {
@@ -317,7 +333,27 @@ export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch
         ),
       ];
 
-      return { venue, status, stats, timeline, broadcasts };
+      // Lineups (rosters): null per side until announced (~1h before kickoff).
+      const rosters = get<Json[]>(summary, 'rosters') ?? [];
+      const lineupFor = (teamName: string): TeamLineup | null => {
+        const r = rosters.find((x) => canonTeam(get<string>(x, 'team', 'displayName') ?? '') === canonTeam(teamName));
+        if (!r) return null;
+        const starters: LineupPlayer[] = [];
+        const bench: LineupPlayer[] = [];
+        for (const p of get<Json[]>(r, 'roster') ?? []) {
+          const lp: LineupPlayer = {
+            name: get<string>(p, 'athlete', 'displayName') ?? 'Unknown',
+            number: get<string>(p, 'jersey') ?? get<string>(p, 'athlete', 'jersey') ?? null,
+            position: get<string>(p, 'position', 'abbreviation') ?? get<string>(p, 'athlete', 'position', 'abbreviation') ?? null,
+          };
+          if (get<boolean>(p, 'starter') === true) starters.push(lp);
+          else bench.push(lp);
+        }
+        if (starters.length === 0) return null; // not announced yet
+        return { formation: get<string>(r, 'formation') ?? null, starters, bench };
+      };
+
+      return { venue, status, stats, timeline, broadcasts, lineups: { home: lineupFor(homeName), away: lineupFor(awayName) } };
     },
 
     async fetchMatchOdds(dates, homeName, awayName) {

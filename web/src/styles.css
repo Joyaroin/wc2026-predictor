@@ -1050,3 +1050,22 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .match-modal .ms-panel { margin-top: 8px; }
 .match-modal .ms-timeline { max-height: none; overflow: visible; }
 .match-modal .ms-state { padding: 24px 8px; }
+
+/* Match-details tabs */
+.ms-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; margin: 4px auto 12px; }
+.ms-tabs button { background: transparent; color: var(--muted); border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.84rem; }
+.ms-tabs button.on { background: var(--accent); color: var(--accent-contrast); }
+
+/* Lineups */
+.ms-lineups { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.lu-col { min-width: 0; }
+.lu-head { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 0.85rem; margin-bottom: 6px; }
+.lu-form { margin-left: auto; color: var(--accent); font-size: 0.74rem; font-weight: 800; }
+.lu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.lu-list li { display: flex; align-items: center; gap: 7px; font-size: 0.82rem; }
+.lu-num { flex: none; width: 20px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
+.lu-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lu-pos { margin-left: auto; color: var(--muted); font-size: 0.7rem; }
+.lu-sub { margin: 8px 0 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.lu-list.bench li { opacity: 0.8; }
+@media (max-width: 420px) { .ms-lineups { grid-template-columns: 1fr; gap: 16px; } }

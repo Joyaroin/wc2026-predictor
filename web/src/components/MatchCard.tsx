@@ -96,8 +96,12 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
     staleTime: 10 * 60_000,
   });
   const canSave = editable && home !== '' && away !== '';
-  // Whole-card click expands full details (only for live/finished cards, which aren't editable).
+  // Whole-card click opens the details modal (only for live/finished cards, which aren't editable).
   const detailsExpandable = (state === 'Live' || state === 'Played') && !match.placeholder;
+  // Within ~2h of kickoff, an upcoming card gets a Lineups button (lineups drop ~1h before).
+  const toKickoffMs = new Date(match.kickoff).getTime() - Date.now();
+  const preMatchSoon = !match.placeholder && (state === 'Open' || state === 'Locked') && toKickoffMs > 0 && toKickoffMs <= 2 * 60 * 60 * 1000;
+  const detailsAvailable = detailsExpandable || preMatchSoon;
   // Edits not yet persisted → show a "Saving…" hint (no Save button — it auto-saves).
   const dirty = canSave && (!prediction || Number(home) !== prediction.home || Number(away) !== prediction.away);
   const awayRef = useRef<HTMLInputElement>(null);
@@ -328,7 +332,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           )
         )}
 
-        {(state === 'Live' || state === 'Played') && !match.placeholder && (
+        {detailsAvailable && (
           <div className="mc-stats-wrap" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
@@ -336,7 +340,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               onClick={() => setStatsOpen(true)}
               data-testid={`stats-toggle-${match.id}`}
             >
-              📊 Match details ›
+              {preMatchSoon ? '👥 Lineups ›' : '📊 Match details ›'}
             </button>
           </div>
         )}
@@ -507,7 +511,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             <div className="modal-head">
               <h3 className="mm-title">
                 <Flag code={match.homeCode} name={match.homeTeam} /> {match.homeCode ?? 'Home'}
-                <span className="mm-score">{match.homeScore ?? 0}–{match.awayScore ?? 0}</span>
+                <span className="mm-score">{state === 'Live' || state === 'Played' ? `${match.homeScore ?? 0}–${match.awayScore ?? 0}` : 'v'}</span>
                 {match.awayCode ?? 'Away'} <Flag code={match.awayCode} name={match.awayTeam} />
               </h3>
               <button className="modal-close" onClick={() => setStatsOpen(false)} aria-label="Close">✕</button>

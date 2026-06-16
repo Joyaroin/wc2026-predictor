@@ -87,12 +87,23 @@ export interface MatchEvent {
   side: 'HOME' | 'AWAY' | null;
   text: string;
 }
+export interface LineupPlayer {
+  name: string;
+  number: string | null;
+  position: string | null;
+}
+export interface TeamLineup {
+  formation: string | null;
+  starters: LineupPlayer[];
+  bench: LineupPlayer[];
+}
 export interface MatchStats {
   venue: string | null;
   status: string | null;
   stats: MatchStatRow[];
   timeline: MatchEvent[];
   broadcasts: string[];
+  lineups: { home: TeamLineup | null; away: TeamLineup | null };
 }
 /** Runtime feature flags. `adsEnabled` controls the bottom-right pop-up. */
 export interface AppFlags {
