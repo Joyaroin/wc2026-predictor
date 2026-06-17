@@ -150,7 +150,7 @@ export function createAssistantService(
       const system = [
         { type: 'text' as const, text: SYSTEM },
         ...(research
-          ? [{ type: 'text' as const, text: 'Web research is ON for this message. Use the web_search tool to look up current info (form, injuries, news, head-to-head) when it helps, then answer concisely and mention where it came from. Keep searches minimal.' }]
+          ? [{ type: 'text' as const, text: `Web research is ON for this message. HARD RULE: you may ONLY search the web for football / FIFA World Cup 2026 topics — teams, players, managers, fixtures, results, form, injuries, transfers, standings, history. If the user asks you to research anything outside football, DO NOT run a web search: politely refuse in one line and steer back to the World Cup. When you do search, keep it minimal, answer concisely, and mention where it came from.` }]
           : []),
         { type: 'text' as const, text: `Current context (live data for this user):\n${context}` },
       ];
