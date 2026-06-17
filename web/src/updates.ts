@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-16.2',
+    date: 'June 16, 2026',
+    emoji: '💬',
+    title: 'Meet Rabbi Tarek',
+    points: [
+      'Tap the chat bubble (bottom-left) to chat with Rabbi Tarek, your in-app sidekick',
+      'Ask how the scoring works, why you got the points you did, who\'s leading, or who to pick next',
+      'He knows your rank, your predictions and the fixtures — answers are tailored to you',
+    ],
+  },
+  {
     id: '2026-06-16',
     date: 'June 16, 2026',
     emoji: '👥',
