@@ -15,6 +15,10 @@ export interface Config {
   adminPlayer: string;
   /** Web Push (VAPID) keys. Null when not configured — push notifications are then disabled. */
   vapid: { publicKey: string; privateKey: string; subject: string } | null;
+  /** Anthropic API key for the in-app assistant. Empty = assistant disabled (graceful no-op). */
+  anthropicApiKey: string;
+  /** Model id for the assistant. */
+  assistantModel: string;
 }
 
 export class ConfigError extends Error {}
@@ -51,5 +55,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
             subject: (env.VAPID_SUBJECT ?? 'mailto:notifications@wc-predictions-2026.com').trim(),
           }
         : null,
+    anthropicApiKey: (env.ANTHROPIC_API_KEY ?? '').trim(),
+    assistantModel: (env.ASSISTANT_MODEL ?? 'claude-haiku-4-5').trim(),
   };
 }

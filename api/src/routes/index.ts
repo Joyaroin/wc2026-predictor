@@ -15,6 +15,7 @@ import {
   validateBody,
   loginLimiter,
   joinLimiter,
+  assistantLimiter,
 } from '../middleware/index';
 
 const wrapVoid =
@@ -46,6 +47,13 @@ const pushSubSchema = z.object({
 });
 const pushUnsubSchema = z.object({ endpoint: z.string().url().max(1000) });
 const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
+const assistantSchema = z.object({
+  message: z.string().min(1).max(1000),
+  history: z
+    .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(2000) }))
+    .max(20)
+    .optional(),
+});
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -116,6 +124,10 @@ export function buildRouter(services: Services, config: Config): Router {
   r.put('/player-of-tournament', auth, validateBody(pottSchema), wrap((req) => services.pott.setPick(caller(req), req.body.winnerId, req.body.winnerName)));
   // Admin-only (X-Admin-Token header): set the official Player of the Tournament winner.
   r.post('/admin/player-of-tournament', validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
+
+  // --- In-app AI assistant ---
+  r.get('/assistant/status', auth, wrap(async () => ({ enabled: services.assistant.enabled() })));
+  r.post('/assistant', auth, assistantLimiter, validateBody(assistantSchema), wrap((req) => services.assistant.ask(caller(req), req.body.message, req.body.history ?? [])));
 
   // --- Feedback / bug reports ---
   r.post('/feedback', auth, validateBody(feedbackSchema), wrapVoid((req) => services.feedback.submit(caller(req), req.body.message, req.body.page)));

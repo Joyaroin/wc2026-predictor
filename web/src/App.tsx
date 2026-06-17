@@ -17,6 +17,7 @@ import { FeedbackPage } from './pages/FeedbackPage';
 import { LiveTicker } from './components/LiveTicker';
 import { OnboardingTour } from './components/OnboardingTour';
 import { AdPopup } from './components/AdPopup';
+import { AssistantWidget } from './components/AssistantWidget';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -34,6 +35,7 @@ export default function App() {
       {player && <LiveTicker />}
       {player && <OnboardingTour />}
       {player && <AdPopup />}
+      {player && <AssistantWidget />}
       <main className="container">
         <Routes>
           <Route path="/" element={player ? <Navigate to="/fixtures" replace /> : <LandingPage />} />

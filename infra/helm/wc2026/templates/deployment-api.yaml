@@ -66,6 +66,13 @@ spec:
                   name: {{ include "wc2026.secretName" . }}
                   key: VAPID_SUBJECT
                   optional: true
+            # Optional — in-app AI assistant (Anthropic). Absent = assistant disabled.
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wc2026.secretName" . }}
+                  key: ANTHROPIC_API_KEY
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

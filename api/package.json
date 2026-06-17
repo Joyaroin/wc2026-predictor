@@ -13,6 +13,7 @@
     "create-table": "tsx scripts/create-table.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.2",
     "@aws-sdk/client-dynamodb": "3.1063.0",
     "@aws-sdk/lib-dynamodb": "3.1063.0",
     "@codegenie/serverless-express": "4.16.0",

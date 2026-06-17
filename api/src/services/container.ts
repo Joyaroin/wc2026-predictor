@@ -23,6 +23,7 @@ import { createFlagsService, type FlagsService } from './flags';
 import { createPushService, type PushService } from './push';
 import { createNotificationsService, type NotificationsService } from './notifications';
 import { createSyncService, type SyncService } from './sync';
+import { createAssistantService, type AssistantService } from './assistant';
 import { createEspnClient } from '../integration/espnClient';
 
 export interface Services {
@@ -46,6 +47,7 @@ export interface Services {
   push: PushService;
   notifications: NotificationsService;
   sync: SyncService;
+  assistant: AssistantService;
 }
 
 export interface ServiceDeps {
@@ -61,14 +63,16 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
   const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
   const espn = createEspnClient(logger);
   const notifications = createNotificationsService(repos.push, repos.predictions, repos.matches, repos.reminders, clock, config, logger);
+  const predictions = createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock);
+  const leaderboard = createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, repos.darkHorse, repos.tournamentWinner, repos.pott, clock);
   return {
     auth: createAuthService(repos.players, config, clock),
     players: createPlayerService(repos.players),
     groups: createGroupService(repos.groups, repos.memberships, repos.players, clock),
     matches,
-    predictions: createPredictionService(repos.predictions, matches, repos.memberships, repos.players, clock),
+    predictions,
     scoring,
-    leaderboard: createLeaderboardService(repos.predictions, repos.memberships, repos.players, repos.matches, repos.bracket, repos.goldenBoot, repos.darkHorse, repos.tournamentWinner, repos.pott, clock),
+    leaderboard,
     bracket: createBracketService(repos.bracket, matches, clock),
     goldenBoot: createGoldenBootService(repos.goldenBoot, repos.stats, matches, espn, clock, logger),
     darkHorse: createDarkHorseService(repos.darkHorse, matches, clock),
@@ -82,5 +86,6 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     push: createPushService(repos.push, config, clock),
     notifications,
     sync: createSyncService(footballApi, repos.matches, scoring, notifications, logger),
+    assistant: createAssistantService(config, matches, leaderboard, predictions, clock, logger),
   };
 }

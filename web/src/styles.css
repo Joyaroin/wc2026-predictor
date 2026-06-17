@@ -1090,3 +1090,29 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .pitch-player.away .pitch-jersey { box-shadow: 0 0 0 2px var(--accent2), 0 1px 3px rgba(0,0,0,0.5); }
 .pitch-name { font-size: 0.6rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.85); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ms-lineups.bench-only { margin-top: 2px; }
+
+/* In-app AI assistant — bottom-left chat */
+.asst-fab {
+  position: fixed; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 45;
+  width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 1.5rem; line-height: 1;
+  background: var(--accent); color: var(--accent-contrast); border: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+}
+.asst-panel {
+  position: fixed; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 46;
+  width: min(360px, calc(100vw - 32px)); height: min(520px, calc(100dvh - 96px));
+  display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; overflow: hidden; box-shadow: 0 16px 50px rgba(0,0,0,0.55);
+}
+.asst-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.asst-title { font-weight: 800; }
+.asst-close { background: transparent; border: none; color: var(--muted); font-size: 1rem; padding: 4px 8px; }
+.asst-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.asst-msg { max-width: 85%; padding: 8px 12px; border-radius: 14px; font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+.asst-msg.bot { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.asst-msg.me { align-self: flex-end; background: var(--input-filled); border: 1px solid var(--input-filled-border); color: var(--input-filled-ink); border-bottom-right-radius: 4px; }
+.asst-msg.err { align-self: center; background: transparent; color: var(--danger); font-size: 0.85rem; }
+.asst-typing { color: var(--muted); letter-spacing: 2px; }
+.asst-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--card); }
+.asst-input input { flex: 1; min-width: 0; }
+.asst-input button { flex: none; }

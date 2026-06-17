@@ -109,6 +109,10 @@ export interface MatchStats {
 export interface AppFlags {
   adsEnabled: boolean;
 }
+export interface AssistantTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -189,6 +193,9 @@ export const api = {
     req<{ ok: true }>('/push/subscribe', { method: 'POST', body: sub }),
   pushUnsubscribe: (endpoint: string) => req<{ ok: true }>('/push/unsubscribe', { method: 'POST', body: { endpoint } }),
   flags: () => req<AppFlags>('/flags'),
+  assistantStatus: () => req<{ enabled: boolean }>('/assistant/status'),
+  assistant: (message: string, history: AssistantTurn[]) =>
+    req<{ reply: string }>('/assistant', { method: 'POST', body: { message, history } }),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   submitFeedback: (message: string, page?: string) =>
     req<{ ok: true }>('/feedback', { method: 'POST', body: { message, page } }),
