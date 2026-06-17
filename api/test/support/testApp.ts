@@ -32,6 +32,7 @@ export const testConfig: Config = {
   vapid: null,
   anthropicApiKey: '',
   assistantModel: 'claude-haiku-4-5',
+  assistantResearchModel: 'claude-haiku-4-5',
 };
 
 export interface TestApp {

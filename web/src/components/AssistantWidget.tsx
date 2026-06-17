@@ -13,6 +13,7 @@ export function AssistantWidget() {
   const [thread, setThread] = useState<AssistantTurn[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [research, setResearch] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarOk, setAvatarOk] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,7 +44,7 @@ export function AssistantWidget() {
     setInput('');
     setSending(true);
     try {
-      const { reply } = await api.assistant(text, history);
+      const { reply } = await api.assistant(text, history, research);
       setThread((t) => [...t, { role: 'assistant', content: reply }]);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong — try again.');
@@ -79,7 +80,11 @@ export function AssistantWidget() {
             )}
             {sending && (
               <BotRow avatar={<Avatar size={26} />}>
-                <span className="asst-dots" aria-label="typing"><i /><i /><i /></span>
+                {research ? (
+                  <span className="asst-searching">🔎 searching the web<span className="asst-dots"><i /><i /><i /></span></span>
+                ) : (
+                  <span className="asst-dots" aria-label="typing"><i /><i /><i /></span>
+                )}
               </BotRow>
             )}
             {error && <div className="asst-msg err">{error}</div>}
@@ -91,11 +96,20 @@ export function AssistantWidget() {
               void send();
             }}
           >
+            <button
+              type="button"
+              className={`asst-research ${research ? 'on' : ''}`}
+              onClick={() => setResearch((r) => !r)}
+              aria-pressed={research}
+              title={research ? 'Web research on — slower, searches the web' : 'Turn on web research for live info (form, injuries, news)'}
+            >
+              🔎
+            </button>
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Rabbi Tarek…"
+              placeholder={research ? 'Research the web…' : 'Ask Rabbi Tarek…'}
               maxLength={1000}
               disabled={sending}
               aria-label="Message"

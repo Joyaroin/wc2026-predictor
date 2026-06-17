@@ -21,6 +21,8 @@ export interface Config {
   anthropicApiKey: string;
   /** Model id for the assistant. */
   assistantModel: string;
+  /** Model id used only when the user opts into web research (kept cheap by default). */
+  assistantResearchModel: string;
 }
 
 export class ConfigError extends Error {}
@@ -60,5 +62,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         : null,
     anthropicApiKey: (env.ANTHROPIC_API_KEY ?? '').trim(),
     assistantModel: (env.ASSISTANT_MODEL ?? 'claude-haiku-4-5').trim(),
+    assistantResearchModel: (env.ASSISTANT_RESEARCH_MODEL ?? 'claude-haiku-4-5').trim(),
   };
 }

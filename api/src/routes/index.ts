@@ -55,6 +55,7 @@ const assistantSchema = z.object({
     .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(2000) }))
     .max(20)
     .optional(),
+  research: z.boolean().optional(),
 });
 
 const wrap =
@@ -132,7 +133,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/assistant/status', auth, wrap(async () => ({ enabled: await assistantOn() })));
   r.post('/assistant', auth, assistantLimiter, validateBody(assistantSchema), wrap(async (req) => {
     if (!(await assistantOn())) throw new ForbiddenError('The assistant is currently turned off.');
-    return services.assistant.ask(caller(req), req.body.message, req.body.history ?? []);
+    return services.assistant.ask(caller(req), req.body.message, req.body.history ?? [], req.body.research === true);
   }));
 
   // --- Feedback / bug reports ---

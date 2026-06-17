@@ -195,8 +195,8 @@ export const api = {
   pushUnsubscribe: (endpoint: string) => req<{ ok: true }>('/push/unsubscribe', { method: 'POST', body: { endpoint } }),
   flags: () => req<AppFlags>('/flags'),
   assistantStatus: () => req<{ enabled: boolean }>('/assistant/status'),
-  assistant: (message: string, history: AssistantTurn[]) =>
-    req<{ reply: string }>('/assistant', { method: 'POST', body: { message, history } }),
+  assistant: (message: string, history: AssistantTurn[], research = false) =>
+    req<{ reply: string }>('/assistant', { method: 'POST', body: { message, history, research } }),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   setAssistantEnabled: (assistantEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { assistantEnabled } }),
   submitFeedback: (message: string, page?: string) =>

@@ -1133,8 +1133,12 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .asst-dots { display: inline-flex; gap: 4px; padding: 2px 0; }
 .asst-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
 
+.asst-searching { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.88rem; }
 .asst-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--card); }
 .asst-input input { flex: 1; min-width: 0; }
+.asst-research { flex: none; width: 40px; padding: 0; font-size: 1rem; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); transition: transform 0.12s ease; }
+.asst-research:hover { transform: scale(1.06); }
+.asst-research.on { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
 .asst-send { flex: none; width: 40px; padding: 0; font-size: 1rem; transition: transform 0.12s ease; }
 .asst-send:not(:disabled):hover { transform: scale(1.1); }
 .asst-send:not(:disabled):active { transform: scale(0.9); }
