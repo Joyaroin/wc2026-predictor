@@ -3,13 +3,14 @@ environment: dev
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: {repository: wc2026-api, tag: cceb14381a63ad9b33b194693cf02a6cf6e639f6}
-  web: {repository: wc2026-web, tag: cceb14381a63ad9b33b194693cf02a6cf6e639f6}
+  api: {repository: wc2026-api, tag: 41f5d8b60ec70161da634fa6220195d92045d7d8}
+  web: {repository: wc2026-web, tag: 41f5d8b60ec70161da634fa6220195d92045d7d8}
 api:
   replicas: 1
   env:
     TABLE_NAME: wc2026-dev
     ALLOWED_ORIGIN: https://dev.wc-predictions-2026.com
+    ADMIN_PLAYER_ID: 9d528d5e-375f-44af-b96f-e59afc9a1faa
 serviceAccount:
   roleArn: "" # k3s on EC2 uses the node instance role for DynamoDB — no IRSA
 secret:

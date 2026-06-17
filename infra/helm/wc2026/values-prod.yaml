@@ -2,13 +2,14 @@ environment: prod
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: {repository: wc2026-api, tag: 41f5d8b60ec70161da634fa6220195d92045d7d8} # optionally pin a built SHA at promotion time
-  web: {repository: wc2026-web, tag: 41f5d8b60ec70161da634fa6220195d92045d7d8}
+  api: {repository: wc2026-api, tag: 08a8ab9a34feb47e533883d47305192097246f79} # optionally pin a built SHA at promotion time
+  web: {repository: wc2026-web, tag: 08a8ab9a34feb47e533883d47305192097246f79}
 api:
   replicas: 1 # single small node — keep modest; bump with a larger instance
   env:
     TABLE_NAME: wc2026-prod
     ALLOWED_ORIGIN: https://wc-predictions-2026.com
+    ADMIN_PLAYER_ID: 0cfd530d-b667-4913-82e1-db9877ec32dd
 serviceAccount:
   roleArn: ""
 secret:
