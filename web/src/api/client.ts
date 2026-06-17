@@ -105,9 +105,10 @@ export interface MatchStats {
   broadcasts: string[];
   lineups: { home: TeamLineup | null; away: TeamLineup | null };
 }
-/** Runtime feature flags. `adsEnabled` controls the bottom-right pop-up. */
+/** Runtime feature flags. `adsEnabled` controls the bottom-right pop-up; `assistantEnabled` the AI assistant. */
 export interface AppFlags {
   adsEnabled: boolean;
+  assistantEnabled: boolean;
 }
 export interface AssistantTurn {
   role: 'user' | 'assistant';
@@ -197,6 +198,7 @@ export const api = {
   assistant: (message: string, history: AssistantTurn[]) =>
     req<{ reply: string }>('/assistant', { method: 'POST', body: { message, history } }),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
+  setAssistantEnabled: (assistantEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { assistantEnabled } }),
   submitFeedback: (message: string, page?: string) =>
     req<{ ok: true }>('/feedback', { method: 'POST', body: { message, page } }),
   feedbackAdminMe: () => req<{ isAdmin: boolean }>('/feedback/admin/me'),

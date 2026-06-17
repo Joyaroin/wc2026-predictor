@@ -11,6 +11,7 @@ api:
   env:
     TABLE_NAME: wc2026-prod
     ALLOWED_ORIGIN: https://wc-predictions-2026.com
+    ADMIN_PLAYER_ID: 0cfd530d-b667-4913-82e1-db9877ec32dd
 
 serviceAccount:
   roleArn: ""

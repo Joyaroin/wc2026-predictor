@@ -28,6 +28,7 @@ export const testConfig: Config = {
   persistence: 'memory',
   adminToken: 'test-admin-token',
   adminPlayer: 'adham',
+  adminPlayerId: '',
   vapid: null,
   anthropicApiKey: '',
   assistantModel: 'claude-haiku-4-5',

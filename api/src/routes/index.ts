@@ -39,7 +39,9 @@ const jokerSchema = z.object({ joker: z.boolean() });
 const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
 const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
 const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
-const flagsSchema = z.object({ adsEnabled: z.boolean() });
+const flagsSchema = z
+  .object({ adsEnabled: z.boolean().optional(), assistantEnabled: z.boolean().optional() })
+  .refine((v) => v.adsEnabled !== undefined || v.assistantEnabled !== undefined, 'No flag provided');
 const avatarColorSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid colour').nullable() });
 const pushSubSchema = z.object({
   endpoint: z.string().url().max(1000),
@@ -125,9 +127,13 @@ export function buildRouter(services: Services, config: Config): Router {
   // Admin-only (X-Admin-Token header): set the official Player of the Tournament winner.
   r.post('/admin/player-of-tournament', validateBody(pottSchema), wrap((req) => services.pott.setWinner(req.header('x-admin-token'), req.body.winnerId, req.body.winnerName)));
 
-  // --- In-app AI assistant ---
-  r.get('/assistant/status', auth, wrap(async () => ({ enabled: services.assistant.enabled() })));
-  r.post('/assistant', auth, assistantLimiter, validateBody(assistantSchema), wrap((req) => services.assistant.ask(caller(req), req.body.message, req.body.history ?? [])));
+  // --- In-app AI assistant (enabled = API key present AND admin flag on) ---
+  const assistantOn = async (): Promise<boolean> => services.assistant.enabled() && (await services.flags.get()).assistantEnabled;
+  r.get('/assistant/status', auth, wrap(async () => ({ enabled: await assistantOn() })));
+  r.post('/assistant', auth, assistantLimiter, validateBody(assistantSchema), wrap(async (req) => {
+    if (!(await assistantOn())) throw new ForbiddenError('The assistant is currently turned off.');
+    return services.assistant.ask(caller(req), req.body.message, req.body.history ?? []);
+  }));
 
   // --- Feedback / bug reports ---
   r.post('/feedback', auth, validateBody(feedbackSchema), wrapVoid((req) => services.feedback.submit(caller(req), req.body.message, req.body.page)));

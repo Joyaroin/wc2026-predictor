@@ -545,7 +545,11 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
     async getFlags() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'FLAGS' } }));
-      return { ...DEFAULT_FLAGS, ...(r.Item ? { adsEnabled: r.Item.adsEnabled as boolean } : {}) };
+      return {
+        ...DEFAULT_FLAGS,
+        ...(typeof r.Item?.adsEnabled === 'boolean' ? { adsEnabled: r.Item.adsEnabled } : {}),
+        ...(typeof r.Item?.assistantEnabled === 'boolean' ? { assistantEnabled: r.Item.assistantEnabled } : {}),
+      };
     },
     async setFlags(patch) {
       const current = await this.getFlags();

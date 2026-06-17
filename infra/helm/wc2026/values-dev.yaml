@@ -10,6 +10,7 @@ api:
   env:
     TABLE_NAME: wc2026-dev
     ALLOWED_ORIGIN: https://dev.wc-predictions-2026.com
+    ADMIN_PLAYER_ID: 9d528d5e-375f-44af-b96f-e59afc9a1faa
 serviceAccount:
   roleArn: "" # k3s on EC2 uses the node instance role for DynamoDB — no IRSA
 secret:

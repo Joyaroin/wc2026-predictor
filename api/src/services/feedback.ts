@@ -23,8 +23,12 @@ export function createFeedbackService(
   clock: Clock,
   adminToken: string,
   adminPlayer: string,
+  adminPlayerId = '',
 ): FeedbackService {
   async function isAdmin(callerId: string): Promise<boolean> {
+    // When an explicit admin id is configured, only that exact account is admin —
+    // a separate account that happens to share the name "adham" does not qualify.
+    if (adminPlayerId) return callerId === adminPlayerId;
     if (!adminPlayer) return false;
     const player = await players.getById(callerId);
     return !!player && player.name.trim().toLowerCase() === adminPlayer;

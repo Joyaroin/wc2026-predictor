@@ -94,8 +94,10 @@ export interface TopScorer {
 /** Runtime, admin-toggleable feature flags. */
 export interface AppFlags {
   adsEnabled: boolean;
+  /** Master switch for the in-app AI assistant (Rabbi Tarek). Still requires an API key to actually run. */
+  assistantEnabled: boolean;
 }
-export const DEFAULT_FLAGS: AppFlags = { adsEnabled: true };
+export const DEFAULT_FLAGS: AppFlags = { adsEnabled: true, assistantEnabled: true };
 
 export interface StatsRepo {
   getLeader(): Promise<TopScorer | null>;

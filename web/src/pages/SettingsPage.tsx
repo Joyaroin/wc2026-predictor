@@ -94,6 +94,10 @@ export function SettingsPage() {
     mutationFn: (on: boolean) => api.setAdsEnabled(on),
     onSuccess: (f) => { qc.setQueryData(['flags'], f); flash('Saved ✓'); },
   });
+  const toggleAssistant = useMutation({
+    mutationFn: (on: boolean) => api.setAssistantEnabled(on),
+    onSuccess: (f) => { qc.setQueryData(['flags'], f); qc.invalidateQueries({ queryKey: ['assistant-status'] }); flash('Saved ✓'); },
+  });
 
   return (
     <div className="settings">
@@ -236,6 +240,24 @@ export function SettingsPage() {
                 <span className="switch-knob" />
               </button>
               <span className="fine">{flags.data?.adsEnabled ? 'On' : 'Off'}</span>
+            </div>
+          </div>
+          <div className="card">
+            <h4>Rabbi Tarek assistant</h4>
+            <p className="muted fine">Turn the in-app AI assistant on or off for everyone — takes effect immediately.</p>
+            <div className="toggle-row">
+              <button
+                type="button"
+                className={`switch ${flags.data?.assistantEnabled ? 'on' : ''}`}
+                role="switch"
+                aria-checked={!!flags.data?.assistantEnabled}
+                disabled={flags.isLoading || toggleAssistant.isPending}
+                onClick={() => toggleAssistant.mutate(!flags.data?.assistantEnabled)}
+                data-testid="toggle-assistant"
+              >
+                <span className="switch-knob" />
+              </button>
+              <span className="fine">{flags.data?.assistantEnabled ? 'On' : 'Off'}</span>
             </div>
           </div>
         </>

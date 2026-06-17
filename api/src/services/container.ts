@@ -78,7 +78,7 @@ export function createServices({ repos, config, clock, logger, footballApi }: Se
     darkHorse: createDarkHorseService(repos.darkHorse, matches, clock),
     tournamentWinner: createTournamentWinnerService(repos.tournamentWinner, matches, clock),
     pott: createPottService(repos.pott, repos.stats, matches, clock, config.adminToken),
-    feedback: createFeedbackService(repos.feedback, repos.players, clock, config.adminToken, config.adminPlayer),
+    feedback: createFeedbackService(repos.feedback, repos.players, clock, config.adminToken, config.adminPlayer, config.adminPlayerId),
     espnFacts: createEspnFactsService(espn, repos.matches, scoring, clock, logger),
     matchStats: createMatchStatsService(espn, repos.matches, clock, logger),
     suggestions: createSuggestionsService(espn, repos.matches, clock, logger),

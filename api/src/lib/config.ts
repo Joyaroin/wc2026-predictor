@@ -13,6 +13,8 @@ export interface Config {
   adminToken: string;
   /** Player name (lower-cased) treated as the owner/admin — sees the feedback inbox when logged in. */
   adminPlayer: string;
+  /** Exact player id of the admin account. When set, admin is locked to this id (not just the name). */
+  adminPlayerId: string;
   /** Web Push (VAPID) keys. Null when not configured — push notifications are then disabled. */
   vapid: { publicKey: string; privateKey: string; subject: string } | null;
   /** Anthropic API key for the in-app assistant. Empty = assistant disabled (graceful no-op). */
@@ -47,6 +49,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     persistence,
     adminToken: (env.ADMIN_TOKEN ?? '').trim(),
     adminPlayer: (env.ADMIN_PLAYER ?? 'adham').trim().toLowerCase(),
+    adminPlayerId: (env.ADMIN_PLAYER_ID ?? '').trim(),
     vapid:
       env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
         ? {
