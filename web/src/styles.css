@@ -1092,27 +1092,66 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .ms-lineups.bench-only { margin-top: 2px; }
 
 /* In-app AI assistant — bottom-left chat */
+.asst-avatar { border-radius: 50%; object-fit: cover; flex: none; display: block; }
+.asst-avatar.fallback { background: var(--accent); color: var(--accent-contrast); display: flex; align-items: center; justify-content: center; }
+
 .asst-fab {
   position: fixed; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 45;
-  width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 1.5rem; line-height: 1;
-  background: var(--accent); color: var(--accent-contrast); border: none;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: 50%; padding: 0; border: 2px solid var(--accent);
+  background: var(--card); overflow: visible; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+.asst-fab:hover { transform: scale(1.08); box-shadow: 0 8px 26px rgba(0,0,0,0.55); }
+.asst-fab:active { transform: scale(0.96); }
+.asst-fab .asst-avatar { width: 52px; height: 52px; }
+.asst-fab-ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none; }
+
 .asst-panel {
   position: fixed; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 46;
   width: min(360px, calc(100vw - 32px)); height: min(520px, calc(100dvh - 96px));
   display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line);
-  border-radius: 16px; overflow: hidden; box-shadow: 0 16px 50px rgba(0,0,0,0.55);
+  border-radius: 16px; overflow: hidden; box-shadow: 0 16px 50px rgba(0,0,0,0.6);
+  transform-origin: bottom left;
 }
-.asst-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.asst-head { display: flex; align-items: center; gap: 9px; padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .asst-title { font-weight: 800; }
-.asst-close { background: transparent; border: none; color: var(--muted); font-size: 1rem; padding: 4px 8px; }
-.asst-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.asst-msg { max-width: 85%; padding: 8px 12px; border-radius: 14px; font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
-.asst-msg.bot { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-.asst-msg.me { align-self: flex-end; background: var(--input-filled); border: 1px solid var(--input-filled-border); color: var(--input-filled-ink); border-bottom-right-radius: 4px; }
+.asst-status { font-size: 0.72rem; color: var(--accent); display: inline-flex; align-items: center; gap: 4px; }
+.asst-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.asst-close { margin-left: auto; background: transparent; border: none; color: var(--muted); font-size: 1rem; padding: 4px 8px; transition: color 0.15s ease; }
+.asst-close:hover { color: var(--ink); }
+.asst-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+.asst-row { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; }
+.asst-row-av { flex: none; }
+.asst-msg { padding: 8px 12px; border-radius: 14px; font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+.asst-row .asst-msg { max-width: 100%; }
+.asst-msg.bot { background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.asst-msg.me { align-self: flex-end; max-width: 85%; background: var(--input-filled); border: 1px solid var(--input-filled-border); color: var(--input-filled-ink); border-bottom-right-radius: 4px; }
 .asst-msg.err { align-self: center; background: transparent; color: var(--danger); font-size: 0.85rem; }
-.asst-typing { color: var(--muted); letter-spacing: 2px; }
+
+.asst-dots { display: inline-flex; gap: 4px; padding: 2px 0; }
+.asst-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+
 .asst-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--card); }
 .asst-input input { flex: 1; min-width: 0; }
-.asst-input button { flex: none; }
+.asst-send { flex: none; width: 40px; padding: 0; font-size: 1rem; transition: transform 0.12s ease; }
+.asst-send:not(:disabled):hover { transform: scale(1.1); }
+.asst-send:not(:disabled):active { transform: scale(0.9); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .asst-fab { animation: asst-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both, asst-bob 3.2s ease-in-out 0.4s infinite; }
+  .asst-fab:hover { animation-play-state: paused, paused; }
+  .asst-fab-ring { animation: asst-ring 2.6s ease-out infinite; }
+  .asst-panel { animation: asst-panel-in 0.28s cubic-bezier(0.34,1.4,0.64,1) both; }
+  .asst-row, .asst-msg.me { animation: asst-msg-in 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+  .asst-dots i { animation: asst-bounce 1.1s ease-in-out infinite; }
+  .asst-dots i:nth-child(2) { animation-delay: 0.15s; }
+  .asst-dots i:nth-child(3) { animation-delay: 0.3s; }
+}
+@keyframes asst-pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes asst-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+@keyframes asst-ring { 0% { opacity: 0.55; transform: scale(1); } 80%, 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes asst-panel-in { from { opacity: 0; transform: translateY(14px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes asst-msg-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes asst-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-5px); opacity: 1; } }
