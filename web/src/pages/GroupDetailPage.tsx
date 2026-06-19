@@ -43,6 +43,7 @@ export function GroupDetailPage() {
   });
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [view, setView] = useState<'board' | 'chat'>('board');
   const isCreator = group.data?.createdBy === player?.playerId;
 
   const afterRemoval = () => {
@@ -94,27 +95,35 @@ export function GroupDetailPage() {
 
       {group.data && <ShareInvite code={group.data.inviteCode} groupName={group.data.name} />}
 
-      <div className="lb-scope" role="group" aria-label="Leaderboard scope">
-        <button className={scope === 'overall' ? 'on' : ''} onClick={() => setScope('overall')} data-testid="scope-overall">Overall</button>
-        <button className={scope === 'week' ? 'on' : ''} onClick={() => setScope('week')} data-testid="scope-week">This matchday</button>
+      <div className="ms-tabs" role="tablist">
+        <button type="button" className={view === 'board' ? 'on' : ''} onClick={() => setView('board')} data-testid="group-tab-board">Leaderboard</button>
+        <button type="button" className={view === 'chat' ? 'on' : ''} onClick={() => setView('chat')} data-testid="group-tab-chat">💬 Chat</button>
       </div>
 
-      {leaderboard.isLoading && <p>Loading…</p>}
-      {rows.length === 0 && !leaderboard.isLoading && <p className="muted">No scores yet.</p>}
-      {rows.length > 0 && (
+      {view === 'board' ? (
         <>
-          <Podium rows={rows} meId={player?.playerId ?? ''} />
-          <LeaderboardTable
-            rows={rows}
-            meId={player?.playerId ?? ''}
-            onRowClick={(row) => navigate(`/players/${row.playerId}`, { state: { name: row.name, color: row.avatarColor } })}
-          />
-          <p className="muted fine gd-hint">Tap a player to see their picks.</p>
-        </>
-      )}
+          <div className="lb-scope" role="group" aria-label="Leaderboard scope">
+            <button className={scope === 'overall' ? 'on' : ''} onClick={() => setScope('overall')} data-testid="scope-overall">Overall</button>
+            <button className={scope === 'week' ? 'on' : ''} onClick={() => setScope('week')} data-testid="scope-week">This matchday</button>
+          </div>
 
-      <h3 className="section-head">💬 Group chat</h3>
-      <ChatPanel scope="group" groupId={id} />
+          {leaderboard.isLoading && <p>Loading…</p>}
+          {rows.length === 0 && !leaderboard.isLoading && <p className="muted">No scores yet.</p>}
+          {rows.length > 0 && (
+            <>
+              <Podium rows={rows} meId={player?.playerId ?? ''} />
+              <LeaderboardTable
+                rows={rows}
+                meId={player?.playerId ?? ''}
+                onRowClick={(row) => navigate(`/players/${row.playerId}`, { state: { name: row.name, color: row.avatarColor } })}
+              />
+              <p className="muted fine gd-hint">Tap a player to see their picks.</p>
+            </>
+          )}
+        </>
+      ) : (
+        <ChatPanel scope="group" groupId={id} />
+      )}
     </div>
   );
 }
