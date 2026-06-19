@@ -45,22 +45,33 @@ export function GroupsPage() {
 
   return (
     <div className="groups-page">
-      <Link to="/global" className="group-card global-card" data-testid="global-card">
-        <div className="gc-top">
-          <span className="gc-name">🌍 Global leaderboard</span>
-          <span className="gc-members muted fine">{global.data ? `${global.data.total} players` : '…'}</span>
-        </div>
-        <div className="gc-stats">
-          {global.data?.me ? (
-            <span className="gc-rank"><span className="gc-medal">{medal(global.data.me.rank)}</span> {ordinal(global.data.me.rank)} · <strong>{global.data.me.points}</strong> pts</span>
-          ) : (
-            <span className="muted fine">Everyone playing, ranked</span>
-          )}
-          {global.data?.top?.[0] && global.data.top[0].playerId !== player?.playerId && (
-            <span className="gc-leader muted fine">👑 {global.data.top[0].name} · {global.data.top[0].points}</span>
-          )}
-        </div>
-      </Link>
+      <div className="gp-globals">
+        <Link to="/global" className="group-card global-card" data-testid="global-card">
+          <div className="gc-top">
+            <span className="gc-name">🌍 Global leaderboard</span>
+            <span className="gc-members muted fine">{global.data ? `${global.data.total} players` : '…'}</span>
+          </div>
+          <div className="gc-stats">
+            {global.data?.me ? (
+              <span className="gc-rank"><span className="gc-medal">{medal(global.data.me.rank)}</span> {ordinal(global.data.me.rank)} · <strong>{global.data.me.points}</strong> pts</span>
+            ) : (
+              <span className="muted fine">Everyone playing, ranked</span>
+            )}
+            {global.data?.top?.[0] && global.data.top[0].playerId !== player?.playerId && (
+              <span className="gc-leader muted fine">👑 {global.data.top[0].name} · {global.data.top[0].points}</span>
+            )}
+          </div>
+        </Link>
+
+        <Link to="/chat" className="group-card global-card" data-testid="global-chat-card">
+          <div className="gc-top">
+            <span className="gc-name">💬 Global chat</span>
+          </div>
+          <div className="gc-stats">
+            <span className="muted fine">Talk to everyone playing →</span>
+          </div>
+        </Link>
+      </div>
 
       <h2>Your groups</h2>
 

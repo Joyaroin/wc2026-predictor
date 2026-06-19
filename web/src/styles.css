@@ -1179,3 +1179,7 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--surface-2); }
 .chat-input input { flex: 1; min-width: 0; }
 .chat-input button { flex: none; }
+
+/* Groups tab: global leaderboard + global chat cards side by side */
+.gp-globals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 460px) { .gp-globals { grid-template-columns: 1fr; } }

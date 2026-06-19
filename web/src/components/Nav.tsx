@@ -19,7 +19,6 @@ export function Nav() {
         <NavLink viewTransition to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
         <NavLink viewTransition to="/standings" data-testid="nav-standings">Standings</NavLink>
         <NavLink viewTransition to="/groups" data-testid="nav-groups">Groups</NavLink>
-        <NavLink viewTransition to="/chat" data-testid="nav-chat">Chat</NavLink>
       </div>
 
       <div className="nav-user">
