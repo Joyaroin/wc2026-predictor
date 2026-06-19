@@ -9,6 +9,8 @@ export const DEFAULT_THEME = 'default';
 export const THEMES: { id: string; label: string; flag?: string }[] = [
   { id: 'default', label: 'Default (dark)' },
   { id: 'light', label: 'Light' },
+  { id: 'system', label: 'Follow system' },
+  { id: 'oled', label: 'OLED black' },
   { id: 'BRA', label: 'Brazil', flag: 'BRA' },
   { id: 'ARG', label: 'Argentina', flag: 'ARG' },
   { id: 'FRA', label: 'France', flag: 'FRA' },
@@ -34,6 +36,28 @@ export const THEMES: { id: string; label: string; flag?: string }[] = [
   { id: 'AUS', label: 'Australia', flag: 'AUS' },
   { id: 'SWE', label: 'Sweden', flag: 'SWE' },
   { id: 'QAT', label: 'Qatar', flag: 'QAT' },
+  { id: 'NOR', label: 'Norway', flag: 'NOR' },
+  { id: 'SUI', label: 'Switzerland', flag: 'SUI' },
+  { id: 'KSA', label: 'Saudi Arabia', flag: 'KSA' },
+  { id: 'TUR', label: 'Turkey', flag: 'TUR' },
+  { id: 'SCO', label: 'Scotland', flag: 'SCO' },
+  { id: 'ECU', label: 'Ecuador', flag: 'ECU' },
+  { id: 'GHA', label: 'Ghana', flag: 'GHA' },
+  { id: 'CIV', label: 'Ivory Coast', flag: 'CIV' },
+  { id: 'ALG', label: 'Algeria', flag: 'ALG' },
+  { id: 'TUN', label: 'Tunisia', flag: 'TUN' },
+  { id: 'RSA', label: 'South Africa', flag: 'RSA' },
+  { id: 'AUT', label: 'Austria', flag: 'AUT' },
+  { id: 'PAR', label: 'Paraguay', flag: 'PAR' },
+  { id: 'JOR', label: 'Jordan', flag: 'JOR' },
+  { id: 'NZL', label: 'New Zealand', flag: 'NZL' },
+  { id: 'UZB', label: 'Uzbekistan', flag: 'UZB' },
+  { id: 'CZE', label: 'Czechia', flag: 'CZE' },
+  { id: 'COD', label: 'DR Congo', flag: 'COD' },
+  { id: 'CPV', label: 'Cape Verde', flag: 'CPV' },
+  { id: 'CUW', label: 'Curacao', flag: 'CUW' },
+  { id: 'BIH', label: 'Bosnia & Herz.', flag: 'BIH' },
+  { id: 'HAI', label: 'Haiti', flag: 'HAI' },
 ];
 
 function detectedZone(): string {
@@ -73,8 +97,23 @@ export function PrefsProvider({ children }: { children: ReactNode }): ReactNode 
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === DEFAULT_THEME) delete root.dataset.theme;
-    else root.dataset.theme = theme;
+    const apply = () => {
+      if (theme === 'system') {
+        // Follow the OS: light when the device prefers light, otherwise default dark.
+        if (window.matchMedia('(prefers-color-scheme: light)').matches) root.dataset.theme = 'light';
+        else delete root.dataset.theme;
+      } else if (theme === DEFAULT_THEME) {
+        delete root.dataset.theme;
+      } else {
+        root.dataset.theme = theme;
+      }
+    };
+    apply();
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: light)');
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
   }, [theme]);
 
   return <Ctx.Provider value={{ timeZone, tzPref, setTzPref, theme, setTheme }}>{children}</Ctx.Provider>;

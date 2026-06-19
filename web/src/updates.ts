@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-19.2',
+    date: 'June 19, 2026',
+    emoji: '🎨',
+    title: 'Loads more themes',
+    points: [
+      'Every remaining World Cup nation now has a theme — 22 new flags to rep your side',
+      'New OLED true-black theme (easy on phone batteries) and a Follow-system option that matches your device\'s light/dark',
+      'Pick yours in Account → Appearance',
+    ],
+  },
+  {
     id: '2026-06-19',
     date: 'June 19, 2026',
     emoji: '💬',
