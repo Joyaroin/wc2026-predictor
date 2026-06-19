@@ -19,6 +19,7 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { AdPopup } from './components/AdPopup';
 import { AssistantWidget } from './components/AssistantWidget';
 import { GlobalLeaderboardPage } from './pages/GlobalLeaderboardPage';
+import { ChatPage } from './pages/ChatPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><MyBreakdownPage /></RequireAuth>} />
           <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
+          <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
           <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
           <Route path="/updates" element={<RequireAuth><UpdatesPage /></RequireAuth>} />

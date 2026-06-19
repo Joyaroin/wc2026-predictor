@@ -13,6 +13,9 @@ export const keys = {
   memberSk: (playerId: string) => `MEMBER#${playerId}`,
   predSk: (matchId: string) => `PRED#${matchId}`,
   brkSk: (matchId: string) => `BRK#${matchId}`,
+  chatGlobalPk: () => 'CHAT#GLOBAL',
+  chatGroupPk: (groupId: string) => `CHAT#GROUP#${groupId}`,
+  msgSk: (id: string) => `MSG#${id}`,
 };
 
 // --- Player ---

@@ -59,6 +59,7 @@ export const globalLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardH
 export const loginLimiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: true, legacyHeaders: false });
 export const joinLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false });
 export const assistantLimiter = rateLimit({ windowMs: 60_000, limit: 12, standardHeaders: true, legacyHeaders: false });
+export const messagesLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: true, legacyHeaders: false });
 
 export function notFoundHandler(): RequestHandler {
   return (_req, res) => {

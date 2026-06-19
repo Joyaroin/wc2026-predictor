@@ -9,6 +9,17 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-19',
+    date: 'June 19, 2026',
+    emoji: '💬',
+    title: 'Chat is here',
+    points: [
+      'New Chat tab — a global feed to talk with everyone playing',
+      'Each group now has its own chat too, down on the group page',
+      'Messages refresh live every few seconds; keep it friendly — an admin can remove anything off',
+    ],
+  },
+  {
     id: '2026-06-16.2',
     date: 'June 16, 2026',
     emoji: '💬',

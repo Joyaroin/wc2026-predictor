@@ -6,6 +6,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { LeaderboardTable } from '../components/LeaderboardTable';
 import { Avatar, AvatarStack } from '../components/Avatar';
 import { ShareInvite } from '../components/ShareInvite';
+import { ChatPanel } from '../components/ChatPanel';
 import { medal } from '../lib/rank';
 
 function Podium({ rows, meId }: { rows: LeaderboardRow[]; meId: string }) {
@@ -111,6 +112,9 @@ export function GroupDetailPage() {
           <p className="muted fine gd-hint">Tap a player to see their picks.</p>
         </>
       )}
+
+      <h3 className="section-head">💬 Group chat</h3>
+      <ChatPanel scope="group" groupId={id} />
     </div>
   );
 }

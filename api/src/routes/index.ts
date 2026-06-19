@@ -16,6 +16,7 @@ import {
   loginLimiter,
   joinLimiter,
   assistantLimiter,
+  messagesLimiter,
 } from '../middleware/index';
 
 const wrapVoid =
@@ -57,6 +58,7 @@ const assistantSchema = z.object({
     .optional(),
   research: z.boolean().optional(),
 });
+const messageSchema = z.object({ text: z.string().min(1).max(500) });
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -134,6 +136,18 @@ export function buildRouter(services: Services, config: Config): Router {
   r.post('/assistant', auth, assistantLimiter, validateBody(assistantSchema), wrap(async (req) => {
     if (!(await assistantOn())) throw new ForbiddenError('The assistant is currently turned off.');
     return services.assistant.ask(caller(req), req.body.message, req.body.history ?? [], req.body.research === true);
+  }));
+
+  // --- Chat (global feed + per-group feed; polling reads, rate-limited writes) ---
+  r.get('/messages/global', auth, wrap(() => services.messages.listGlobal()));
+  r.post('/messages/global', auth, messagesLimiter, validateBody(messageSchema), wrap((req) => services.messages.postGlobal(caller(req), req.body.text)));
+  r.get('/groups/:id/messages', auth, wrap((req) => services.messages.listGroup(caller(req), param(req, 'id'))));
+  r.post('/groups/:id/messages', auth, messagesLimiter, validateBody(messageSchema), wrap((req) => services.messages.postGroup(caller(req), param(req, 'id'), req.body.text)));
+  // Admin-only delete. scope=global|group (+ groupId for group messages) via query.
+  r.delete('/messages/:id', auth, wrapVoid((req) => {
+    const scope = req.query.scope === 'group' ? 'group' : 'global';
+    const groupId = typeof req.query.groupId === 'string' ? req.query.groupId : null;
+    return services.messages.remove(caller(req), scope, groupId, param(req, 'id'));
   }));
 
   // --- Feedback / bug reports ---

@@ -19,6 +19,8 @@ import type {
   PottPick,
   FeedbackRepo,
   FeedbackItem,
+  MessageRepo,
+  ChatMessage,
   StatsRepo,
   TopScorer,
   Winner,
@@ -306,6 +308,23 @@ export function createMemoryRepositories(): Repositories {
     },
   };
 
+  const chatMsgs: ChatMessage[] = [];
+  const messageRepo: MessageRepo = {
+    async add(m) {
+      chatMsgs.push({ ...m });
+    },
+    async listGlobal(limit) {
+      return chatMsgs.filter((m) => m.scope === 'global').slice(-limit).map((m) => ({ ...m }));
+    },
+    async listGroup(groupId, limit) {
+      return chatMsgs.filter((m) => m.scope === 'group' && m.groupId === groupId).slice(-limit).map((m) => ({ ...m }));
+    },
+    async remove(scope, groupId, id) {
+      const i = chatMsgs.findIndex((m) => m.id === id && m.scope === scope && (m.groupId ?? null) === (groupId ?? null));
+      if (i >= 0) chatMsgs.splice(i, 1);
+    },
+  };
+
   return {
     players: playerRepo,
     groups: groupRepo,
@@ -318,6 +337,7 @@ export function createMemoryRepositories(): Repositories {
     tournamentWinner: tournamentWinnerRepo,
     pott: pottRepo,
     feedback: feedbackRepo,
+    messages: messageRepo,
     stats: statsRepo,
     push: pushRepo,
     reminders: reminderRepo,

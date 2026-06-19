@@ -29,6 +29,8 @@ import type {
   PottRepo,
   PottPick,
   FeedbackRepo,
+  MessageRepo,
+  ChatMessage,
   StatsRepo,
   PushRepo,
   ReminderRepo,
@@ -520,6 +522,43 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  const msgFromItem = (i: Item): ChatMessage => ({
+    id: i.id as string,
+    scope: i.scope as 'global' | 'group',
+    groupId: (i.groupId ?? null) as string | null,
+    playerId: i.playerId as string,
+    playerName: i.playerName as string,
+    avatarColor: (i.avatarColor ?? null) as string | null,
+    text: i.text as string,
+    createdAt: i.createdAt as string,
+  });
+  const chatPk = (scope: 'global' | 'group', groupId: string | null): string =>
+    scope === 'global' ? keys.chatGlobalPk() : keys.chatGroupPk(groupId ?? '');
+  const queryRecentMessages = async (pk: string, limit: number): Promise<ChatMessage[]> => {
+    const r = await doc.send(
+      new QueryCommand({
+        TableName: Table,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :m)',
+        ExpressionAttributeValues: { ':pk': pk, ':m': 'MSG#' },
+        ScanIndexForward: false, // newest first
+        Limit: limit,
+      }),
+    );
+    return (r.Items ?? []).map((i) => msgFromItem(i as Item)).reverse(); // oldest→newest for display
+  };
+  const messages: MessageRepo = {
+    async add(m) {
+      await doc.send(
+        new PutCommand({ TableName: Table, Item: { PK: chatPk(m.scope, m.groupId), SK: keys.msgSk(m.id), ...m } }),
+      );
+    },
+    listGlobal: (limit) => queryRecentMessages(keys.chatGlobalPk(), limit),
+    listGroup: (groupId, limit) => queryRecentMessages(keys.chatGroupPk(groupId), limit),
+    async remove(scope, groupId, id) {
+      await doc.send(new DeleteCommand({ TableName: Table, Key: { PK: chatPk(scope, groupId), SK: keys.msgSk(id) } }));
+    },
+  };
+
   const stats: StatsRepo = {
     async getLeader() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
@@ -601,5 +640,5 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
-  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, stats, push, reminders };
+  return { players, groups, memberships, matches, predictions, bracket, goldenBoot, darkHorse, tournamentWinner, pott, feedback, messages, stats, push, reminders };
 }

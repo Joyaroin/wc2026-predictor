@@ -181,6 +181,25 @@ export interface FeedbackRepo {
   listAll(): Promise<FeedbackItem[]>;
 }
 
+/** A chat message in the global feed or a group feed. `id` is `<createdAtMillis>_<rand>` so SK sorts by time. */
+export interface ChatMessage {
+  id: string;
+  scope: 'global' | 'group';
+  groupId: string | null;
+  playerId: string;
+  playerName: string;
+  avatarColor: string | null;
+  text: string;
+  createdAt: string;
+}
+export interface MessageRepo {
+  add(m: ChatMessage): Promise<void>;
+  /** Most recent `limit` messages, returned oldest→newest. */
+  listGlobal(limit: number): Promise<ChatMessage[]>;
+  listGroup(groupId: string, limit: number): Promise<ChatMessage[]>;
+  remove(scope: 'global' | 'group', groupId: string | null, id: string): Promise<void>;
+}
+
 export interface Repositories {
   players: PlayerRepo;
   groups: GroupRepo;
@@ -193,6 +212,7 @@ export interface Repositories {
   tournamentWinner: TournamentWinnerRepo;
   pott: PottRepo;
   feedback: FeedbackRepo;
+  messages: MessageRepo;
   stats: StatsRepo;
   push: PushRepo;
   reminders: ReminderRepo;

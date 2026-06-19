@@ -1159,3 +1159,23 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 @keyframes asst-panel-in { from { opacity: 0; transform: translateY(14px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes asst-msg-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes asst-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-5px); opacity: 1; } }
+
+/* Chat — global feed + group feed (polling) */
+.chat-page { max-width: 720px; margin: 0 auto; }
+.chat { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; margin-top: 10px; }
+.chat-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; height: min(58vh, 460px); overflow-y: auto; }
+.chat-empty { text-align: center; margin: auto; }
+.chat-row { display: flex; align-items: flex-end; gap: 8px; max-width: 88%; }
+.chat-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+.chat-bubble { display: flex; flex-direction: column; gap: 1px; padding: 7px 11px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 4px; min-width: 0; }
+.chat-row.mine .chat-bubble { background: var(--input-filled); border-color: var(--input-filled-border); color: var(--input-filled-ink); border-bottom-left-radius: 14px; border-bottom-right-radius: 4px; }
+.chat-name { font-size: 0.72rem; font-weight: 800; color: var(--accent); }
+.chat-text { font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.chat-time { font-size: 0.62rem; color: var(--muted); align-self: flex-end; margin-top: 1px; }
+.chat-row.mine .chat-time { color: color-mix(in srgb, var(--input-filled-ink) 60%, transparent); }
+.chat-del { flex: none; align-self: center; background: transparent; border: none; color: var(--muted); font-size: 0.75rem; padding: 2px 5px; opacity: 0.5; }
+.chat-del:hover { opacity: 1; color: var(--danger); }
+.chat-err { color: var(--danger); padding: 0 12px 6px; }
+.chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.chat-input input { flex: 1; min-width: 0; }
+.chat-input button { flex: none; }

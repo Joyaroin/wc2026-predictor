@@ -114,6 +114,14 @@ export interface AssistantTurn {
   role: 'user' | 'assistant';
   content: string;
 }
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  avatarColor?: string | null;
+  text: string;
+  createdAt: string;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -197,6 +205,12 @@ export const api = {
   assistantStatus: () => req<{ enabled: boolean }>('/assistant/status'),
   assistant: (message: string, history: AssistantTurn[], research = false) =>
     req<{ reply: string }>('/assistant', { method: 'POST', body: { message, history, research } }),
+  globalMessages: () => req<ChatMessage[]>('/messages/global'),
+  postGlobalMessage: (text: string) => req<ChatMessage>('/messages/global', { method: 'POST', body: { text } }),
+  groupMessages: (groupId: string) => req<ChatMessage[]>(`/groups/${groupId}/messages`),
+  postGroupMessage: (groupId: string, text: string) => req<ChatMessage>(`/groups/${groupId}/messages`, { method: 'POST', body: { text } }),
+  deleteMessage: (id: string, scope: 'global' | 'group', groupId?: string) =>
+    req<{ ok: true }>(`/messages/${id}?scope=${scope}${groupId ? `&groupId=${groupId}` : ''}`, { method: 'DELETE' }),
   setAdsEnabled: (adsEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { adsEnabled } }),
   setAssistantEnabled: (assistantEnabled: boolean) => req<AppFlags>('/admin/flags', { method: 'POST', body: { assistantEnabled } }),
   submitFeedback: (message: string, page?: string) =>
