@@ -26,7 +26,7 @@ export function FeedbackPage() {
 
   return (
     <div className="feedback">
-      <h2>🐞 Feedback</h2>
+      <h2>Feedback</h2>
       <p className="muted fine">Found a bug or have an idea? Tell me and I'll fix it.</p>
 
       <div className="card">
@@ -74,7 +74,7 @@ export function FeedbackPage() {
 
       {adminMe.data?.isAdmin && (
         <div className="card">
-          <h3>📥 Inbox {inbox.data ? `(${inbox.data.length})` : ''}</h3>
+          <h3>Inbox {inbox.data ? `(${inbox.data.length})` : ''}</h3>
           {inbox.isLoading && <p className="muted">Loading…</p>}
           {inbox.data && inbox.data.length === 0 && <p className="muted">No feedback yet.</p>}
           <ul className="feedback-list">

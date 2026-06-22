@@ -18,7 +18,6 @@ export function LeaderboardTable({
           type="button"
           key={r.playerId}
           className={`lb-row${r.playerId === meId ? ' me' : ''}${onRowClick ? ' clickable' : ''}`}
-          style={{ animationDelay: `${Math.min(i, 12) * 35}ms` }}
           onClick={() => onRowClick?.(r)}
           data-testid={`lb-row-${r.playerId}`}
         >

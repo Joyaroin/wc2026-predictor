@@ -14,7 +14,7 @@ export function GlobalLeaderboardPage() {
 
   return (
     <div className="global-leaderboard">
-      <h2>🌍 Global leaderboard</h2>
+      <h2>Global leaderboard</h2>
       {q.isLoading && <p>Loading…</p>}
       {q.data && (
         <>
