@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { usePlayer } from '../context/PlayerContext';
+import { api } from '../api/client';
 import { hasUnseenUpdates } from '../updates';
+import { hasUnreadGlobalChat } from '../lib/chatUnread';
 
 export function Nav() {
   const { player, logout } = usePlayer();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unseen, setUnseen] = useState(hasUnseenUpdates());
+
+  // Global chat lives under the Groups tab — surface unread messages with a dot there.
+  const globalChat = useQuery({ queryKey: ['messages', 'global', 'global'], queryFn: api.globalMessages, refetchInterval: 20_000, staleTime: 15_000 });
+  const chatUnread = hasUnreadGlobalChat(globalChat.data, player?.playerId);
 
   return (
     <nav className="nav">
@@ -18,7 +25,7 @@ export function Nav() {
       <div className="nav-links">
         <NavLink viewTransition to="/fixtures" data-testid="nav-fixtures">Fixtures</NavLink>
         <NavLink viewTransition to="/standings" data-testid="nav-standings">Standings</NavLink>
-        <NavLink viewTransition to="/groups" data-testid="nav-groups">Groups</NavLink>
+        <NavLink viewTransition to="/groups" data-testid="nav-groups">Groups{chatUnread && <span className="menu-dot inline" data-testid="nav-chat-unread" aria-label="unread chat messages" />}</NavLink>
       </div>
 
       <div className="nav-user">

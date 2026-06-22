@@ -560,7 +560,7 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   --on-bg: #2c2a14; --success-bg: #1f2912;
 }
 /* Uruguay — la celeste (light) */
-[data-theme="URY"] {
+[data-theme="URU"] {
   --bg: #eef6fb; --card: #ffffff; --surface-2: #dfeef8;
   --ink: #16293a; --muted: #577690;
   --accent: #4f9fd0; --accent-contrast: #06283d;
@@ -780,16 +780,17 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 
 .ms-panel { margin-top: 10px; animation: fadeIn 0.2s ease; }
 .ms-state { text-align: center; padding: 14px 8px; }
-.ms-meta { text-align: center; margin-bottom: 10px; }
+.ms-meta { text-align: center; margin-bottom: 12px; letter-spacing: 0.02em; }
 
-.ms-stats { display: flex; flex-direction: column; gap: 9px; }
-.ms-stat-row { display: flex; flex-direction: column; gap: 4px; }
-.ms-stat-vals { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.84rem; }
-.ms-stat-vals .ms-stat-label { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
-.ms-stat-vals .strong { font-weight: 800; color: var(--ink); }
-.ms-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.ms-stats { display: flex; flex-direction: column; gap: 14px; }
+.ms-stat-row { display: flex; flex-direction: column; gap: 6px; }
+.ms-stat-vals { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.ms-stat-vals .ms-stat-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); opacity: 0.7; }
+.ms-stat-vals .strong { font-weight: 700; color: var(--ink); }
+.ms-bar { display: flex; height: 4px; border-radius: 999px; overflow: hidden; background: var(--surface-2); gap: 2px; }
+.ms-bar-home, .ms-bar-away { border-radius: 999px; }
 .ms-bar-home { background: var(--accent); }
-.ms-bar-away { background: var(--muted); opacity: 0.55; }
+.ms-bar-away { background: var(--line-strong); }
 
 /* ===== Groups experience ===== */
 /* Avatars */
@@ -1029,14 +1030,15 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .mc-detchev.up { transform: rotate(180deg); }
 
 /* Match timeline (goals / cards / subs) */
-.ms-timeline { display: flex; flex-direction: column; gap: 3px; max-height: 280px; overflow-y: auto; margin-bottom: 4px; }
-.ms-ev { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; font-size: 0.82rem; padding: 1px 0; }
-.ms-ev-home { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-width: 0; }
-.ms-ev-away { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; }
+.ms-timeline { display: flex; flex-direction: column; gap: 1px; max-height: 280px; overflow-y: auto; margin-bottom: 8px; }
+.ms-ev { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; font-size: 0.84rem; padding: 5px 0; }
+.ms-ev + .ms-ev { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.ms-ev-home { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.ms-ev-away { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; }
 .ms-ev-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ms-ev-clock { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
-.ms-ev-icon { flex: none; font-size: 0.8rem; }
-.ms-watch { text-align: center; margin-top: 8px; }
+.ms-ev-clock { font-weight: 700; font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; text-align: center; opacity: 0.85; }
+.ms-ev-icon { flex: none; font-size: 0.82rem; line-height: 1; }
+.ms-watch { text-align: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
 
 /* Whole live/finished card is tappable to expand full details */
 .match-card.expandable { cursor: pointer; }
@@ -1052,8 +1054,9 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 .match-modal .ms-state { padding: 24px 8px; }
 
 /* Match-details tabs */
-.ms-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; margin: 4px auto 12px; }
-.ms-tabs button { background: transparent; color: var(--muted); border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.84rem; }
+.ms-tabs { display: flex; width: fit-content; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; margin: 4px auto 16px; }
+.ms-tabs button { background: transparent; color: var(--muted); border: none; border-radius: 999px; padding: 6px 16px; font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: color 0.15s ease, background 0.15s ease; }
+.ms-tabs button:hover { color: var(--ink); }
 .ms-tabs button.on { background: var(--accent); color: var(--accent-contrast); }
 
 /* Lineups */

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, type ChatMessage } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { Avatar } from './Avatar';
+import { markGlobalChatSeen } from '../lib/chatUnread';
 
 function timeLabel(iso: string): string {
   const d = new Date(iso);
@@ -28,6 +29,15 @@ export function ChatPanel({ scope, groupId }: { scope: 'global' | 'group'; group
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [msgs.data]);
+
+  // While the global chat is open, the newest message counts as seen — clears the unread tick.
+  useEffect(() => {
+    if (scope === 'global' && msgs.data && msgs.data.length > 0) {
+      const changed = markGlobalChatSeen(msgs.data[msgs.data.length - 1]!.id);
+      // Nudge other subscribers (nav + groups card) to drop their tick right away.
+      if (changed) void qc.invalidateQueries({ queryKey: key });
+    }
+  }, [scope, msgs.data]);
 
   const send = useMutation({
     mutationFn: (text: string) => (scope === 'global' ? api.postGlobalMessage(text) : api.postGroupMessage(groupId!, text)),

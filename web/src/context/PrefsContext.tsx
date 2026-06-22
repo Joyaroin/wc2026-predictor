@@ -28,7 +28,7 @@ export const THEMES: { id: string; label: string; flag?: string }[] = [
   { id: 'CRO', label: 'Croatia', flag: 'CRO' },
   { id: 'BEL', label: 'Belgium', flag: 'BEL' },
   { id: 'COL', label: 'Colombia', flag: 'COL' },
-  { id: 'URY', label: 'Uruguay', flag: 'URY' },
+  { id: 'URU', label: 'Uruguay', flag: 'URU' },
   { id: 'JPN', label: 'Japan', flag: 'JPN' },
   { id: 'KOR', label: 'South Korea', flag: 'KOR' },
   { id: 'MAR', label: 'Morocco', flag: 'MAR' },

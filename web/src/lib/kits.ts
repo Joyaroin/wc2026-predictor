@@ -7,7 +7,7 @@ const KIT: Record<string, string> = {
   IRQ: '#ffffff', JOR: '#ce1126', JPN: '#002d74', KOR: '#c8102e', KSA: '#006c35', MAR: '#c1272d',
   MEX: '#006847', NED: '#ff6200', NOR: '#ba0c2f', NZL: '#ffffff', PAN: '#d21034', PAR: '#d52b1e',
   POR: '#c8102e', QAT: '#8a1538', RSA: '#007749', SCO: '#0a3161', SEN: '#00853f', SUI: '#d52b1e',
-  SWE: '#ffcd00', TUN: '#e70013', TUR: '#e30a17', URY: '#5cb8e4', USA: '#ffffff', UZB: '#0099b5',
+  SWE: '#ffcd00', TUN: '#e70013', TUR: '#e30a17', URU: '#5cb8e4', USA: '#ffffff', UZB: '#0099b5',
 };
 
 /** Country/kit colour for a FIFA code, or a neutral light grey when unknown. */
