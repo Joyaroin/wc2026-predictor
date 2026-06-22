@@ -5,6 +5,7 @@ import { api, ApiError, type LeaderboardRow } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { AvatarStack } from '../components/Avatar';
 import { ordinal, medal } from '../lib/rank';
+import { hasUnreadGlobalChat } from '../lib/chatUnread';
 
 export function GroupsPage() {
   const qc = useQueryClient();
@@ -12,6 +13,9 @@ export function GroupsPage() {
   const groups = useQuery({ queryKey: ['groups'], queryFn: api.listGroups });
   const groupList = groups.data ?? [];
   const global = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard, staleTime: 30_000 });
+  // Shares ChatPanel's cache key so opening the chat (which marks messages seen) clears this tick.
+  const globalChat = useQuery({ queryKey: ['messages', 'global', 'global'], queryFn: api.globalMessages, refetchInterval: 15_000, staleTime: 10_000 });
+  const chatUnread = hasUnreadGlobalChat(globalChat.data, player?.playerId);
 
   // Per-group standings → show your rank + the leader on each card.
   const boards = useQueries({
@@ -65,10 +69,10 @@ export function GroupsPage() {
 
         <Link to="/chat" className="group-card global-card" data-testid="global-chat-card">
           <div className="gc-top">
-            <span className="gc-name">💬 Global chat</span>
+            <span className="gc-name">💬 Global chat{chatUnread && <span className="menu-dot inline" data-testid="global-chat-unread" aria-label="unread messages" />}</span>
           </div>
           <div className="gc-stats">
-            <span className="muted fine">Talk to everyone playing →</span>
+            <span className="muted fine">{chatUnread ? 'New messages — tap to read →' : 'Talk to everyone playing →'}</span>
           </div>
         </Link>
       </div>
