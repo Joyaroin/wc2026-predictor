@@ -5,7 +5,7 @@ import type { Stage } from './types';
 export const WIN_PROBABILITY: Record<string, number> = {
   FRA: 18.6, ESP: 17.4, ENG: 11.5, POR: 11.3, BRA: 9.3, ARG: 9.0, GER: 5.9, NED: 4.3,
   NOR: 2.9, JPN: 2.5, BEL: 2.3, MAR: 2.3, COL: 1.9, MEX: 1.8, USA: 1.6, TUR: 1.5,
-  SUI: 1.4, URY: 1.2, CRO: 1.1, ECU: 0.9, SEN: 0.8, SWE: 0.7, AUT: 0.6, CIV: 0.5,
+  SUI: 1.4, URU: 1.2, CRO: 1.1, ECU: 0.9, SEN: 0.8, SWE: 0.7, AUT: 0.6, CIV: 0.5,
   CAN: 0.5, KOR: 0.4, PAR: 0.4, SCO: 0.4, CZE: 0.4, EGY: 0.4, ALG: 0.4, BIH: 0.4,
   TUN: 0.4, GHA: 0.3, COD: 0.3, AUS: 0.3, NZL: 0.3, JOR: 0.3, CUW: 0.3, UZB: 0.3,
   PAN: 0.3, IRQ: 0.3, RSA: 0.3, CPV: 0.3, QAT: 0.3, KSA: 0.3, IRN: 0.369, HAI: 0.1,

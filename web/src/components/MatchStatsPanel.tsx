@@ -10,7 +10,7 @@ function num(v: string): number {
 }
 
 function evIcon(kind: MatchEvent['kind']): string {
-  return kind === 'goal' || kind === 'pen' ? '⚽' : kind === 'yellow' ? '🟨' : kind === 'red' ? '🟥' : '🔄';
+  return kind === 'goal' ? '⚽' : kind === 'pen' ? '🥅' : kind === 'yellow' ? '🟨' : kind === 'red' ? '🟥' : '🔄';
 }
 
 function LineupCol({ code, name, lineup }: { code: string | null; name: string; lineup: TeamLineup }) {
