@@ -96,7 +96,7 @@ export function GroupsPage() {
           const leader = board?.[0];
           const names = board?.map((r) => r.name) ?? [];
           return (
-            <Link to={`/groups/${g.id}`} className="group-card" key={g.id} style={{ animationDelay: `${(i + 1) * 60}ms` }} data-testid={`group-${g.id}`}>
+            <Link to={`/groups/${g.id}`} className="group-card" key={g.id} data-testid={`group-${g.id}`}>
               <div className="gc-top">
                 <span className="gc-name">{g.name}</span>
                 <span className="gc-members muted fine">{g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>

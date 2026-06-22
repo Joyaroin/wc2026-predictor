@@ -78,8 +78,8 @@ export function StandingsPage() {
         <span className="key-swatch adv" /> Top 2 &nbsp; <span className="key-swatch third" /> Best-8 third place
       </p>
       <div className="standings-grid">
-        {tables.map(({ group, rows }, ci) => (
-          <div className="card standing-card" key={group} data-testid={`standing-${group}`} style={{ animationDelay: `${ci * 70}ms` }}>
+        {tables.map(({ group, rows }) => (
+          <div className="card standing-card" key={group} data-testid={`standing-${group}`}>
             <h3 className="standing-title">Group {group}</h3>
             <table className="standing-table">
               <thead>
@@ -90,7 +90,6 @@ export function StandingsPage() {
                   <tr
                     key={r.code}
                     className={i < 2 ? 'adv' : i === 2 && qualifyingThirds.has(r.code) ? 'adv-third' : ''}
-                    style={{ animationDelay: `${ci * 70 + i * 55}ms` }}
                   >
                     <td className="t-team"><Flag code={r.code} name={r.name} /> <span title={r.name}>{r.code}</span></td>
                     <td>{r.p}</td><td>{r.w}</td><td>{r.d}</td><td>{r.l}</td>

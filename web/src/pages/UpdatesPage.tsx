@@ -9,11 +9,11 @@ export function UpdatesPage() {
 
   return (
     <div className="updates">
-      <h2>✨ What's new</h2>
+      <h2>What's new</h2>
       <p className="muted fine">Features and improvements as they ship.</p>
       <div className="timeline">
         {UPDATES.map((u, i) => (
-          <article className="timeline-entry" key={u.id} style={{ animationDelay: `${i * 110}ms` }}>
+          <article className="timeline-entry" key={u.id}>
             <div className="timeline-marker">
               <span className="timeline-dot" />
               {i < UPDATES.length - 1 && <span className="timeline-line" />}

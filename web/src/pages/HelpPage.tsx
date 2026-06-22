@@ -4,7 +4,7 @@ import { replayTour } from '../tour';
 export function HelpPage() {
   return (
     <div className="help">
-      <h2>❓ How to play</h2>
+      <h2>How to play</h2>
       <p className="muted fine">Everything you need to know about predictions, points, and awards.</p>
       <p><button className="odds-btn" onClick={() => replayTour()} data-testid="replay-tour">🎬 Replay the tour</button></p>
 
