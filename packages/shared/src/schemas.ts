@@ -42,19 +42,21 @@ export const matchStatusSchema = z.enum([
 
 export const outcomeSchema = z.enum(['HOME', 'DRAW', 'AWAY']);
 export const bracketSideSchema = z.enum(['HOME', 'AWAY']);
-export const bracketInputSchema = z.object({ side: bracketSideSchema });
+export const bracketInputSchema = z.object({ side: bracketSideSchema }).strict();
 
 // Per-prediction points: scoreline (max 12) + first team to score (+2) + first player to score (+6) = max 20.
 export const pointsSchema = z.number().int().min(0).max(20);
 
 /** Request body when a player submits/updates a prediction. */
-export const predictionInputSchema = z.object({
-  home: goalSchema,
-  away: goalSchema,
-  firstTeam: bracketSideSchema.nullable().optional(),
-  firstScorerId: z.string().max(40).nullable().optional(),
-  firstScorerName: z.string().max(80).nullable().optional(),
-});
+export const predictionInputSchema = z
+  .object({
+    home: goalSchema,
+    away: goalSchema,
+    firstTeam: bracketSideSchema.nullable().optional(),
+    firstScorerId: z.string().max(40).nullable().optional(),
+    firstScorerName: z.string().max(80).nullable().optional(),
+  })
+  .strict();
 
 /** Full persisted prediction shape (used for serialization round-trip — PBT-02). */
 export const predictionSchema = z.object({
@@ -104,7 +106,7 @@ export const bracketPickSchema = z.object({
   updatedAt: z.string(),
 });
 
-export const createGroupSchema = z.object({ name: groupNameSchema });
-export const joinGroupSchema = z.object({ inviteCode: inviteCodeSchema });
-export const createPlayerSchema = z.object({ name: playerNameSchema });
-export const renamePlayerSchema = z.object({ name: playerNameSchema });
+export const createGroupSchema = z.object({ name: groupNameSchema }).strict();
+export const joinGroupSchema = z.object({ inviteCode: inviteCodeSchema }).strict();
+export const createPlayerSchema = z.object({ name: playerNameSchema }).strict();
+export const renamePlayerSchema = z.object({ name: playerNameSchema }).strict();

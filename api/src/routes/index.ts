@@ -9,7 +9,7 @@ import {
 } from '@wc2026/shared';
 import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
-import { ForbiddenError } from '../lib/errors';
+import { ForbiddenError, ValidationError } from '../lib/errors';
 import {
   requireSession,
   validateBody,
@@ -30,26 +30,27 @@ const wrapVoid =
 const loginSchema = z.object({
   name: playerNameSchema,
   pin: z.string().regex(/^\d{4}$/, 'PIN must be 4 digits'),
-});
-const renameSchema = z.object({ name: playerNameSchema });
+}).strict();
+const renameSchema = z.object({ name: playerNameSchema }).strict();
 const pinSchema = z.string().regex(/^\d{4}$/, 'PIN must be 4 digits');
-const changePinSchema = z.object({ currentPin: pinSchema, newPin: pinSchema });
-const createGroupSchema = z.object({ name: groupNameSchema });
-const joinSchema = z.object({ inviteCode: inviteCodeSchema });
-const jokerSchema = z.object({ joker: z.boolean() });
-const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) });
-const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) });
-const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) });
+const changePinSchema = z.object({ currentPin: pinSchema, newPin: pinSchema }).strict();
+const createGroupSchema = z.object({ name: groupNameSchema }).strict();
+const joinSchema = z.object({ inviteCode: inviteCodeSchema }).strict();
+const jokerSchema = z.object({ joker: z.boolean() }).strict();
+const goldenBootSchema = z.object({ scorerId: z.string().min(1).max(40), scorerName: z.string().min(1).max(80) }).strict();
+const darkHorseSchema = z.object({ teamCode: z.string().min(2).max(4), teamName: z.string().min(1).max(60) }).strict();
+const pottSchema = z.object({ winnerId: z.string().min(1).max(40), winnerName: z.string().min(1).max(80) }).strict();
 const flagsSchema = z
   .object({ adsEnabled: z.boolean().optional(), assistantEnabled: z.boolean().optional() })
+  .strict()
   .refine((v) => v.adsEnabled !== undefined || v.assistantEnabled !== undefined, 'No flag provided');
-const avatarColorSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid colour').nullable() });
+const avatarColorSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid colour').nullable() }).strict();
 const pushSubSchema = z.object({
   endpoint: z.string().url().max(1000),
   keys: z.object({ p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100) }),
-});
-const pushUnsubSchema = z.object({ endpoint: z.string().url().max(1000) });
-const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() });
+}).strict();
+const pushUnsubSchema = z.object({ endpoint: z.string().url().max(1000) }).strict();
+const feedbackSchema = z.object({ message: z.string().min(1).max(2000), page: z.string().max(120).optional() }).strict();
 const assistantSchema = z.object({
   message: z.string().min(1).max(1000),
   history: z
@@ -57,8 +58,8 @@ const assistantSchema = z.object({
     .max(20)
     .optional(),
   research: z.boolean().optional(),
-});
-const messageSchema = z.object({ text: z.string().min(1).max(500) });
+}).strict();
+const messageSchema = z.object({ text: z.string().min(1).max(500) }).strict();
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -69,9 +70,14 @@ const wrap =
   };
 
 const caller = (req: Request): string => req.callerId as string;
+// Path identifiers flow into single-table DynamoDB keys (e.g. GROUP#<id>), where
+// '#' is the delimiter. Restrict to a safe charset so a param can't smuggle the
+// delimiter and cross entity types (defence-in-depth; key values are also parameterised).
+const SAFE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const param = (req: Request, key: string): string => {
   const v = req.params[key];
-  return typeof v === 'string' ? v : '';
+  if (typeof v !== 'string' || !SAFE_ID.test(v)) throw new ValidationError(`Invalid ${key}`);
+  return v;
 };
 
 export function buildRouter(services: Services, config: Config): Router {
