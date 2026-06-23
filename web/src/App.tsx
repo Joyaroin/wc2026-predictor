@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { usePlayer } from './context/PlayerContext';
 import { Nav } from './components/Nav';
+import { BottomNav } from './components/BottomNav';
 import { LandingPage } from './pages/LandingPage';
 import { GroupsPage } from './pages/GroupsPage';
 import { GroupDetailPage } from './pages/GroupDetailPage';
@@ -33,6 +34,7 @@ export default function App() {
   return (
     <div className="app">
       {player && <Nav />}
+      {player && <BottomNav />}
       {player && <LiveTicker />}
       {player && <OnboardingTour />}
       {player && <AdPopup />}
