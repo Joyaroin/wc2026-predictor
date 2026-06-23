@@ -193,6 +193,8 @@ export const api = {
   playerBreakdown: (playerId: string) => req<BreakdownView>(`/players/${playerId}/breakdown`),
   matchPredictions: (groupId: string, matchId: string) =>
     req<MatchPredictionsView>(`/groups/${groupId}/matches/${matchId}/predictions`),
+  globalMatchPredictions: (matchId: string) =>
+    req<MatchPredictionsView>(`/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
   matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
   matchSuggestions: (ids: string[]) =>

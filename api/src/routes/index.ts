@@ -105,6 +105,7 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/groups/:id/leaderboard', auth, wrap((req) => services.leaderboard.getLeaderboard(caller(req), param(req, 'id'), req.query.scope === 'week' ? 'week' : undefined)));
   r.get('/groups/:id/players/:pid/breakdown', auth, wrap((req) => services.leaderboard.getBreakdown(caller(req), param(req, 'id'), param(req, 'pid'))));
   r.get('/groups/:id/matches/:mid/predictions', auth, wrap((req) => services.predictions.getMatchPredictions(caller(req), param(req, 'id'), param(req, 'mid'))));
+  r.get('/matches/:id/predictions', auth, wrap((req) => services.predictions.getGlobalMatchPredictions(caller(req), param(req, 'id'))));
 
   // --- Matches & predictions ---
   r.get('/matches', auth, wrap(() => services.matches.list()));

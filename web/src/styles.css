@@ -67,10 +67,10 @@ h1, h2, h3 { line-height: 1.2; }
 
 /* Mobile bottom tab bar — primary destinations in the thumb zone (hidden on desktop). */
 .bottom-nav { display: none; }
-.menu-only-mobile { display: none; } /* Standings is a top-bar link on desktop; only needed in ⋮ on mobile */
+.menu-dropdown a.menu-only-mobile { display: none; } /* Standings is a top-bar link on desktop; only needed in ⋮ on mobile */
 @media (max-width: 760px) {
   .nav-links { display: none; }
-  .menu-only-mobile { display: block; }
+  .menu-dropdown a.menu-only-mobile { display: block; }
   .bottom-nav {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
     background: var(--grad-panel); border-top: 1px solid var(--hairline);
@@ -847,6 +847,12 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
   display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
 }
 .mc-stats-toggle:hover { border-color: var(--accent); color: var(--ink); }
+a.mc-stats-toggle { text-decoration: none; }
+/* Match predictions page header */
+.mp-head { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 4px; font-weight: 700; }
+.mp-head .mp-team { display: inline-flex; align-items: center; gap: 7px; }
+.mp-head .mp-score { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 800; }
+.predictions .mp-pick { font-variant-numeric: tabular-nums; font-weight: 700; }
 .mc-stats-toggle .chev { transition: transform 0.15s ease; display: inline-block; }
 .mc-stats-toggle .chev.up { transform: rotate(180deg); }
 
@@ -1237,6 +1243,11 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 
 /* Chat — global feed + group feed (polling) */
 .chat-page { max-width: 720px; margin: 0 auto; }
+.chat-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding-bottom: 2px; }
+.chat-tabs::-webkit-scrollbar { display: none; }
+.chat-tabs button { flex: none; background: var(--surface-2); color: var(--muted); border: 1px solid var(--hairline); border-radius: var(--r-pill); padding: 6px 14px; font-weight: 600; font-size: var(--text-sm); white-space: nowrap; cursor: pointer; box-shadow: none; transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease; }
+.chat-tabs button:hover { color: var(--ink); }
+.chat-tabs button.on { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
 .chat { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); overflow: hidden; margin-top: 10px; }
 .chat-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; height: min(58vh, 460px); overflow-y: auto; }
 .chat-empty { text-align: center; margin: auto; }
