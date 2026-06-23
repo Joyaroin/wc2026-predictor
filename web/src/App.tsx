@@ -2,12 +2,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { usePlayer } from './context/PlayerContext';
 import { Nav } from './components/Nav';
+import { BottomNav } from './components/BottomNav';
 import { LandingPage } from './pages/LandingPage';
 import { GroupsPage } from './pages/GroupsPage';
 import { GroupDetailPage } from './pages/GroupDetailPage';
 import { PlayerResultsPage } from './pages/PlayerResultsPage';
 import { FixturesPage } from './pages/FixturesPage';
-import { MatchDetailPage } from './pages/MatchDetailPage';
+import { MatchPredictionsPage } from './pages/MatchPredictionsPage';
 import { MyBreakdownPage } from './pages/MyBreakdownPage';
 import { AwardsPage } from './pages/AwardsPage';
 import { StandingsPage } from './pages/StandingsPage';
@@ -33,6 +34,7 @@ export default function App() {
   return (
     <div className="app">
       {player && <Nav />}
+      {player && <BottomNav />}
       {player && <LiveTicker />}
       {player && <OnboardingTour />}
       {player && <AdPopup />}
@@ -49,7 +51,8 @@ export default function App() {
           <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
           <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="/players/:pid" element={<RequireAuth><PlayerResultsPage /></RequireAuth>} />
-          <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />
+          <Route path="/predictions/:mid" element={<RequireAuth><MatchPredictionsPage /></RequireAuth>} />
+          <Route path="/groups/:id/matches/:mid" element={<RequireAuth><MatchPredictionsPage /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><MyBreakdownPage /></RequireAuth>} />
           <Route path="/global" element={<RequireAuth><GlobalLeaderboardPage /></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />

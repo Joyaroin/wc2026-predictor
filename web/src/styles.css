@@ -65,6 +65,34 @@ h1, h2, h3 { line-height: 1.2; }
 .nav-chat { position: relative; display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-md); line-height: 1; padding: 2px; text-decoration: none; }
 .nav-chat .menu-dot { position: absolute; top: -1px; right: -2px; }
 
+/* Mobile bottom tab bar — primary destinations in the thumb zone (hidden on desktop). */
+.bottom-nav { display: none; }
+.menu-dropdown a.menu-only-mobile { display: none; } /* Standings is a top-bar link on desktop; only needed in ⋮ on mobile */
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+  .menu-dropdown a.menu-only-mobile { display: block; }
+  .bottom-nav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: var(--grad-panel); border-top: 1px solid var(--hairline);
+    padding: 6px 4px max(6px, env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px -16px rgba(0,0,0,0.7);
+    backdrop-filter: saturate(1.1) blur(8px);
+  }
+  .bn-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 4px 0; color: var(--muted); text-decoration: none; font-weight: 600; font-size: var(--text-2xs);
+    min-width: 0; -webkit-tap-highlight-color: transparent;
+  }
+  .bn-tab.active { color: var(--accent); }
+  .bn-icon { width: 22px; height: 22px; }
+  .bn-iconwrap { position: relative; display: inline-flex; }
+  .bn-dot { position: absolute; top: -2px; right: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 1.5px solid var(--surface-2); }
+  .bn-label { letter-spacing: 0.01em; }
+  /* keep page content & floating buttons clear of the bar */
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+  .asst-fab, .ad-fab { bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .asst-panel { bottom: calc(70px + env(safe-area-inset-bottom)); }
+}
+
 .brand { display: flex; align-items: center; gap: 8px; margin-right: 18px; flex: none; }
 .brand-logo { height: 30px; width: auto; border-radius: var(--r-sm); object-fit: contain; background: #fff; padding: 3px 6px; }
 .brand-name { color: var(--ink); font-weight: 600; letter-spacing: 0.2px; white-space: nowrap; }
@@ -819,6 +847,12 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
   display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
 }
 .mc-stats-toggle:hover { border-color: var(--accent); color: var(--ink); }
+a.mc-stats-toggle { text-decoration: none; }
+/* Match predictions page header */
+.mp-head { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 4px; font-weight: 700; }
+.mp-head .mp-team { display: inline-flex; align-items: center; gap: 7px; }
+.mp-head .mp-score { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 800; }
+.predictions .mp-pick { font-variant-numeric: tabular-nums; font-weight: 700; }
 .mc-stats-toggle .chev { transition: transform 0.15s ease; display: inline-block; }
 .mc-stats-toggle .chev.up { transform: rotate(180deg); }
 
@@ -1209,6 +1243,11 @@ button, a, input, select, summary, .week-header, .pick, .firstteam, .joker-btn, 
 
 /* Chat — global feed + group feed (polling) */
 .chat-page { max-width: 720px; margin: 0 auto; }
+.chat-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding-bottom: 2px; }
+.chat-tabs::-webkit-scrollbar { display: none; }
+.chat-tabs button { flex: none; background: var(--surface-2); color: var(--muted); border: 1px solid var(--hairline); border-radius: var(--r-pill); padding: 6px 14px; font-weight: 600; font-size: var(--text-sm); white-space: nowrap; cursor: pointer; box-shadow: none; transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease; }
+.chat-tabs button:hover { color: var(--ink); }
+.chat-tabs button.on { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
 .chat { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); overflow: hidden; margin-top: 10px; }
 .chat-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; height: min(58vh, 460px); overflow-y: auto; }
 .chat-empty { text-align: center; margin: auto; }

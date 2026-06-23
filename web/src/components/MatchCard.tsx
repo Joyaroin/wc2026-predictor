@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -342,6 +343,14 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             >
               {preMatchSoon ? '👥 Lineups ›' : '📊 Match details ›'}
             </button>
+          </div>
+        )}
+
+        {!match.placeholder && (
+          <div className="mc-stats-wrap" onClick={(e) => e.stopPropagation()}>
+            <Link className="mc-stats-toggle" to={`/predictions/${match.id}`} data-testid={`who-picked-${match.id}`}>
+              Who picked what ›
+            </Link>
           </div>
         )}
 

@@ -9,6 +9,18 @@ export interface UpdateEntry {
 
 export const UPDATES: UpdateEntry[] = [
   {
+    id: '2026-06-22',
+    date: 'June 22, 2026',
+    emoji: '👀',
+    title: 'See who picked what',
+    points: [
+      'Tap "Who picked what" on any match to see everyone\'s predictions side by side — no more digging into each player',
+      'Switch between Global (everyone playing) and each of your groups; other picks unlock at kick-off',
+      'On phones, a new bottom tab bar puts Predict, Groups, Me and Chat one thumb-tap away',
+      'Match cards got a cleaner, broadcast-style look; Awards now lives in the ⋮ menu',
+    ],
+  },
+  {
     id: '2026-06-19.2',
     date: 'June 19, 2026',
     emoji: '🎨',

@@ -19,6 +19,8 @@ export interface PredictionService {
   remove(callerId: string, matchId: string): Promise<void>;
   getMine(callerId: string): Promise<Prediction[]>;
   getMatchPredictions(callerId: string, groupId: string, matchId: string): Promise<MatchPredictionsView>;
+  /** Everyone playing — same lock rules (own pick only until kickoff, all picks after). */
+  getGlobalMatchPredictions(callerId: string, matchId: string): Promise<MatchPredictionsView>;
   setJoker(callerId: string, matchId: string, joker: boolean): Promise<Prediction>;
 }
 
@@ -132,6 +134,37 @@ export function createPredictionService(
         if (!player) continue;
         rows.push({ playerId: p.playerId, name: player.name, home: p.home, away: p.away, points: p.points });
       }
+      return { locked, actual, predictions: rows };
+    },
+
+    async getGlobalMatchPredictions(callerId, matchId) {
+      const match = await matchService.get(matchId);
+      if (!match) throw new NotFoundError('Match not found');
+      const locked = matchService.isLocked(match);
+      const actual =
+        match.homeScore !== null && match.awayScore !== null
+          ? { home: match.homeScore, away: match.awayScore }
+          : null;
+
+      if (!locked) {
+        // Pre-lock: only the caller's own prediction is visible (US-6.1).
+        const own = await predictions.get(callerId, matchId);
+        const me = await players.getById(callerId);
+        const rows: MatchPredictionRow[] = own && me
+          ? [{ playerId: callerId, name: me.name, home: own.home, away: own.away, points: own.points }]
+          : [];
+        return { locked, actual: null, predictions: rows };
+      }
+
+      // Post-lock: everyone's predictions, best scores first.
+      const all = await predictions.listByMatch(matchId);
+      const rows: MatchPredictionRow[] = [];
+      for (const p of all) {
+        const player = await players.getById(p.playerId);
+        if (!player) continue;
+        rows.push({ playerId: p.playerId, name: player.name, home: p.home, away: p.away, points: p.points });
+      }
+      if (actual) rows.sort((a, b) => b.points - a.points);
       return { locked, actual, predictions: rows };
     },
   };
