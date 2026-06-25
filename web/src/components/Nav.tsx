@@ -4,16 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { usePlayer } from '../context/PlayerContext';
 import { api } from '../api/client';
 import { hasUnseenUpdates } from '../updates';
-import { hasUnreadGlobalChat } from '../lib/chatUnread';
+import { useGlobalChatUnread } from '../lib/useGlobalChatUnread';
 
 export function Nav() {
   const { player, logout } = usePlayer();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unseen, setUnseen] = useState(hasUnseenUpdates());
 
-  // Global chat lives under the Groups tab — surface unread messages with a dot there.
+  // Global chat now lives in the ⋮ menu — surface unread messages with a dot there.
   const globalChat = useQuery({ queryKey: ['messages', 'global', 'global'], queryFn: api.globalMessages, refetchInterval: 20_000, staleTime: 15_000 });
-  const chatUnread = hasUnreadGlobalChat(globalChat.data, player?.playerId);
+  const chatUnread = useGlobalChatUnread(globalChat.data, player?.playerId);
 
   return (
     <nav className="nav">
@@ -30,9 +30,6 @@ export function Nav() {
       </div>
 
       <div className="nav-user">
-        <NavLink viewTransition to="/chat" className="nav-chat" data-testid="nav-chat" aria-label="Global chat" title="Global chat">
-          💬{chatUnread && <span className="menu-dot" data-testid="nav-chat-unread" aria-label="unread chat messages" />}
-        </NavLink>
         <span className="nav-name">{player?.name}</span>
         <div className="menu">
           <button
@@ -42,12 +39,13 @@ export function Nav() {
             aria-expanded={menuOpen}
             data-testid="nav-menu"
           >
-            ⋮{unseen && <span className="menu-dot" aria-label="new updates" />}
+            ⋮{(unseen || chatUnread) && <span className="menu-dot" aria-label="new updates or messages" />}
           </button>
           {menuOpen && (
             <>
               <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
               <div className="menu-dropdown" onClick={() => setMenuOpen(false)} data-testid="nav-dropdown">
+                <NavLink viewTransition to="/chat" data-testid="nav-chat">💬 Chat{chatUnread && <span className="menu-dot inline" data-testid="nav-chat-unread" aria-label="unread chat messages" />}</NavLink>
                 <NavLink viewTransition to="/awards" data-testid="nav-awards">Awards</NavLink>
                 <NavLink viewTransition to="/standings" className="menu-only-mobile" data-testid="nav-standings-menu">Standings</NavLink>
                 <NavLink viewTransition to="/settings" data-testid="nav-settings">Account</NavLink>

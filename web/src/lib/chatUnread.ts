@@ -3,6 +3,9 @@
 import type { ChatMessage } from '../api/client';
 
 const SEEN_KEY = 'wc2026.chat.global.seen';
+/** Fired in-tab when the seen marker changes, so unread indicators recompute immediately
+    (localStorage writes alone don't trigger React re-renders in the same tab). */
+export const CHAT_SEEN_EVENT = 'wc2026:chat-global-seen';
 
 /** Id of the most recent global message the player has already seen ('' if none). */
 export function lastSeenGlobalChat(): string {
@@ -18,6 +21,7 @@ export function markGlobalChatSeen(latestId: string | undefined | null): boolean
   if (!latestId || latestId === lastSeenGlobalChat()) return false;
   try {
     localStorage.setItem(SEEN_KEY, latestId);
+    window.dispatchEvent(new Event(CHAT_SEEN_EVENT)); // notify same-tab unread indicators now
     return true;
   } catch {
     return false; // ignore storage failures (private mode, quota)
