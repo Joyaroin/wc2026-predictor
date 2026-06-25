@@ -43,9 +43,6 @@ body {
   letter-spacing: -0.011em;
   background: var(--bg);
   color: var(--ink);
-  /* The Fixtures full-bleed breakout uses 100vw, which includes the scrollbar width
-     on Windows — clip the sliver so no horizontal scrollbar appears. */
-  overflow-x: clip;
 }
 a { color: var(--accent); text-decoration: none; }
 .container { max-width: 880px; margin: 0 auto; padding: 16px; }
@@ -134,8 +131,12 @@ input {
 
 .stage-header { border-bottom: 1px solid var(--line); padding-bottom: 4px; color: var(--accent2); }
 .match-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-/* Desktop: let the Fixtures page break out of the centered container and fill the page. */
+/* Desktop: let the Fixtures page break out of the centered container and fill the page.
+   The 100vw breakout includes the scrollbar width, so clip the sliver here — scoped to
+   desktop only. (Putting overflow on <body> breaks position:fixed on iOS WebKit, which
+   detached the mobile bottom nav in the installed PWA — so it must NOT be global.) */
 @media (min-width: 920px) {
+  body { overflow-x: clip; }
   .fixtures { width: 100vw; max-width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: 0 28px; }
 }
 
