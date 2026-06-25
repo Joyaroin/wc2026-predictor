@@ -11,7 +11,8 @@ export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [unseen, setUnseen] = useState(hasUnseenUpdates());
 
-  // Global chat now lives in the ⋮ menu — surface unread messages with a dot there.
+  // Chat & Standings are primary destinations (top-bar links on desktop, bottom-nav tabs on
+  // mobile) — surface unread chat with a dot on the Chat link.
   const globalChat = useQuery({ queryKey: ['messages', 'global', 'global'], queryFn: api.globalMessages, refetchInterval: 20_000, staleTime: 15_000 });
   const chatUnread = useGlobalChatUnread(globalChat.data, player?.playerId);
 
@@ -27,6 +28,7 @@ export function Nav() {
         <NavLink viewTransition to="/standings" data-testid="nav-standings">Standings</NavLink>
         <NavLink viewTransition to="/groups" data-testid="nav-groups">Groups</NavLink>
         <NavLink viewTransition to="/me" data-testid="nav-me">My Results</NavLink>
+        <NavLink viewTransition to="/chat" data-testid="nav-chat">Chat{chatUnread && <span className="menu-dot inline" data-testid="nav-chat-unread" aria-label="unread chat messages" />}</NavLink>
       </div>
 
       <div className="nav-user">
@@ -39,15 +41,13 @@ export function Nav() {
             aria-expanded={menuOpen}
             data-testid="nav-menu"
           >
-            ⋮{(unseen || chatUnread) && <span className="menu-dot" aria-label="new updates or messages" />}
+            ⋮{unseen && <span className="menu-dot" aria-label="new updates" />}
           </button>
           {menuOpen && (
             <>
               <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
               <div className="menu-dropdown" onClick={() => setMenuOpen(false)} data-testid="nav-dropdown">
-                <NavLink viewTransition to="/chat" data-testid="nav-chat">💬 Chat{chatUnread && <span className="menu-dot inline" data-testid="nav-chat-unread" aria-label="unread chat messages" />}</NavLink>
                 <NavLink viewTransition to="/awards" data-testid="nav-awards">Awards</NavLink>
-                <NavLink viewTransition to="/standings" className="menu-only-mobile" data-testid="nav-standings-menu">Standings</NavLink>
                 <NavLink viewTransition to="/settings" data-testid="nav-settings">Account</NavLink>
                 <NavLink viewTransition to="/updates" data-testid="nav-updates" onClick={() => setUnseen(false)}>✨ What's new{unseen && <span className="menu-dot inline" />}</NavLink>
                 <NavLink viewTransition to="/help" data-testid="nav-help">Help & rules</NavLink>
