@@ -20,28 +20,8 @@ import { fold } from '../lib/search';
 import { canonTeam } from '../lib/teams';
 import { Confetti } from './Confetti';
 import { MatchStatsPanel } from './MatchStatsPanel';
-
-/** Eases a number up from 0 when it first appears — points feel earned, not printed. */
-function useCountUp(target: number, active: boolean): number {
-  const [v, setV] = useState(active ? 0 : target);
-  useEffect(() => {
-    if (!active || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setV(target);
-      return;
-    }
-    let raf = 0;
-    const t0 = performance.now();
-    const dur = 750;
-    const tick = (t: number) => {
-      const k = Math.min(1, (t - t0) / dur);
-      setV(Math.round(target * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, active]);
-  return v;
-}
+import { useCountUp } from '../lib/useCountUp';
+import { usePredictionAutosave } from '../lib/usePredictionAutosave';
 
 interface Props {
   match: MatchView;
@@ -110,37 +90,9 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const advanceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(advanceRef.current), []);
 
-  // Auto-save: persist the scoreline as soon as both boxes hold a valid number; auto-remove when
-  // both are cleared. No Save button — score, first team, first scorer and Joker all save on change.
-  const validScore = (h: number, a: number) =>
-    Number.isInteger(h) && Number.isInteger(a) && h >= 0 && a >= 0 && h <= 30 && a <= 30;
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(saveTimer.current), []);
-  useEffect(() => {
-    if (!editable) return;
-    clearTimeout(saveTimer.current);
-    if (home !== '' && away !== '') {
-      const h = Number(home);
-      const a = Number(away);
-      if (!validScore(h, a)) return;
-      if (prediction && h === prediction.home && a === prediction.away) return; // unchanged
-      saveTimer.current = setTimeout(() => onSave(match.id, h, a), 600);
-    } else if (home === '' && away === '' && prediction) {
-      saveTimer.current = setTimeout(() => onClear(match.id), 800);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [home, away, editable, prediction?.home, prediction?.away]);
-
-  // Flush the pending save immediately (e.g. on blur / Enter) so bonus buttons unlock sooner.
-  const flushSave = () => {
-    if (!editable || home === '' || away === '') return;
-    const h = Number(home);
-    const a = Number(away);
-    if (validScore(h, a) && (!prediction || h !== prediction.home || a !== prediction.away)) {
-      clearTimeout(saveTimer.current);
-      onSave(match.id, h, a);
-    }
-  };
+  // Auto-save the scoreline (debounced) and expose flushSave for blur/Enter. No Save button —
+  // score, first team, first scorer and Joker all persist on change.
+  const { flushSave } = usePredictionAutosave({ matchId: match.id, editable, home, away, prediction, onSave, onClear });
   const selected = prediction?.firstScorerId ? squad.find((p) => p.id === prediction.firstScorerId) : undefined;
   // Which of the two teams a squad player belongs to → its flag code.
   const codeForTeam = (team: string) => (canonTeam(team) === canonTeam(match.homeTeam) ? match.homeCode : match.awayCode);
@@ -235,9 +187,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         onKeyDown={(e) => {
           if (e.key === 'Enter' && canSave) {
             clearTimeout(advanceRef.current);
-            clearTimeout(saveTimer.current);
+            // Blur fires onBlur→flushSave, which cancels the debounce and persists immediately.
             (e.target as HTMLInputElement).blur();
-            onSave(match.id, Number(home), Number(away));
           }
         }}
         data-testid={`pred-${side}-${match.id}`}

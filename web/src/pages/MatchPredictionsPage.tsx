@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { pointsLabel } from '../lib/format';
 import { Flag } from '../components/Flag';
+import { resultsRefetchInterval } from '../lib/liveRefetch';
 
 /** Everyone's predictions for one match — switch between Global and each of your groups. */
 export function MatchPredictionsPage() {
   const { mid = '', id = '' } = useParams(); // id present when arrived from a group
+  const qc = useQueryClient();
   const groups = useQuery({ queryKey: ['groups'], queryFn: api.listGroups });
   const matches = useQuery({ queryKey: ['matches'], queryFn: api.matches, staleTime: 60_000 });
   const [scope, setScope] = useState<string>(id || 'global'); // 'global' or a groupId
@@ -15,6 +17,8 @@ export function MatchPredictionsPage() {
   const view = useQuery({
     queryKey: ['match-preds', scope, mid],
     queryFn: () => (scope === 'global' ? api.globalMatchPredictions(mid) : api.matchPredictions(scope, mid)),
+    // Live points per pick update during the match.
+    refetchInterval: () => resultsRefetchInterval(qc),
   });
 
   const match = matches.data?.find((m) => m.id === mid);

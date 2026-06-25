@@ -18,7 +18,7 @@ export function Nav() {
   return (
     <nav className="nav">
       <NavLink viewTransition to="/fixtures" className="brand" data-testid="nav-brand">
-        <img src="/logo.png" alt="" className="brand-logo" />
+        <img src="/logo.svg" alt="" className="brand-logo" width="28" height="28" />
         <span className="brand-name">WC Predictions <b>2026</b></span>
       </NavLink>
 

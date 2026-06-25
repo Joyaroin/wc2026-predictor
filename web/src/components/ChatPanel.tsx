@@ -23,7 +23,8 @@ export function ChatPanel({ scope, groupId }: { scope: 'global' | 'group'; group
   const msgs = useQuery({
     queryKey: key,
     queryFn: () => (scope === 'global' ? api.globalMessages() : api.groupMessages(groupId!)),
-    refetchInterval: 4000,
+    // Open-chat polling — still feels live, but pauses while the tab is hidden (global default).
+    refetchInterval: 6000,
   });
 
   useEffect(() => {

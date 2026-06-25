@@ -1,13 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api, type LeaderboardRow } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { LeaderboardTable } from '../components/LeaderboardTable';
+import { resultsRefetchInterval } from '../lib/liveRefetch';
 
 export function GlobalLeaderboardPage() {
   const { player } = usePlayer();
   const navigate = useNavigate();
-  const q = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard });
+  const qc = useQueryClient();
+  // Auto-refresh while matches are live so ranks move without a manual reload.
+  const q = useQuery({ queryKey: ['global-leaderboard'], queryFn: api.globalLeaderboard, refetchInterval: () => resultsRefetchInterval(qc) });
 
   const meInTop = q.data?.top.some((r) => r.playerId === player?.playerId);
   const openPlayer = (row: LeaderboardRow) => navigate(`/players/${row.playerId}`, { state: { name: row.name, color: row.avatarColor } });
