@@ -66,10 +66,8 @@ h1, h2, h3 { line-height: 1.2; }
 
 /* Mobile bottom tab bar — primary destinations in the thumb zone (hidden on desktop). */
 .bottom-nav { display: none; }
-.menu-dropdown a.menu-only-mobile { display: none; } /* Standings is a top-bar link on desktop; only needed in ⋮ on mobile */
 @media (max-width: 760px) {
   .nav-links { display: none; }
-  .menu-dropdown a.menu-only-mobile { display: block; }
   .bottom-nav {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
     background: var(--grad-panel); border-top: 1px solid var(--hairline);
