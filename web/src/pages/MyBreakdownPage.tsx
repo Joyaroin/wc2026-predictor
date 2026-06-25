@@ -1,16 +1,24 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { computeSections, SECTION_ORDER, sectionLabel, effectivePoints, type Prediction, type SectionKey } from '@wc2026/shared';
-import { api } from '../api/client';
+import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
+import { MatchGridSkeleton } from '../components/Skeleton';
+import { matchesRefetchInterval, resultsRefetchInterval } from '../lib/liveRefetch';
 
 /** No-op handlers — result cards are read-only (finished matches can't be edited). */
 const noop = () => {};
 
 /** "My results" — every finished match as a read-only card, filterable by match week / round. */
 export function MyBreakdownPage() {
-  const matches = useQuery({ queryKey: ['matches'], queryFn: api.matches });
-  const predictions = useQuery({ queryKey: ['my-predictions'], queryFn: api.myPredictions });
+  const qc = useQueryClient();
+  const matches = useQuery({
+    queryKey: ['matches'],
+    queryFn: api.matches,
+    refetchInterval: (query) => matchesRefetchInterval(query.state.data as MatchView[] | undefined),
+  });
+  // Points are recomputed server-side as results land — poll while live so totals update live.
+  const predictions = useQuery({ queryKey: ['my-predictions'], queryFn: api.myPredictions, refetchInterval: () => resultsRefetchInterval(qc) });
 
   const sectionById = useMemo(() => computeSections(matches.data ?? []), [matches.data]);
 
@@ -43,7 +51,14 @@ export function MyBreakdownPage() {
   const total = (predictions.data ?? []).reduce((s, p) => s + effectivePoints(p), 0);
   const exacts = (predictions.data ?? []).filter((p) => p.exact).length;
 
-  if (matches.isLoading || predictions.isLoading) return <p>Loading your results…</p>;
+  if (matches.isLoading || predictions.isLoading) {
+    return (
+      <div className="results">
+        <h2>My results</h2>
+        <MatchGridSkeleton count={4} />
+      </div>
+    );
+  }
 
   return (
     <div className="results">

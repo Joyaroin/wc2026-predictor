@@ -7,6 +7,7 @@ import { PrefsProvider } from './context/PrefsContext';
 import App from './App';
 import { pushSupported, registerServiceWorker } from './lib/push';
 import './styles.css';
+import './styles/themes.css'; // team/light palettes — loaded after base so overrides win
 
 // Register the service worker (enables installability + push). Best-effort.
 if (pushSupported()) {
@@ -14,7 +15,18 @@ if (pushSupported()) {
 }
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // Re-sync on return-to-app and on network recovery so the UI is never stuck on
+      // stale data (e.g. you switch away to watch the match, come back → scores are fresh).
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      // Per-query polling intervals pause automatically while the tab is hidden, so we
+      // never poll in the background — battery/network is only used while on-screen.
+      refetchIntervalInBackground: false,
+    },
+  },
 });
 
 const rootEl = document.getElementById('root');

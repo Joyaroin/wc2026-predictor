@@ -8,6 +8,7 @@ import { Avatar, AvatarStack } from '../components/Avatar';
 import { ShareInvite } from '../components/ShareInvite';
 import { ChatPanel } from '../components/ChatPanel';
 import { medal } from '../lib/rank';
+import { resultsRefetchInterval } from '../lib/liveRefetch';
 
 function Podium({ rows, meId }: { rows: LeaderboardRow[]; meId: string }) {
   const top = rows.slice(0, 3);
@@ -40,6 +41,8 @@ export function GroupDetailPage() {
   const leaderboard = useQuery({
     queryKey: ['leaderboard', id, scope],
     queryFn: () => api.leaderboard(id, scope === 'week' ? 'week' : undefined),
+    // Live-aware: ranks tick over during matches, otherwise refresh on focus/invalidation.
+    refetchInterval: () => resultsRefetchInterval(qc),
   });
 
   const [menuOpen, setMenuOpen] = useState(false);

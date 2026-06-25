@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, type MatchView } from '../api/client';
 import { Flag } from '../components/Flag';
+import { matchesRefetchInterval } from '../lib/liveRefetch';
 
 interface Row {
   code: string;
@@ -55,10 +56,7 @@ export function StandingsPage() {
     queryKey: ['matches'],
     queryFn: api.matches,
     // Keep standings (and the third-place race) moving while group games are on.
-    refetchInterval: (query) => {
-      const data = query.state.data as MatchView[] | undefined;
-      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 30_000 : 60_000;
-    },
+    refetchInterval: (query) => matchesRefetchInterval(query.state.data as MatchView[] | undefined),
   });
   const tables = useMemo(() => computeTables(matches.data ?? []), [matches.data]);
 

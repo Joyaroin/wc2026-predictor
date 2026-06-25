@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { computeSections, SECTION_ORDER, sectionLabel, type Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
+import { MatchGridSkeleton } from '../components/Skeleton';
 import { canonTeam } from '../lib/teams';
 import { isLive } from '../lib/format';
+import { matchesRefetchInterval } from '../lib/liveRefetch';
 
 const PREDS = ['my-predictions'] as const;
 
@@ -29,11 +31,8 @@ export function FixturesPage() {
     queryKey: ['matches'],
     queryFn: api.matches,
     // Always poll so the page flips to LIVE at kickoff without a manual refresh;
-    // poll faster while a match is actually in play.
-    refetchInterval: (query) => {
-      const data = query.state.data as MatchView[] | undefined;
-      return data?.some((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED') ? 30_000 : 60_000;
-    },
+    // faster while a match is actually in play. (Shared cadence — see lib/liveRefetch.)
+    refetchInterval: (query) => matchesRefetchInterval(query.state.data as MatchView[] | undefined),
   });
   const predictions = useQuery({ queryKey: [...PREDS], queryFn: api.myPredictions });
   const pool = useQuery({ queryKey: ['player-pool'], queryFn: api.playerPool, staleTime: 60 * 60 * 1000 });
@@ -223,7 +222,14 @@ export function FixturesPage() {
   const isOpen = (key: string) => overrides[key] ?? key === activeKey;
   const toggle = (key: string) => setOverrides((o) => ({ ...o, [key]: !(o[key] ?? key === activeKey) }));
 
-  if (matches.isLoading) return <p>Loading fixtures…</p>;
+  if (matches.isLoading) {
+    return (
+      <div className="fixtures">
+        <h2>Fixtures</h2>
+        <MatchGridSkeleton />
+      </div>
+    );
+  }
   if (matches.isError) return <p className="error">Could not load fixtures. Is the API running?</p>;
 
   const busy = save.isPending || joker.isPending || firstTeam.isPending || firstScorer.isPending || clear.isPending;
