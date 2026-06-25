@@ -23,8 +23,10 @@ export function ChatPanel({ scope, groupId }: { scope: 'global' | 'group'; group
   const msgs = useQuery({
     queryKey: key,
     queryFn: () => (scope === 'global' ? api.globalMessages() : api.groupMessages(groupId!)),
-    // Open-chat polling — still feels live, but pauses while the tab is hidden (global default).
-    refetchInterval: 6000,
+    // Live chat: poll quickly while open, refetch on tab refocus (global default), and pause
+    // while the tab is hidden (refetchIntervalInBackground:false) to save battery.
+    refetchInterval: 3000,
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {
@@ -32,11 +34,10 @@ export function ChatPanel({ scope, groupId }: { scope: 'global' | 'group'; group
   }, [msgs.data]);
 
   // While the global chat is open, the newest message counts as seen — clears the unread tick.
+  // markGlobalChatSeen fires CHAT_SEEN_EVENT, so every unread indicator updates immediately.
   useEffect(() => {
     if (scope === 'global' && msgs.data && msgs.data.length > 0) {
-      const changed = markGlobalChatSeen(msgs.data[msgs.data.length - 1]!.id);
-      // Nudge other subscribers (nav + groups card) to drop their tick right away.
-      if (changed) void qc.invalidateQueries({ queryKey: key });
+      markGlobalChatSeen(msgs.data[msgs.data.length - 1]!.id);
     }
   }, [scope, msgs.data]);
 
