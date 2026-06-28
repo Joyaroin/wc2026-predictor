@@ -37,6 +37,20 @@ describe('scoringService.scoreMatch', () => {
     expect((await repos.predictions.get('b', 'm1'))?.points).toBe(5); // outcome 2 + goal diff 3, no 0-0 bonus
   });
 
+  it('adds +5 for a correct penalty-winner call on a knockout draw', async () => {
+    const repos = createMemoryRepositories();
+    await repos.matches.upsert(sampleMatch({ id: 'k1', stage: 'LAST_16', status: 'FINISHED', homeScore: 1, awayScore: 1, winner: 'HOME' }));
+    const now = new Date().toISOString();
+    await repos.predictions.put({ playerId: 'a', matchId: 'k1', home: 1, away: 1, penWinner: 'HOME', points: 0, createdAt: now, updatedAt: now }); // exact 1-1 (12) + pen (5)
+    await repos.predictions.put({ playerId: 'b', matchId: 'k1', home: 2, away: 0, penWinner: 'HOME', points: 0, createdAt: now, updatedAt: now }); // decisive prediction → 0 (no win, no pen)
+
+    const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
+    await scoring.scoreMatch('k1');
+
+    expect((await repos.predictions.get('a', 'k1'))?.points).toBe(17);
+    expect((await repos.predictions.get('b', 'k1'))?.points).toBe(0);
+  });
+
   it('does nothing when the match has no final score', async () => {
     const repos = createMemoryRepositories();
     await repos.matches.upsert(sampleMatch({ id: 'm2', status: 'SCHEDULED' }));
