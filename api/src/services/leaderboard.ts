@@ -1,5 +1,5 @@
 // Leaderboard service: aggregate stored points, order via shared comparator (US-5.3/5.4/5.5).
-import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, scoreBreakdown, firstGoalPoints, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
+import { compareStandings, effectivePoints, computeSections, SECTION_ORDER, scoreBreakdown, firstGoalPoints, penaltyWinnerPoints, type StandingAgg, type Prediction, type Match } from '@wc2026/shared';
 import type { Clock } from '../lib/clock';
 import type { BracketRepo, GoldenBootRepo, DarkHorseRepo, TournamentWinnerRepo, PottRepo, MatchRepo, MembershipRepo, PlayerRepo, PredictionRepo } from '../repos/types';
 import type { LeaderboardRow, BreakdownRow, BreakdownView, GlobalLeaderboardView } from './dtos';
@@ -85,6 +85,7 @@ export function createLeaderboardService(
           away: bd.away,
           firstTeam: pred.firstTeam ? { picked: pred.firstTeam, hit: firstGoalKnown ? fg.firstTeam > 0 : null } : null,
           firstScorer: pred.firstScorerId ? { name: pred.firstScorerName ?? null, hit: firstGoalKnown ? fg.firstPlayer > 0 : null } : null,
+          penWinner: pred.penWinner ? { picked: pred.penWinner, hit: m.winner != null ? penaltyWinnerPoints(pred, m) > 0 : null } : null,
           joker: !!pred.joker,
         };
       }

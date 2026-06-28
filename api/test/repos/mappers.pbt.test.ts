@@ -25,6 +25,7 @@ const arbPrediction = fc.record({
   firstTeam: fc.option(fc.constantFrom('HOME', 'AWAY') as fc.Arbitrary<'HOME' | 'AWAY'>, { nil: null }),
   firstScorerId: fc.option(fc.string({ maxLength: 12 }), { nil: null }),
   firstScorerName: fc.option(fc.string({ maxLength: 20 }), { nil: null }),
+  penWinner: fc.option(fc.constantFrom('HOME', 'AWAY') as fc.Arbitrary<'HOME' | 'AWAY'>, { nil: null }),
   points: fc.integer({ min: 0, max: 20 }),
   exact: fc.boolean(),
   joker: fc.boolean(),
