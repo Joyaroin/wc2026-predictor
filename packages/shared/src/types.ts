@@ -98,6 +98,8 @@ export interface Prediction {
   /** Optional: first goalscorer pick (ESPN athlete id) (+6 if right). */
   firstScorerId?: string | null;
   firstScorerName?: string | null;
+  /** Optional: on a knockout draw prediction, which team wins the shootout (+5 if right). */
+  penWinner?: BracketSide | null;
   points: Points;
   /** Set at scoring time: the scoreline was exact (used for leaderboard tie-breaks). */
   exact?: boolean;
