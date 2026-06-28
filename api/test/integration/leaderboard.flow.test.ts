@@ -64,6 +64,24 @@ describe('leaderboard flow (US-2.x / US-5.x)', () => {
     expect(bd.body.awardPoints).toBe(0);
   });
 
+  it('breakdown exposes the penalty-winner result on a knockout draw', async () => {
+    const t = makeTestApp({ now: new Date('2026-06-16T00:00:00.000Z') });
+    const sam = await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' });
+    const tok = sam.body.token as string;
+    const pid = sam.body.playerId as string;
+
+    await t.repos.matches.upsert(sampleMatch({ id: 'k1', stage: 'LAST_16', status: 'FINISHED', homeScore: 1, awayScore: 1, winner: 'HOME' }));
+    const now = new Date().toISOString();
+    await t.repos.predictions.put({ playerId: pid, matchId: 'k1', home: 1, away: 1, penWinner: 'HOME', points: 0, createdAt: now, updatedAt: now });
+    await t.services.scoring.scoreMatch('k1');
+
+    const bd = await request(t.app).get(`/api/players/${pid}/breakdown`).set('Authorization', `Bearer ${tok}`);
+    expect(bd.status).toBe(200);
+    const row = bd.body.rows.find((r: { matchId: string }) => r.matchId === 'k1');
+    expect(row.breakdown.penWinner).toEqual({ picked: 'HOME', hit: true });
+    expect(row.points).toBe(17); // exact 1-1 (12) + pen (5)
+  });
+
   it('forbids non-members from reading a group leaderboard', async () => {
     const t = makeTestApp();
     const sam = await request(t.app).post('/api/auth/login').send({ name: 'Sam', pin: '1234' });

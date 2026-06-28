@@ -56,6 +56,7 @@ export interface PointsBreakdown {
   away: boolean;
   firstTeam: { picked: 'HOME' | 'AWAY'; hit: boolean | null } | null;
   firstScorer: { name: string | null; hit: boolean | null } | null;
+  penWinner: { picked: 'HOME' | 'AWAY'; hit: boolean | null } | null;
   joker: boolean;
 }
 export interface BreakdownRow {

@@ -55,6 +55,7 @@ export const predictionInputSchema = z
     firstTeam: bracketSideSchema.nullable().optional(),
     firstScorerId: z.string().max(40).nullable().optional(),
     firstScorerName: z.string().max(80).nullable().optional(),
+    penWinner: bracketSideSchema.nullable().optional(),
   })
   .strict();
 
@@ -67,6 +68,7 @@ export const predictionSchema = z.object({
   firstTeam: bracketSideSchema.nullable().optional(),
   firstScorerId: z.string().nullable().optional(),
   firstScorerName: z.string().nullable().optional(),
+  penWinner: bracketSideSchema.nullable().optional(),
   points: pointsSchema,
   exact: z.boolean().optional(),
   joker: z.boolean().optional(),

@@ -101,6 +101,7 @@ export function MyBreakdownPage() {
                 onJoker={noop}
                 onFirstTeam={noop}
                 onFirstScorer={noop}
+                onPenWinner={noop}
                 onStatPick={noop}
               />
             ))}

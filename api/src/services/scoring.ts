@@ -1,6 +1,6 @@
 // Scoring service: precompute & persist points when a match is decided (SR-4 / US-5.2).
 // Scores both score-predictions and knockout bracket (advancement) picks.
-import { scoreBreakdown, firstGoalPoints, darkHorsePoints } from '@wc2026/shared';
+import { scoreBreakdown, firstGoalPoints, darkHorsePoints, penaltyWinnerPoints } from '@wc2026/shared';
 import type { BracketRepo, MatchRepo, PredictionRepo } from '../repos/types';
 
 export interface ScoringService {
@@ -29,7 +29,8 @@ export function createScoringService(
         const bd = scoreBreakdown({ home: p.home, away: p.away }, actual);
         // First-team/first-player bonuses — a correctly-called 0-0 earns both (no first scorer exists).
         const fg = firstGoalPoints(p, actual, { firstGoalTeam: match.firstGoalTeam, firstScorerId: match.firstScorerId });
-        const points = bd.points + fg.firstTeam + fg.firstPlayer;
+        const pen = penaltyWinnerPoints(p, match);
+        const points = bd.points + fg.firstTeam + fg.firstPlayer + pen;
         if (points !== p.points || bd.exact !== p.exact) {
           await predictions.put({ ...p, points, exact: bd.exact, updatedAt: now });
         }

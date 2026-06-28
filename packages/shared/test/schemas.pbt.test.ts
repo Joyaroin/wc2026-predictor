@@ -54,6 +54,13 @@ describe('schema round-trips (RT-1)', () => {
     );
   });
 
+  it('predictionSchema accepts optional penWinner', () => {
+    const base = { playerId: 'p', matchId: 'm', home: 1, away: 1, points: 0, createdAt: 't', updatedAt: 't' };
+    expect(predictionSchema.parse({ ...base, penWinner: 'HOME' }).penWinner).toBe('HOME');
+    expect(predictionSchema.parse({ ...base, penWinner: null }).penWinner).toBeNull();
+    expect(predictionSchema.parse(base).penWinner).toBeUndefined();
+  });
+
   it('match survives JSON serialize → parse', () => {
     fc.assert(
       fc.property(arbMatch, (m) => {

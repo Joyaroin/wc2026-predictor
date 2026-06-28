@@ -12,6 +12,7 @@ export interface PredictionInput {
   firstTeam?: BracketSide | null;
   firstScorerId?: string | null;
   firstScorerName?: string | null;
+  penWinner?: BracketSide | null;
 }
 
 export interface PredictionService {
@@ -54,6 +55,7 @@ export function createPredictionService(
         firstTeam: input.firstTeam !== undefined ? input.firstTeam : (existing?.firstTeam ?? null),
         firstScorerId: input.firstScorerId !== undefined ? input.firstScorerId : (existing?.firstScorerId ?? null),
         firstScorerName: input.firstScorerName !== undefined ? input.firstScorerName : (existing?.firstScorerName ?? null),
+        penWinner: input.penWinner !== undefined ? input.penWinner : (existing?.penWinner ?? null),
         points: existing?.points ?? 0,
         exact: existing?.exact ?? false,
         joker: existing?.joker ?? false,

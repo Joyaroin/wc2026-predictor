@@ -1,6 +1,6 @@
 // Pure scoring engine. No I/O, no clock, no randomness (BR-5).
 // See aidlc-docs/construction/shared/functional-design/business-logic-model.md
-import type { Score, Outcome, Points, StandingAgg, BracketSide } from './types';
+import type { Score, Outcome, Points, StandingAgg, BracketSide, Stage } from './types';
 
 /** Classify a scoreline's outcome. */
 export function outcomeOf(s: Score): Outcome {
@@ -82,6 +82,31 @@ export function firstGoalPoints(pred: FirstGoalPrediction, actual: Score, facts:
       : 0;
   const firstPlayer = pred.firstScorerId && facts.firstScorerId && pred.firstScorerId === facts.firstScorerId ? FIRST_PLAYER_POINTS : 0;
   return { firstTeam, firstPlayer };
+}
+
+/** Bonus for correctly calling the penalty-shootout winner on a knockout draw prediction. */
+export const PEN_WINNER_POINTS = 5;
+
+/**
+ * +5 only when: the match went to pens (knockout, level full-time score, a HOME/AWAY winner),
+ * the player predicted a draw, and their penWinner matches the actual shootout winner.
+ * A decisive prediction (e.g. 2-0) never qualifies — so it earns no pen bonus even if that
+ * team wins the shootout (and existing scoreline scoring already denies it the outcome point).
+ */
+export function penaltyWinnerPoints(
+  pred: { home: number; away: number; penWinner?: BracketSide | null },
+  match: { stage: Stage; homeScore: number | null; awayScore: number | null; winner?: Outcome | null },
+): number {
+  const wentToPens =
+    match.stage !== 'GROUP_STAGE' &&
+    match.homeScore != null &&
+    match.awayScore != null &&
+    match.homeScore === match.awayScore &&
+    (match.winner === 'HOME' || match.winner === 'AWAY');
+  const predictedDraw = pred.home === pred.away;
+  return wentToPens && predictedDraw && pred.penWinner != null && pred.penWinner === match.winner
+    ? PEN_WINNER_POINTS
+    : 0;
 }
 
 /** Points after applying the Joker multiplier (doubles when joker is set). */

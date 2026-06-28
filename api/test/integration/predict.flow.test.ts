@@ -55,6 +55,22 @@ describe('prediction flow (US-4.x)', () => {
     expect(put.status).toBe(409);
   });
 
+  it('persists penWinner on a draw prediction and returns it', async () => {
+    const t = makeTestApp({ now: new Date('2026-06-15T10:00:00.000Z') });
+    await t.repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: KICKOFF }));
+    const token = await loginToken(t.app, 'Sam', '1234');
+
+    const put = await request(t.app)
+      .put('/api/predictions/m1')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ home: 1, away: 1, penWinner: 'HOME' });
+    expect(put.status).toBe(200);
+    expect(put.body.penWinner).toBe('HOME');
+
+    const mine = await request(t.app).get('/api/predictions/me').set('Authorization', `Bearer ${token}`);
+    expect(mine.body[0].penWinner).toBe('HOME');
+  });
+
   it('rejects an out-of-range score', async () => {
     const t = makeTestApp({ now: new Date('2026-06-15T10:00:00.000Z') });
     await t.repos.matches.upsert(sampleMatch({ id: 'm1', kickoff: KICKOFF }));
