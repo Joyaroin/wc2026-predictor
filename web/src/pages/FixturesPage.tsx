@@ -74,14 +74,15 @@ export function FixturesPage() {
 
   const save = useMutation({
     mutationFn: ({ matchId, home, away }: { matchId: string; home: number; away: number }) =>
-      api.upsertPrediction(matchId, { home, away }),
+      // A non-draw scoreline can't go to pens — clear any stale penalty-winner pick.
+      api.upsertPrediction(matchId, { home, away, ...(home !== away ? { penWinner: null } : {}) }),
     onMutate: async ({ matchId, home, away }) => {
       await qc.cancelQueries({ queryKey: [...PREDS] });
       const now = new Date().toISOString();
       const prev = patchPreds(qc, (old) => {
         const ex = old.find((p) => p.matchId === matchId);
         const next: Prediction = ex
-          ? { ...ex, home, away, updatedAt: now }
+          ? { ...ex, home, away, ...(home !== away ? { penWinner: null } : {}), updatedAt: now }
           : { playerId: 'me', matchId, home, away, points: 0, joker: false, createdAt: now, updatedAt: now };
         return [...old.filter((p) => p.matchId !== matchId), next];
       });
@@ -162,6 +163,18 @@ export function FixturesPage() {
       const prev = patchPreds(qc, (old) =>
         old.map((p) => (p.matchId === matchId ? { ...p, firstScorerId: scorerId, firstScorerName: scorerName } : p)),
       );
+      return { prev };
+    },
+    ...common,
+  });
+
+  // Knockout draw only: which team wins the shootout (+5).
+  const penWinner = useMutation({
+    mutationFn: ({ matchId, home, away, side }: { matchId: string; home: number; away: number; side: 'HOME' | 'AWAY' | null }) =>
+      api.upsertPrediction(matchId, { home, away, penWinner: side }),
+    onMutate: async ({ matchId, side }) => {
+      await qc.cancelQueries({ queryKey: [...PREDS] });
+      const prev = patchPreds(qc, (old) => old.map((p) => (p.matchId === matchId ? { ...p, penWinner: side } : p)));
       return { prev };
     },
     ...common,
@@ -287,6 +300,10 @@ export function FixturesPage() {
                         onFirstScorer={(matchId, scorerId, scorerName) => {
                           const p = predByMatch.get(matchId);
                           if (p) firstScorer.mutate({ matchId, home: p.home, away: p.away, scorerId, scorerName });
+                        }}
+                        onPenWinner={(matchId, side) => {
+                          const p = predByMatch.get(matchId);
+                          if (p) penWinner.mutate({ matchId, home: p.home, away: p.away, side });
                         }}
                         onStatPick={(matchId, home, away, ft) => statPick.mutate({ matchId, home, away, firstTeam: ft })}
                       />

@@ -6,9 +6,11 @@ import {
   effectivePoints,
   scoreBreakdown,
   firstGoalPoints,
+  penaltyWinnerPoints,
   SCORE_POINTS,
   FIRST_TEAM_POINTS,
   FIRST_PLAYER_POINTS,
+  PEN_WINNER_POINTS,
   type Prediction,
 } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
@@ -31,12 +33,13 @@ interface Props {
   onJoker: (matchId: string, joker: boolean) => void;
   onFirstTeam: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onFirstScorer: (matchId: string, scorerId: string | null, scorerName: string | null) => void;
+  onPenWinner: (matchId: string, side: 'HOME' | 'AWAY' | null) => void;
   onStatPick: (matchId: string, home: number, away: number, firstTeam: 'HOME' | 'AWAY') => void;
   squad: { id: string; name: string; position: string; team: string }[];
   saving: boolean;
 }
 
-export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirstTeam, onFirstScorer, onStatPick, squad, saving }: Props) {
+export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirstTeam, onFirstScorer, onPenWinner, onStatPick, squad, saving }: Props) {
   const { timeZone } = usePrefs();
   const state = matchState(match);
   const [home, setHome] = useState<string>(prediction ? String(prediction.home) : '');
@@ -116,10 +119,17 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   const pickedTeamCode = prediction?.firstTeam === 'HOME' ? match.homeCode : match.awayCode;
   const pickedTeamName = prediction?.firstTeam === 'HOME' ? match.homeTeam : match.awayTeam;
 
+  // Penalty-shootout winner (knockout draw predictions): +5 if called right.
+  const isKnockout = match.stage !== 'GROUP_STAGE';
+  const penPts = actualScore && prediction ? penaltyWinnerPoints(prediction, match) : 0;
+  const wentToPens = isKnockout && finished && !!actualScore && actualScore.home === actualScore.away && (match.winner === 'HOME' || match.winner === 'AWAY');
+  const penCode = prediction?.penWinner === 'HOME' ? match.homeCode : match.awayCode;
+  const penName = prediction?.penWinner === 'HOME' ? match.homeTeam : match.awayTeam;
+
   // Points bubble: persisted points once played; provisional "as it stands" points while live.
   const scored = state === 'Played' && !!prediction;
   const livePts = live && prediction && bd
-    ? effectivePoints({ points: bd.points + (fg ? fg.firstTeam + fg.firstPlayer : 0), joker: prediction.joker })
+    ? effectivePoints({ points: bd.points + (fg ? fg.firstTeam + fg.firstPlayer : 0) + penPts, joker: prediction.joker })
     : null;
   const shownPts = useCountUp(scored && prediction ? effectivePoints(prediction) : livePts ?? 0, scored || livePts !== null);
   const ptsText = scored || livePts !== null ? `+${shownPts} pts` : '- pts';
@@ -261,6 +271,11 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
                 firstGoalKnown ? firstScorerHit : undefined,
                 FIRST_PLAYER_POINTS,
               )}
+              {wentToPens && prediction.penWinner && rcptRow(
+                <>Wins on pens: <Flag code={penCode} name={penName} /></>,
+                penPts > 0,
+                PEN_WINNER_POINTS,
+              )}
               {prediction.joker && (
                 <div className="rcpt-row rcpt-joker" style={{ animationDelay: `${rcptIdx * 70}ms` }}>
                   <span className="rcpt-label">★ Joker</span>
@@ -270,13 +285,14 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               )}
             </div>
           ) : (
-            (prediction.firstTeam || prediction.firstScorerName || prediction.joker) ? (
+            (prediction.firstTeam || prediction.firstScorerName || prediction.joker || prediction.penWinner) ? (
               <div className="mc-receipt" data-testid={`locked-picks-${match.id}`}>
                 <div className="mc-divider" />
                 <div className="mc-yourpicks muted fine">
                   Locked in:
                   {prediction.firstTeam && <> 1st to score <Flag code={pickedTeamCode} name={pickedTeamName} /></>}
                   {prediction.firstScorerName && <> · ⚽ {prediction.firstScorerName}</>}
+                  {prediction.penWinner && <> · PK <Flag code={penCode} name={penName} /></>}
                   {prediction.joker && <> · ★ Joker ×2</>}
                 </div>
               </div>
@@ -425,6 +441,35 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
                   </>
                 )}
               </div>
+            )}
+
+            {isKnockout && prediction && prediction.home === prediction.away && (
+              <>
+                <div className="mc-divider" />
+                <div className="bonus-title">Wins on penalties (+5)</div>
+                <div className="firstteam-row">
+                  <button
+                    type="button"
+                    className={prediction.penWinner === 'HOME' ? 'firstteam on' : 'firstteam'}
+                    disabled={saving}
+                    title={match.homeTeam}
+                    onClick={() => onPenWinner(match.id, prediction.penWinner === 'HOME' ? null : 'HOME')}
+                    data-testid={`pen-home-${match.id}`}
+                  >
+                    <Flag code={match.homeCode} name={match.homeTeam} big />
+                  </button>
+                  <button
+                    type="button"
+                    className={prediction.penWinner === 'AWAY' ? 'firstteam on' : 'firstteam'}
+                    disabled={saving}
+                    title={match.awayTeam}
+                    onClick={() => onPenWinner(match.id, prediction.penWinner === 'AWAY' ? null : 'AWAY')}
+                    data-testid={`pen-away-${match.id}`}
+                  >
+                    <Flag code={match.awayCode} name={match.awayTeam} big />
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
