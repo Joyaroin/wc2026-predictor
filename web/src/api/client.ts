@@ -29,6 +29,7 @@ export interface PointsBreakdown {
   away: boolean;
   firstTeam: { picked: 'HOME' | 'AWAY'; hit: boolean | null } | null;
   firstScorer: { name: string | null; hit: boolean | null } | null;
+  penWinner: { picked: 'HOME' | 'AWAY'; hit: boolean | null } | null;
   joker: boolean;
 }
 export interface BreakdownRow {
@@ -224,7 +225,7 @@ export const api = {
   myPredictions: () => req<Prediction[]>('/predictions/me'),
   upsertPrediction: (
     matchId: string,
-    body: { home: number; away: number; firstTeam?: 'HOME' | 'AWAY' | null; firstScorerId?: string | null; firstScorerName?: string | null },
+    body: { home: number; away: number; firstTeam?: 'HOME' | 'AWAY' | null; firstScorerId?: string | null; firstScorerName?: string | null; penWinner?: 'HOME' | 'AWAY' | null },
   ) => req<Prediction>(`/predictions/${matchId}`, { method: 'PUT', body }),
   setJoker: (matchId: string, joker: boolean) =>
     req<Prediction>(`/predictions/${matchId}/joker`, { method: 'PUT', body: { joker } }),
