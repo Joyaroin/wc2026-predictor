@@ -1,6 +1,6 @@
 // Example-based tests for the additive scoreline scoring.
 import { describe, it, expect } from 'vitest';
-import { computePoints, scoreBreakdown, outcomeOf, compareStandings } from '../src/scoring';
+import { computePoints, scoreBreakdown, outcomeOf, compareStandings, penaltyWinnerPoints, PEN_WINNER_POINTS } from '../src/scoring';
 import type { StandingAgg } from '../src/types';
 
 describe('computePoints — additive scoreline', () => {
@@ -56,5 +56,31 @@ describe('compareStandings — tie-break order', () => {
   });
   it('final fallback is alphabetical by name (case-insensitive)', () => {
     expect(compareStandings({ ...base, name: 'amir' }, { ...base, name: 'Bella' })).toBeLessThan(0);
+  });
+});
+
+describe('penaltyWinnerPoints', () => {
+  const ko = { stage: 'LAST_16' as const, homeScore: 1, awayScore: 1, winner: 'HOME' as const };
+  it('+5 when draw predicted and shootout winner correct (any draw scoreline)', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: 'HOME' }, ko)).toBe(PEN_WINNER_POINTS);
+    expect(penaltyWinnerPoints({ home: 0, away: 0, penWinner: 'HOME' }, ko)).toBe(5);
+  });
+  it('0 when shootout winner wrong', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: 'AWAY' }, ko)).toBe(0);
+  });
+  it('0 when no pen winner picked', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: null }, ko)).toBe(0);
+  });
+  it('0 when a decisive result was predicted (the 2-0-but-pens case)', () => {
+    expect(penaltyWinnerPoints({ home: 2, away: 0, penWinner: 'HOME' }, ko)).toBe(0);
+  });
+  it('0 when the match did not go to pens (decisive result)', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: 'HOME' }, { stage: 'FINAL', homeScore: 2, awayScore: 1, winner: 'HOME' })).toBe(0);
+  });
+  it('0 for group stage even on a level scoreline', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: 'HOME' }, { stage: 'GROUP_STAGE', homeScore: 1, awayScore: 1, winner: 'DRAW' })).toBe(0);
+  });
+  it('0 when winner not yet decided', () => {
+    expect(penaltyWinnerPoints({ home: 1, away: 1, penWinner: 'HOME' }, { stage: 'LAST_16', homeScore: null, awayScore: null, winner: null })).toBe(0);
   });
 });
