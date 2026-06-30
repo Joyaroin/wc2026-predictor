@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute } from '../src/lib/format';
+import { matchState, pointsLabel, stageLabel, formatKickoff, liveMinute, pensLabel } from '../src/lib/format';
 
 describe('matchState', () => {
   it('Played when finished with a score', () => {
@@ -64,5 +64,18 @@ describe('stageLabel', () => {
     expect(stageLabel('GROUP_STAGE', 'C')).toBe('Group C');
     expect(stageLabel('LAST_32', null)).toBe('Round of 32');
     expect(stageLabel('FINAL', null)).toBe('Final');
+  });
+});
+
+describe('pensLabel', () => {
+  it('formats the shootout score with the winning team code', () => {
+    expect(pensLabel({ penaltyHome: 3, penaltyAway: 4, winner: 'AWAY', homeCode: 'NED', awayCode: 'MAR' })).toBe('pens 3–4 MAR');
+    expect(pensLabel({ penaltyHome: 5, penaltyAway: 4, winner: 'HOME', homeCode: 'GER', awayCode: 'PAR' })).toBe('pens 5–4 GER');
+  });
+  it('null when there is no shootout', () => {
+    expect(pensLabel({ penaltyHome: null, penaltyAway: null, winner: 'HOME', homeCode: 'NED', awayCode: 'MAR' })).toBeNull();
+  });
+  it('falls back to Home/Away when a code is missing', () => {
+    expect(pensLabel({ penaltyHome: 3, penaltyAway: 4, winner: 'AWAY', homeCode: 'NED', awayCode: null })).toBe('pens 3–4 Away');
   });
 });

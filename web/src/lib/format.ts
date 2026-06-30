@@ -69,3 +69,16 @@ export function stageLabel(stage: Match['stage'], groupName: string | null): str
   };
   return labels[stage];
 }
+
+/** Terse shootout result line, e.g. "pens 3–4 MAR" — null unless the match went to pens. */
+export function pensLabel(m: {
+  penaltyHome?: number | null;
+  penaltyAway?: number | null;
+  winner?: Match['winner'];
+  homeCode: string | null;
+  awayCode: string | null;
+}): string | null {
+  if (m.penaltyHome == null || m.penaltyAway == null) return null;
+  const code = m.winner === 'HOME' ? (m.homeCode ?? 'Home') : (m.awayCode ?? 'Away');
+  return `pens ${m.penaltyHome}–${m.penaltyAway} ${code}`;
+}
