@@ -94,6 +94,8 @@ export function mapToDomain(pm: ProviderMatch): Match {
     homeScore: resultScore(pm.score, 'home'),
     awayScore: resultScore(pm.score, 'away'),
     winner: (pm.score?.winner && WINNER[pm.score.winner]) || null,
+    penaltyHome: pm.score?.duration === 'PENALTY_SHOOTOUT' ? (pm.score.penalties?.home ?? null) : null,
+    penaltyAway: pm.score?.duration === 'PENALTY_SHOOTOUT' ? (pm.score.penalties?.away ?? null) : null,
     placeholder,
   };
 }

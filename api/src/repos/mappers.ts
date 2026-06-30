@@ -97,6 +97,8 @@ export function matchFromItem(item: Item): Match {
     homeScore: (item.homeScore ?? null) as number | null,
     awayScore: (item.awayScore ?? null) as number | null,
     winner: (item.winner ?? null) as Match['winner'],
+    penaltyHome: (item.penaltyHome ?? null) as number | null,
+    penaltyAway: (item.penaltyAway ?? null) as number | null,
     firstGoalTeam: (item.firstGoalTeam ?? null) as Match['firstGoalTeam'],
     firstScorerId: (item.firstScorerId ?? null) as string | null,
     firstScorerName: (item.firstScorerName ?? null) as string | null,

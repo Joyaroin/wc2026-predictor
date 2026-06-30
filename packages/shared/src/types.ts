@@ -67,6 +67,9 @@ export interface Match {
   awayScore: number | null;
   /** Who advanced/won (knockouts) — includes penalty-shootout outcomes. Null until decided. */
   winner?: Outcome | null;
+  /** Penalty-shootout score (home–away); only set for knockout matches decided by pens. */
+  penaltyHome?: number | null;
+  penaltyAway?: number | null;
   /** First team to score (from ESPN); 'NONE' for a 0-0. Null until ingested. */
   firstGoalTeam?: BracketSide | 'NONE' | null;
   /** First goalscorer (ESPN athlete id + name). Null until ingested. */

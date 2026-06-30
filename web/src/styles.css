@@ -175,6 +175,8 @@ input.mc-box:focus:not(:focus-visible) { outline: none; }
 .mc-dash { color: var(--muted); font-weight: 600; }
 .mc-result { text-align: center; font-size: var(--text-sm); }
 .mc-result.live { color: var(--danger); font-weight: 600; }
+.mc-pens { color: var(--muted); font-weight: 600; font-size: var(--text-sm); }
+.mm-pens { text-align: center; margin-top: 4px; }
 .mc-min { font-weight: 700; font-variant-numeric: tabular-nums; }
 .points { color: var(--accent2); font-weight: 600; }
 

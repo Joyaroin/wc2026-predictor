@@ -41,6 +41,8 @@ const arbMatch = fc.record({
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
   winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW'), { nil: null }),
+  penaltyHome: fc.option(arbGoal, { nil: null }),
+  penaltyAway: fc.option(arbGoal, { nil: null }),
   placeholder: fc.boolean(),
 });
 
