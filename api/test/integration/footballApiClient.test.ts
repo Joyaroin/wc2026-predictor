@@ -34,6 +34,8 @@ describe('mapToDomain', () => {
       homeScore: 2,
       awayScore: 1,
       winner: null,
+      penaltyHome: null,
+      penaltyAway: null,
       placeholder: false,
     });
   });
@@ -96,6 +98,43 @@ describe('mapToDomain', () => {
     const m = mapToDomain(pm);
     expect(m.homeScore).toBe(2);
     expect(m.awayScore).toBe(2);
+  });
+
+  it('captures the shootout score (penaltyHome/penaltyAway)', () => {
+    const pm: ProviderMatch = {
+      id: 54,
+      stage: 'LAST_32',
+      utcDate: '2026-07-01T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Netherlands' },
+      awayTeam: { name: 'Morocco' },
+      score: {
+        winner: 'AWAY_TEAM',
+        duration: 'PENALTY_SHOOTOUT',
+        fullTime: { home: 3, away: 4 },
+        regularTime: { home: 1, away: 1 },
+        extraTime: { home: 0, away: 0 },
+        penalties: { home: 2, away: 3 },
+      },
+    };
+    const m = mapToDomain(pm);
+    expect(m.penaltyHome).toBe(2);
+    expect(m.penaltyAway).toBe(3);
+  });
+
+  it('leaves penalties null for a normal match', () => {
+    const pm: ProviderMatch = {
+      id: 55,
+      stage: 'GROUP_STAGE',
+      utcDate: '2026-06-15T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Brazil' },
+      awayTeam: { name: 'Chile' },
+      score: { fullTime: { home: 2, away: 0 } },
+    };
+    const m = mapToDomain(pm);
+    expect(m.penaltyHome).toBeNull();
+    expect(m.penaltyAway).toBeNull();
   });
 
   it('leaves an extra-time (non-shootout) result on fullTime', () => {

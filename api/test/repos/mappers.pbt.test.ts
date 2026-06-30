@@ -53,6 +53,8 @@ const arbMatch = fc.record({
   homeScore: fc.option(arbGoal, { nil: null }),
   awayScore: fc.option(arbGoal, { nil: null }),
   winner: fc.option(fc.constantFrom('HOME', 'AWAY', 'DRAW') as fc.Arbitrary<'HOME' | 'AWAY' | 'DRAW'>, { nil: null }),
+  penaltyHome: fc.option(arbGoal, { nil: null }),
+  penaltyAway: fc.option(arbGoal, { nil: null }),
   firstGoalTeam: fc.option(fc.constantFrom('HOME', 'AWAY', 'NONE') as fc.Arbitrary<'HOME' | 'AWAY' | 'NONE'>, { nil: null }),
   firstScorerId: fc.option(fc.string({ maxLength: 12 }), { nil: null }),
   firstScorerName: fc.option(fc.string({ maxLength: 20 }), { nil: null }),
