@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { pointsLabel } from '../lib/format';
+import { pointsLabel, pensLabel } from '../lib/format';
 import { Flag } from '../components/Flag';
 import { resultsRefetchInterval } from '../lib/liveRefetch';
 
@@ -36,6 +36,7 @@ export function MatchPredictionsPage() {
           <span className="mp-team"><Flag code={match.awayCode} name={match.awayTeam} /> {match.awayCode ?? match.awayTeam}</span>
         </div>
       )}
+      {match && pensLabel(match) && <div className="mp-pens muted fine" style={{ textAlign: 'center' }}>{pensLabel(match)}</div>}
       <h2>Who picked what</h2>
 
       <div className="chat-tabs" role="tablist">

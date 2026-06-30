@@ -15,7 +15,7 @@ import {
 } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, formatKickoff, stageLabel, liveMinute } from '../lib/format';
+import { matchState, formatKickoff, stageLabel, liveMinute, pensLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
@@ -248,6 +248,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         {state === 'Played' && (
           <div className="mc-result" data-testid={`ft-${match.id}`}>
             FT <strong>{match.homeScore}–{match.awayScore}</strong>
+            {pensLabel(match) && <span className="mc-pens"> · {pensLabel(match)}</span>}
           </div>
         )}
         {match.placeholder && <div className="mc-result muted">Teams not decided yet</div>}
@@ -521,6 +522,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               </h3>
               <button className="modal-close" onClick={() => setStatsOpen(false)} aria-label="Close">✕</button>
             </div>
+            {pensLabel(match) && <div className="mm-pens muted fine" data-testid={`mm-pens-${match.id}`}>{pensLabel(match)}</div>}
             <MatchStatsPanel match={match} />
           </div>
         </div>,
