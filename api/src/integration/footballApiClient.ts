@@ -18,7 +18,37 @@ export interface ProviderMatch {
   minute?: number | null;
   homeTeam?: ProviderTeam;
   awayTeam?: ProviderTeam;
-  score?: { winner?: string | null; fullTime?: { home: number | null; away: number | null } };
+  score?: {
+    winner?: string | null;
+    /** REGULAR | EXTRA_TIME | PENALTY_SHOOTOUT — how the match was decided. */
+    duration?: string | null;
+    /** Running/final score. NOTE: for a PENALTY_SHOOTOUT this INCLUDES the shootout goals. */
+    fullTime?: { home: number | null; away: number | null };
+    /** Score after 90 minutes (present for extra-time / shootout matches). */
+    regularTime?: { home: number | null; away: number | null };
+    /** Goals scored in extra time only. */
+    extraTime?: { home: number | null; away: number | null };
+    /** Penalty-shootout goals only. */
+    penalties?: { home: number | null; away: number | null };
+  };
+}
+
+type Side = 'home' | 'away';
+
+/**
+ * The result that counts for predictions. For a penalty shootout, football-data.org folds the
+ * shootout into `fullTime`, so we use the end-of-normal/extra-time score instead (a draw) — the
+ * shootout winner is carried separately on `score.winner`. Every other match uses `fullTime`.
+ * See https://docs.football-data.org/general/v4/overtime.html
+ */
+function resultScore(s: ProviderMatch['score'], side: Side): number | null {
+  if (!s) return null;
+  if (s.duration === 'PENALTY_SHOOTOUT') {
+    if (s.regularTime?.[side] != null) return (s.regularTime[side] ?? 0) + (s.extraTime?.[side] ?? 0);
+    // Fallback if the breakdown is missing: strip the shootout off the cumulative total.
+    if (s.fullTime?.[side] != null && s.penalties?.[side] != null) return (s.fullTime[side] ?? 0) - (s.penalties[side] ?? 0);
+  }
+  return s.fullTime?.[side] ?? null;
 }
 
 const WINNER: Record<string, 'HOME' | 'AWAY' | 'DRAW'> = {
@@ -61,8 +91,8 @@ export function mapToDomain(pm: ProviderMatch): Match {
     kickoff: pm.utcDate,
     status: (pm.status && STATUSES[pm.status]) || 'SCHEDULED',
     minute: typeof pm.minute === 'number' ? pm.minute : null,
-    homeScore: pm.score?.fullTime?.home ?? null,
-    awayScore: pm.score?.fullTime?.away ?? null,
+    homeScore: resultScore(pm.score, 'home'),
+    awayScore: resultScore(pm.score, 'away'),
     winner: (pm.score?.winner && WINNER[pm.score.winner]) || null,
     placeholder,
   };
