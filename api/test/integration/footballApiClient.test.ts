@@ -51,6 +51,68 @@ describe('mapToDomain', () => {
     expect(mapToDomain(pm).winner).toBe('HOME');
   });
 
+  it('uses the pre-penalty score (regularTime + extraTime), not fullTime, for a shootout', () => {
+    // football-data.org folds the shootout into score.fullTime for PENALTY_SHOOTOUT matches;
+    // the real result is the end-of-normal/extra-time draw (regularTime + extraTime).
+    const pm: ProviderMatch = {
+      id: 51,
+      stage: 'LAST_32',
+      utcDate: '2026-07-01T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Netherlands' },
+      awayTeam: { name: 'Morocco' },
+      score: {
+        winner: 'AWAY_TEAM',
+        duration: 'PENALTY_SHOOTOUT',
+        fullTime: { home: 3, away: 4 }, // 1-1 plus a 2-3 shootout
+        regularTime: { home: 1, away: 1 },
+        extraTime: { home: 0, away: 0 },
+        penalties: { home: 2, away: 3 },
+      },
+    };
+    const m = mapToDomain(pm);
+    expect(m.homeScore).toBe(1);
+    expect(m.awayScore).toBe(1);
+    expect(m.winner).toBe('AWAY');
+  });
+
+  it('adds extra-time goals into the pre-penalty score for a shootout', () => {
+    const pm: ProviderMatch = {
+      id: 52,
+      stage: 'QUARTER_FINALS',
+      utcDate: '2026-07-04T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Germany' },
+      awayTeam: { name: 'Paraguay' },
+      score: {
+        winner: 'AWAY_TEAM',
+        duration: 'PENALTY_SHOOTOUT',
+        fullTime: { home: 4, away: 5 }, // 2-2 (1-1 + 1-1 ET) plus a 2-3 shootout
+        regularTime: { home: 1, away: 1 },
+        extraTime: { home: 1, away: 1 },
+        penalties: { home: 2, away: 3 },
+      },
+    };
+    const m = mapToDomain(pm);
+    expect(m.homeScore).toBe(2);
+    expect(m.awayScore).toBe(2);
+  });
+
+  it('leaves an extra-time (non-shootout) result on fullTime', () => {
+    const pm: ProviderMatch = {
+      id: 53,
+      stage: 'SEMI_FINALS',
+      utcDate: '2026-07-08T18:00:00Z',
+      status: 'FINISHED',
+      homeTeam: { name: 'Spain' },
+      awayTeam: { name: 'France' },
+      score: { winner: 'HOME_TEAM', duration: 'EXTRA_TIME', fullTime: { home: 2, away: 1 } },
+    };
+    const m = mapToDomain(pm);
+    expect(m.homeScore).toBe(2);
+    expect(m.awayScore).toBe(1);
+  });
+
   it('maps the live minute when the provider sends one', () => {
     const pm: ProviderMatch = {
       id: 13,
