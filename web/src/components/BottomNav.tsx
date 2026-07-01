@@ -7,7 +7,7 @@ import { useGlobalChatUnread } from '../lib/useGlobalChatUnread';
 /** Primary destinations for the thumb zone. Mobile only (hidden ≥761px via CSS). */
 const TABS = [
   { to: '/fixtures', label: 'Predict', icon: 'M4 6h16M4 12h16M4 18h10' },
-  { to: '/standings', label: 'Standings', icon: 'M3 21h18M6 21V11M12 21V5M18 21v-7' },
+  { to: '/bracket', label: 'Bracket', icon: 'M6 4v6h5v4H6v6M18 4v6h-5M18 20v-6M11 12h7' },
   { to: '/groups', label: 'Groups', icon: 'M17 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM22 20v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11' },
   { to: '/me', label: 'Me', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
 ] as const;

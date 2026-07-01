@@ -19,6 +19,7 @@ const MatchPredictionsPage = lazy(() => import('./pages/MatchPredictionsPage').t
 const MyBreakdownPage = lazy(() => import('./pages/MyBreakdownPage').then((m) => ({ default: m.MyBreakdownPage })));
 const AwardsPage = lazy(() => import('./pages/AwardsPage').then((m) => ({ default: m.AwardsPage })));
 const StandingsPage = lazy(() => import('./pages/StandingsPage').then((m) => ({ default: m.StandingsPage })));
+const BracketPage = lazy(() => import('./pages/BracketPage').then((m) => ({ default: m.BracketPage })));
 const HelpPage = lazy(() => import('./pages/HelpPage').then((m) => ({ default: m.HelpPage })));
 const UpdatesPage = lazy(() => import('./pages/UpdatesPage').then((m) => ({ default: m.UpdatesPage })));
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage').then((m) => ({ default: m.FeedbackPage })));
@@ -51,7 +52,7 @@ export default function App() {
             <Route path="/standings" element={<RequireAuth><StandingsPage /></RequireAuth>} />
             {/* legacy paths → awards */}
             <Route path="/golden-boot" element={<Navigate to="/awards" replace />} />
-            <Route path="/bracket" element={<Navigate to="/awards" replace />} />
+            <Route path="/bracket" element={<RequireAuth><BracketPage /></RequireAuth>} />
             <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
             <Route path="/groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
             <Route path="/players/:pid" element={<RequireAuth><PlayerResultsPage /></RequireAuth>} />
