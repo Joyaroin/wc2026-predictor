@@ -177,6 +177,34 @@ input.mc-box:focus:not(:focus-visible) { outline: none; }
 .mc-result.live { color: var(--danger); font-weight: 600; }
 .mc-pens { color: var(--muted); font-weight: 600; font-size: var(--text-sm); }
 .mm-pens { text-align: center; margin-top: 4px; }
+
+/* Knockout bracket */
+.bracket { display: grid; gap: 10px; }
+.br-rounds { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.br-rounds::-webkit-scrollbar { display: none; }
+.br-chip { flex: none; background: var(--card); border: 1px solid var(--line); color: var(--muted); border-radius: var(--r-pill); padding: 6px 14px; font-weight: 700; font-size: var(--text-sm); }
+.br-chip.on { background: var(--accent2); color: var(--accent2-contrast); border-color: transparent; }
+.br-list { display: grid; gap: 8px; }
+.br-cols { display: none; }
+.br-match { position: relative; background: var(--grad-card); border: 1px solid var(--hairline); border-radius: var(--r); padding: 8px 10px; box-shadow: var(--top-hi); }
+.br-match.live { border-color: var(--danger); }
+.br-team { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: var(--muted); font-weight: 600; }
+.br-team.adv { color: var(--ink); }
+.br-team.adv .br-code { font-weight: 800; }
+.br-code { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.br-score { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.br-tbd { flex: 1; color: var(--muted); font-style: italic; }
+.br-pick { color: var(--accent2); font-weight: 900; }
+.br-pens { text-align: right; margin-top: 2px; }
+.br-hit { display: block; text-align: right; font-weight: 900; margin-top: 2px; }
+.br-hit.ok { color: var(--accent); }
+.br-hit.no { color: var(--danger); }
+.br-col-title { color: var(--accent2); font-weight: 700; font-size: var(--text-sm); margin-bottom: 8px; text-align: center; }
+@media (min-width: 761px) {
+  .br-rounds, .br-list { display: none; }
+  .br-cols { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 8px; }
+  .br-col { flex: none; min-width: 200px; display: grid; gap: 12px; align-content: center; }
+}
 .mc-min { font-weight: 700; font-variant-numeric: tabular-nums; }
 .points { color: var(--accent2); font-weight: 600; }
 
