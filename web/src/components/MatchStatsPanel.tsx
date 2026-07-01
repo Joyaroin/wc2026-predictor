@@ -168,17 +168,31 @@ export function MatchStatsPanel({ match }: { match: MatchView }) {
                   <span>{s.timeline.length} events</span>
                 </div>
                 <div className="ms-timeline">
-                  {s.timeline.slice().reverse().map((e, i) => (
-                    <div className="ms-ev" key={i}>
-                      <span className="ms-ev-home">
-                        {e.side === 'HOME' && <><span className="ms-ev-text">{e.text}</span><span className="ms-ev-icon">{evIcon(e.kind)}</span><Flag code={match.homeCode} name={match.homeTeam} /></>}
-                      </span>
-                      <span className="ms-ev-clock">{e.clock}</span>
-                      <span className="ms-ev-away">
-                        {e.side !== 'HOME' && <><Flag code={match.awayCode} name={match.awayTeam} /><span className="ms-ev-icon">{evIcon(e.kind)}</span><span className="ms-ev-text">{e.text}</span></>}
-                      </span>
-                    </div>
-                  ))}
+                  {s.timeline.slice().reverse().map((e, i) => {
+                    const home = e.side === 'HOME';
+                    const teamCode = home ? match.homeCode : match.awayCode;
+                    const teamName = home ? match.homeTeam : match.awayTeam;
+                    const icon = evIcon(e.kind);
+                    return (
+                      <div className="ms-ev" data-side={home ? 'home' : 'away'} key={i}>
+                        <span className="ms-ev-home">
+                          {home && <><span className="ms-ev-text">{e.text}</span><span className="ms-ev-icon">{icon}</span><Flag code={match.homeCode} name={match.homeTeam} /></>}
+                        </span>
+                        <span className="ms-ev-clock">{e.clock}</span>
+                        <span className="ms-ev-away">
+                          {!home && <><Flag code={match.awayCode} name={match.awayTeam} /><span className="ms-ev-icon">{icon}</span><span className="ms-ev-text">{e.text}</span></>}
+                        </span>
+                        <span className="ms-ev-mobile">
+                          <span className="ms-ev-team">
+                            <Flag code={teamCode} name={teamName} />
+                            <span>{teamCode ?? teamName}</span>
+                          </span>
+                          <span className="ms-ev-kind" aria-hidden>{icon}</span>
+                          <span className="ms-ev-copy">{e.text}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}

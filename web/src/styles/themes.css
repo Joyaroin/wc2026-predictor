@@ -1179,6 +1179,10 @@ a.mc-stats-toggle { text-decoration: none; }
   line-height: 1.25;
 }
 
+.ms-ev-mobile {
+  display: none;
+}
+
 .ms-stats {
   gap: 10px;
 }
@@ -1738,60 +1742,181 @@ a.mc-stats-toggle { text-decoration: none; }
   }
 
   .ms-section {
-    padding: 9px;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 16px;
   }
 
   .match-modal .ms-timeline {
-    gap: 10px;
-    max-height: min(360px, 52dvh);
+    gap: 0;
+    max-height: min(430px, 58dvh);
     overflow-y: auto;
-    padding-right: 2px;
+    padding: 2px 1px;
   }
 
   .ms-ev {
-    grid-template-columns: auto minmax(0, 1fr);
+    position: relative;
+    display: flex;
     align-items: flex-start;
-    gap: 8px 10px;
-    min-height: 0;
-    padding: 10px;
-    border-radius: 12px;
+    gap: 10px;
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
-  .ms-ev-home:empty,
-  .ms-ev-away:empty {
-    display: none;
+  .ms-ev + .ms-ev {
+    margin-top: 12px;
+    border-top: 0;
+  }
+
+  .ms-ev::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    bottom: -18px;
+    left: 24px;
+    width: 1px;
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--prism-line) 78%, transparent);
+  }
+
+  .ms-ev:last-child::before {
+    bottom: calc(100% - 28px);
   }
 
   .ms-ev-home,
   .ms-ev-away {
-    grid-column: 2;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 7px;
-  }
-
-  .ms-ev-home {
-    flex-direction: row-reverse;
+    display: none;
   }
 
   .ms-ev-clock {
-    grid-column: 1;
-    grid-row: 1;
-    min-width: 42px;
-    margin-top: 0;
-  }
-
-  .ms-ev-text {
+    z-index: 1;
+    flex: 0 0 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
-    line-height: 1.35;
+    min-height: 30px;
+    margin-top: 8px;
+    padding: 3px 7px;
+    border: 1px solid var(--prism-line);
+    border-radius: var(--r-pill);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--card) 88%, transparent), color-mix(in srgb, var(--surface-2) 74%, transparent));
+    box-shadow: 0 8px 22px -18px rgba(0, 0, 0, 0.7), var(--top-hi);
+    font-size: var(--text-2xs);
+    font-weight: 850;
+    line-height: 1;
   }
 
-  .ms-ev-icon,
-  .ms-ev .flag {
-    margin-top: 2px;
+  .ms-ev-mobile {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 7px 9px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--prism-line);
+    border-radius: 14px;
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 46%),
+      color-mix(in srgb, var(--card) 56%, transparent);
+    box-shadow: 0 12px 34px -28px rgba(0, 0, 0, 0.8), var(--top-hi);
+  }
+
+  .ms-ev[data-side="away"] .ms-ev-mobile {
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--accent2) 7%, transparent), transparent 46%),
+      color-mix(in srgb, var(--card) 56%, transparent);
+  }
+
+  .ms-ev-team {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: var(--text-2xs);
+    font-weight: 850;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .ms-ev-team span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-ev-kind {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--prism-line));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    font-size: var(--text-sm);
+    line-height: 1;
+  }
+
+  .ms-ev[data-side="away"] .ms-ev-kind {
+    border-color: color-mix(in srgb, var(--accent2) 28%, var(--prism-line));
+    background: color-mix(in srgb, var(--accent2) 15%, transparent);
+  }
+
+  .ms-ev-copy {
+    min-width: 0;
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: 650;
+    line-height: 1.34;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-stats {
+    gap: 9px;
+  }
+
+  .ms-stat-row {
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--prism-line);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card) 48%, transparent);
+    box-shadow: var(--top-hi);
+  }
+
+  .ms-stat-vals {
+    display: grid;
+    grid-template-columns: minmax(36px, auto) minmax(0, 1fr) minmax(36px, auto);
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+  }
+
+  .ms-stat-vals span:first-child {
+    justify-self: start;
+  }
+
+  .ms-stat-vals span:last-child {
+    justify-self: end;
+  }
+
+  .ms-stat-vals .ms-stat-label {
+    min-width: 0;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  .ms-bar {
+    height: 8px;
   }
 
   .ms-watch {
