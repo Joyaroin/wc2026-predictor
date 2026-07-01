@@ -2,8 +2,8 @@ environment: prod
 image:
   registry: ghcr.io/joyaroin
   pullPolicy: Always
-  api: {repository: wc2026-api, tag: 7787f0ae7d952c914bc3fe3935d48aff094b98f3} # optionally pin a built SHA at promotion time
-  web: {repository: wc2026-web, tag: 7787f0ae7d952c914bc3fe3935d48aff094b98f3}
+  api: {repository: wc2026-api, tag: df3100944ff100d11737e267af561a32f9b8c47c} # optionally pin a built SHA at promotion time
+  web: {repository: wc2026-web, tag: df3100944ff100d11737e267af561a32f9b8c47c}
 api:
   replicas: 1 # single small node — keep modest; bump with a larger instance
   env:
