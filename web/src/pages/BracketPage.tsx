@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Stage, Prediction } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
@@ -6,7 +6,10 @@ import { matchesRefetchInterval } from '../lib/liveRefetch';
 import { KO_ROUNDS, predictedAdvancer } from '../lib/bracket';
 import { BracketMatch } from '../components/BracketMatch';
 
-/** Knockout bracket: mobile = one round at a time (chips + list); desktop = rounds as columns. */
+// Rounds that feed the final from each side (outer → inner).
+const SIDE_ROUNDS: Stage[] = ['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS'];
+
+/** Two-sided knockout bracket: left half fans right, right half fans left, Final in the centre. */
 export function BracketPage() {
   const matches = useQuery({
     queryKey: ['matches'],
@@ -21,71 +24,65 @@ export function BracketPage() {
     return m;
   }, [predictions.data]);
 
-  const byRound = useMemo(() => {
+  const { left, right, center } = useMemo(() => {
     const ko = (matches.data ?? []).filter((m) => m.stage !== 'GROUP_STAGE');
-    const map = new Map<Stage, MatchView[]>();
-    for (const r of KO_ROUNDS) {
-      map.set(r.stage, ko.filter((m) => m.stage === r.stage).slice().sort((a, b) => a.kickoff.localeCompare(b.kickoff)));
-    }
-    return map;
+    // Bracket order ≈ fixture id order; first half of a round feeds the top/left semi, second the bottom/right.
+    const byStage = (s: Stage) => ko.filter((m) => m.stage === s).slice().sort((a, b) => Number(a.id) - Number(b.id));
+    const half = (arr: MatchView[], which: 'L' | 'R') => {
+      const n = Math.ceil(arr.length / 2);
+      return which === 'L' ? arr.slice(0, n) : arr.slice(n);
+    };
+    const leftCols = SIDE_ROUNDS.map((s) => ({ stage: s, matches: half(byStage(s), 'L') })).filter((c) => c.matches.length);
+    const rightCols = [...SIDE_ROUNDS].reverse().map((s) => ({ stage: s, matches: half(byStage(s), 'R') })).filter((c) => c.matches.length);
+    return { left: leftCols, right: rightCols, center: { final: byStage('FINAL'), third: byStage('THIRD_PLACE') } };
   }, [matches.data]);
 
-  const rounds = KO_ROUNDS.filter((r) => (byRound.get(r.stage)?.length ?? 0) > 0);
-
-  // Default to the earliest round that still has an unfinished match; else the last round.
-  const defaultStage = useMemo<Stage | undefined>(() => {
-    for (const r of rounds) {
-      if ((byRound.get(r.stage) ?? []).some((m) => m.status !== 'FINISHED')) return r.stage;
-    }
-    return rounds[rounds.length - 1]?.stage;
-  }, [rounds, byRound]);
-
-  const [sel, setSel] = useState<Stage | null>(null);
-  const active = sel ?? defaultStage;
+  const scRef = useRef<HTMLDivElement>(null);
+  // Start scrolled to the centre (the final) — the business end — then let the user swipe outward.
+  useEffect(() => {
+    const el = scRef.current;
+    if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+  }, [left.length, right.length]);
 
   const render = (m: MatchView) => (
     <BracketMatch key={m.id} match={m} myAdvancer={predictedAdvancer(predByMatch.get(m.id))} />
   );
+  const short = (s: Stage) => KO_ROUNDS.find((r) => r.stage === s)?.short ?? s;
 
   if (matches.isLoading) return <div className="bracket"><h2>Knockout bracket</h2><p className="muted">Loading…</p></div>;
-  if (rounds.length === 0) {
-    return (
-      <div className="bracket">
-        <h2>Knockout bracket</h2>
-        <p className="muted">The bracket appears once the group stage is done and the knockouts are drawn.</p>
-      </div>
-    );
+  if (left.length === 0 && center.final.length === 0) {
+    return <div className="bracket"><h2>Knockout bracket</h2><p className="muted">The bracket appears once the knockouts are drawn.</p></div>;
   }
 
   return (
     <div className="bracket">
       <h2>Knockout bracket</h2>
-      <p className="muted fine">◦ marks who you predicted to advance; ✓/✗ shows if they did.</p>
+      <p className="muted fine">◦ = your pick to advance · ✓/✗ once decided · swipe to see both sides</p>
 
-      {/* Mobile: round chips + a single round's list */}
-      <div className="br-rounds" role="tablist" aria-label="Round">
-        {rounds.map((r) => (
-          <button
-            key={r.stage}
-            type="button"
-            role="tab"
-            aria-selected={active === r.stage}
-            className={`br-chip${active === r.stage ? ' on' : ''}`}
-            onClick={() => setSel(r.stage)}
-            data-testid={`br-round-${r.stage}`}
-          >
-            {r.short}
-          </button>
+      <div className="br2" ref={scRef}>
+        {left.map((c) => (
+          <div key={`L${c.stage}`} className="br2-col side">
+            <div className="br2-title">{short(c.stage)}</div>
+            <div className="br2-matches">{c.matches.map(render)}</div>
+          </div>
         ))}
-      </div>
-      <div className="br-list">{active && (byRound.get(active) ?? []).map(render)}</div>
 
-      {/* Desktop: every round as a column */}
-      <div className="br-cols">
-        {rounds.map((r) => (
-          <div key={r.stage} className="br-col">
-            <div className="br-col-title">{r.label}</div>
-            {(byRound.get(r.stage) ?? []).map(render)}
+        <div className="br2-col center">
+          <div className="br2-trophy" aria-hidden>🏆</div>
+          <div className="br2-title">Final</div>
+          {center.final.map(render)}
+          {center.third.length > 0 && (
+            <>
+              <div className="br2-title third">3rd place</div>
+              {center.third.map(render)}
+            </>
+          )}
+        </div>
+
+        {right.map((c) => (
+          <div key={`R${c.stage}`} className="br2-col side">
+            <div className="br2-title">{short(c.stage)}</div>
+            <div className="br2-matches">{c.matches.map(render)}</div>
           </div>
         ))}
       </div>

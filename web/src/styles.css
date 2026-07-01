@@ -180,12 +180,16 @@ input.mc-box:focus:not(:focus-visible) { outline: none; }
 
 /* Knockout bracket */
 .bracket { display: grid; gap: 10px; }
-.br-rounds { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-.br-rounds::-webkit-scrollbar { display: none; }
-.br-chip { flex: none; background: var(--card); border: 1px solid var(--line); color: var(--muted); border-radius: var(--r-pill); padding: 6px 14px; font-weight: 700; font-size: var(--text-sm); }
-.br-chip.on { background: var(--accent2); color: var(--accent2-contrast); border-color: transparent; }
-.br-list { display: grid; gap: 8px; }
-.br-cols { display: none; }
+/* Two-sided bracket: horizontally swipeable; columns space their matches so later rounds
+   centre between their feeders (flexbox bracket), forming the fan toward the centre Final. */
+.br2 { display: flex; align-items: stretch; gap: 4px; overflow-x: auto; padding: 8px 2px 14px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.br2-col { flex: none; display: flex; flex-direction: column; min-width: 138px; padding: 0 3px; }
+.br2-col.side .br2-matches { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 8px; }
+.br2-col.center { justify-content: center; min-width: 156px; gap: 8px; }
+.br2-title { text-align: center; color: var(--muted); font-weight: 700; font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.br2-title.third { margin-top: 16px; }
+.br2-trophy { text-align: center; font-size: 26px; line-height: 1; }
+@media (min-width: 761px) { .br2-col { min-width: 168px; } }
 .br-match { position: relative; background: var(--grad-card); border: 1px solid var(--hairline); border-radius: var(--r); padding: 8px 10px; box-shadow: var(--top-hi); }
 .br-match.live { border-color: var(--danger); }
 .br-team { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: var(--muted); font-weight: 600; }
@@ -199,12 +203,6 @@ input.mc-box:focus:not(:focus-visible) { outline: none; }
 .br-hit { display: block; text-align: right; font-weight: 900; margin-top: 2px; }
 .br-hit.ok { color: var(--accent); }
 .br-hit.no { color: var(--danger); }
-.br-col-title { color: var(--accent2); font-weight: 700; font-size: var(--text-sm); margin-bottom: 8px; text-align: center; }
-@media (min-width: 761px) {
-  .br-rounds, .br-list { display: none; }
-  .br-cols { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 8px; }
-  .br-col { flex: none; min-width: 200px; display: grid; gap: 12px; align-content: center; }
-}
 .mc-min { font-weight: 700; font-variant-numeric: tabular-nums; }
 .points { color: var(--accent2); font-weight: 600; }
 
