@@ -49,84 +49,24 @@ export function GroupsPage() {
 
   return (
     <div className="groups-page">
-      <div className="gp-globals">
-        <Link to="/global" className="group-card global-card" data-testid="global-card">
-          <div className="gc-top">
-            <span className="gc-name">🌍 Global leaderboard</span>
-            <span className="gc-members muted fine">{global.data ? `${global.data.total} players` : '…'}</span>
-          </div>
-          <div className="gc-stats">
-            {global.data?.me ? (
-              <span className="gc-rank"><span className="gc-medal">{medal(global.data.me.rank)}</span> {ordinal(global.data.me.rank)} · <strong>{global.data.me.points}</strong> pts</span>
-            ) : (
-              <span className="muted fine">Everyone playing, ranked</span>
-            )}
-            {global.data?.top?.[0] && global.data.top[0].playerId !== player?.playerId && (
-              <span className="gc-leader muted fine">👑 {global.data.top[0].name} · {global.data.top[0].points}</span>
-            )}
-          </div>
-        </Link>
-
-        <Link to="/chat" className="group-card global-card" data-testid="global-chat-card">
-          <div className="gc-top">
-            <span className="gc-name">💬 Global chat{chatUnread && <span className="menu-dot inline" data-testid="global-chat-unread" aria-label="unread messages" />}</span>
-          </div>
-          <div className="gc-stats">
-            <span className="muted fine">{chatUnread ? 'New messages — tap to read →' : 'Talk to everyone playing →'}</span>
-          </div>
-        </Link>
-      </div>
-
-      <h2>Your groups</h2>
-
-      {groups.isLoading && <p>Loading…</p>}
-
-      {!groups.isLoading && groupList.length === 0 && (
-        <div className="group-empty">
-          <div className="ge-emoji" aria-hidden>🏆</div>
-          <h3>No groups yet</h3>
-          <p className="muted">Start a group and invite your mates — or join one with a code.</p>
+      <header className="groups-hero">
+        <div className="groups-hero-copy">
+          <span className="gp-kicker">Groups</span>
+          <h2>Groups</h2>
+          <p className="muted fine">{groupList.length} group{groupList.length === 1 ? '' : 's'} joined</p>
         </div>
-      )}
-
-      <div className="group-cards">
-        {groupList.map((g, i) => {
-          const board = boards[i]?.data as LeaderboardRow[] | undefined;
-          const me = board?.find((r) => r.playerId === player?.playerId);
-          const leader = board?.[0];
-          const names = board?.map((r) => r.name) ?? [];
-          return (
-            <Link to={`/groups/${g.id}`} className="group-card" key={g.id} data-testid={`group-${g.id}`}>
-              <div className="gc-top">
-                <span className="gc-name">{g.name}</span>
-                <span className="gc-members muted fine">{g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
-              </div>
-
-              {names.length > 0 && <AvatarStack names={names} />}
-
-              <div className="gc-stats">
-                {me ? (
-                  <span className="gc-rank"><span className="gc-medal">{medal(me.rank)}</span> {ordinal(me.rank)} · <strong>{me.points}</strong> pts</span>
-                ) : (
-                  <span className="muted fine">No points yet</span>
-                )}
-                {leader && leader.playerId !== player?.playerId && (
-                  <span className="gc-leader muted fine">👑 {leader.name} · {leader.points}</span>
-                )}
-                {leader && leader.playerId === player?.playerId && (
-                  <span className="gc-leader muted fine">👑 You're leading</span>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {error && <p className="error">{error}</p>}
+        {global.data?.me && (
+          <Link to="/global" className="groups-rank-chip">
+            <span>{ordinal(global.data.me.rank)}</span>
+            <strong>{global.data.me.points}</strong>
+            <small>pts</small>
+          </Link>
+        )}
+      </header>
 
       <div className="group-actions">
-        <button onClick={() => setMode(mode === 'create' ? null : 'create')} data-testid="show-create">+ New group</button>
-        <button className="ghost" onClick={() => setMode(mode === 'join' ? null : 'join')} data-testid="show-join">Join with code</button>
+        <button onClick={() => setMode(mode === 'create' ? null : 'create')} data-testid="show-create">New group</button>
+        <button className="ghost" onClick={() => setMode(mode === 'join' ? null : 'join')} data-testid="show-join">Join code</button>
       </div>
 
       {mode === 'create' && (
@@ -161,6 +101,108 @@ export function GroupsPage() {
           </div>
         </div>
       )}
+
+      {error && <p className="error">{error}</p>}
+
+      <div className="gp-globals">
+        <Link to="/global" className="group-card global-card gp-feature-card" data-testid="global-card">
+          <div className="gc-top">
+            <span className="gc-icon" aria-hidden>GL</span>
+            <span className="gc-name">Global leaderboard</span>
+            <span className="gc-members muted fine">{global.data ? `${global.data.total} players` : '…'}</span>
+          </div>
+          <div className="gc-stats">
+            {global.data?.me ? (
+              <span className="gc-rank"><span className="gc-medal">{medal(global.data.me.rank)}</span> {ordinal(global.data.me.rank)} <strong>{global.data.me.points}</strong> pts</span>
+            ) : (
+              <span className="muted fine">Everyone playing, ranked</span>
+            )}
+            {global.data?.top?.[0] && global.data.top[0].playerId !== player?.playerId && (
+              <span className="gc-leader muted fine">Leader {global.data.top[0].name} · {global.data.top[0].points}</span>
+            )}
+          </div>
+        </Link>
+
+        <Link to="/chat" className="group-card global-card gp-feature-card chat-card" data-testid="global-chat-card">
+          <div className="gc-top">
+            <span className="gc-icon" aria-hidden>CH</span>
+            <span className="gc-name">Global chat{chatUnread && <span className="menu-dot inline" data-testid="global-chat-unread" aria-label="unread messages" />}</span>
+          </div>
+          <div className="gc-stats">
+            <span className="muted fine">{chatUnread ? 'New messages' : 'Everyone playing'}</span>
+            <span className="gc-arrow" aria-hidden>›</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="group-section-head">
+        <h3>Your groups</h3>
+        <span className="muted fine">{groupList.length ? `${groupList.length} active` : 'None yet'}</span>
+      </div>
+
+      {groups.isLoading && <p>Loading…</p>}
+
+      {!groups.isLoading && groupList.length === 0 && (
+        <div className="group-empty">
+          <h3>No groups yet</h3>
+          <p className="muted">Start a group and invite your mates — or join one with a code.</p>
+        </div>
+      )}
+
+      <div className="group-cards">
+        {groupList.map((g, i) => {
+          const board = boards[i]?.data as LeaderboardRow[] | undefined;
+          const me = board?.find((r) => r.playerId === player?.playerId);
+          const leader = board?.[0];
+          const names = board?.map((r) => r.name) ?? [];
+          return (
+            <Link to={`/groups/${g.id}`} className="group-card" key={g.id} data-testid={`group-${g.id}`}>
+              <div className="gc-top">
+                <span className="gc-name">{g.name}</span>
+                <span className="gc-members muted fine">{g.memberCount} member{g.memberCount === 1 ? '' : 's'}</span>
+              </div>
+
+              <div className="gc-mid">
+                {names.length > 0 ? <AvatarStack names={names} /> : <span className="muted fine">Waiting for scores</span>}
+                <span className="gc-arrow" aria-hidden>›</span>
+              </div>
+
+              <div className="gc-metrics">
+                {me ? (
+                  <>
+                    <span>
+                      <small>Your rank</small>
+                      <strong><span className="gc-medal">{medal(me.rank)}</span> {ordinal(me.rank)}</strong>
+                    </span>
+                    <span>
+                      <small>Points</small>
+                      <strong>{me.points}</strong>
+                    </span>
+                  </>
+                ) : (
+                  <span>
+                    <small>Status</small>
+                    <strong>No points yet</strong>
+                  </span>
+                )}
+                {leader && leader.playerId !== player?.playerId && (
+                  <span>
+                    <small>Leader</small>
+                    <strong>{leader.name} · {leader.points}</strong>
+                  </span>
+                )}
+                {leader && leader.playerId === player?.playerId && (
+                  <span>
+                    <small>Leader</small>
+                    <strong>You're leading</strong>
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
     </div>
   );
 }

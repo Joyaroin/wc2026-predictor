@@ -5,6 +5,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { api } from '../api/client';
 import { hasUnseenUpdates } from '../updates';
 import { useGlobalChatUnread } from '../lib/useGlobalChatUnread';
+import { Avatar } from './Avatar';
 
 export function Nav() {
   const { player, logout } = usePlayer();
@@ -14,7 +15,9 @@ export function Nav() {
   // Chat & Standings are primary destinations (top-bar links on desktop, bottom-nav tabs on
   // mobile) — surface unread chat with a dot on the Chat link.
   const globalChat = useQuery({ queryKey: ['messages', 'global', 'global'], queryFn: api.globalMessages, refetchInterval: 20_000, staleTime: 15_000 });
+  const me = useQuery({ queryKey: ['account-me'], queryFn: api.me, staleTime: 60_000 });
   const chatUnread = useGlobalChatUnread(globalChat.data, player?.playerId);
+  const displayName = player?.name ?? '?';
 
   return (
     <nav className="nav">
@@ -32,16 +35,20 @@ export function Nav() {
       </div>
 
       <div className="nav-user">
-        <span className="nav-name">{player?.name}</span>
+        <NavLink viewTransition to="/settings" className="nav-profile" title={`Account: ${displayName}`} aria-label={`Open account for ${displayName}`}>
+          <Avatar name={displayName} size={26} color={me.data?.avatarColor} />
+          <span className="nav-name">{displayName}</span>
+        </NavLink>
         <div className="menu">
           <button
             className="menu-btn"
             onClick={() => { setMenuOpen((o) => !o); setUnseen(hasUnseenUpdates()); }}
-            aria-label="More"
+            aria-label="Account menu"
             aria-expanded={menuOpen}
             data-testid="nav-menu"
           >
-            ⋮{unseen && <span className="menu-dot" aria-label="new updates" />}
+            <span className="menu-dots" aria-hidden><span /><span /><span /></span>
+            {unseen && <span className="menu-dot" aria-label="new updates" />}
           </button>
           {menuOpen && (
             <>

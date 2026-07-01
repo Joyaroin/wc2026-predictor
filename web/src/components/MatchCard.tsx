@@ -309,7 +309,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               onClick={() => setStatsOpen(true)}
               data-testid={`stats-toggle-${match.id}`}
             >
-              {preMatchSoon ? '👥 Lineups ›' : '📊 Match details ›'}
+              {preMatchSoon ? 'Lineups ›' : 'Details ›'}
             </button>
           </div>
         )}
@@ -317,7 +317,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         {!match.placeholder && (
           <div className="mc-stats-wrap" onClick={(e) => e.stopPropagation()}>
             <Link className="mc-stats-toggle" to={`/predictions/${match.id}`} data-testid={`who-picked-${match.id}`}>
-              Who picked what ›
+              Picks ›
             </Link>
           </div>
         )}
@@ -331,7 +331,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
               aria-expanded={statPickOpen}
               data-testid={`statpick-${match.id}`}
             >
-              ✨ Stat pick <span className={`chev ${statPickOpen ? 'up' : ''}`} aria-hidden>▾</span>
+              Stat pick <span className={`chev ${statPickOpen ? 'up' : ''}`} aria-hidden>▾</span>
             </button>
             {statPickOpen && (
               <div className="statpick-panel">
@@ -372,7 +372,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
         {editable && (
           <div className="mc-bonus">
             <div className="mc-divider" />
-            <div className="bonus-title">First team to score</div>
+            <div className="bonus-title">1st team to score</div>
             <div className="firstteam-row">
               <button
                 type="button"
@@ -397,7 +397,7 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
             </div>
 
             <div className="mc-divider" />
-            <div className="bonus-title">First player to score</div>
+            <div className="bonus-title">1st player</div>
             <button
               type="button"
               className={prediction?.firstScorerId ? 'select-btn on' : 'select-btn'}

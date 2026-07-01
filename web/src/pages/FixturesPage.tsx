@@ -18,6 +18,10 @@ function patchPreds(qc: QueryClient, fn: (old: Prediction[]) => Prediction[]): P
   return prev;
 }
 
+function compactSectionLabel(label: string): string {
+  return label.replace(/^Matchweek\s+/, 'MW');
+}
+
 export function FixturesPage() {
   const qc = useQueryClient();
   const [toast, setToast] = useState<string | null>(null);
@@ -250,14 +254,6 @@ export function FixturesPage() {
   return (
     <div className="fixtures">
       <h2>Fixtures</h2>
-      <div className="fixtures-controls">
-        <p className="muted fine">★ Tip: set a <b>Joker</b> on one match per section (match week / round) to double its points.</p>
-        {finishedCount > 0 && (
-          <Link to="/me" className="fine results-link" data-testid="fixtures-results-link">
-            {finishedCount} finished → My results
-          </Link>
-        )}
-      </div>
 
       {sections.length === 0 && (
         <p className="muted" data-testid="fixtures-empty">
@@ -275,8 +271,8 @@ export function FixturesPage() {
           return (
             <section key={s.key} className={`week ${open ? 'open' : ''}`}>
               <button className="week-header" onClick={() => toggle(s.key)} aria-expanded={open} data-testid={`section-${s.key}`}>
-                <span className="week-cal" aria-hidden>{s.isGroup ? '📅' : '🏆'}</span>
-                <span className="week-title">{s.label}</span>
+                {s.isGroup && <span className="week-kicker">Group</span>}
+                <span className="week-title">{compactSectionLabel(s.label)}</span>
                 <span className="week-sum muted fine">{s.matches.length} matches</span>
                 <span className={`chevron ${open ? 'down' : ''}`} aria-hidden>▸</span>
               </button>

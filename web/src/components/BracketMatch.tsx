@@ -1,8 +1,9 @@
+import type { CSSProperties } from 'react';
 import type { MatchView } from '../api/client';
 import { Flag } from './Flag';
 
 /** One knockout tie in the bracket: two team rows with scores; the losing side is struck through. */
-export function BracketMatch({ match }: { match: MatchView }) {
+export function BracketMatch({ match, className = '', style }: { match: MatchView; className?: string; style?: CSSProperties }) {
   const decided = match.status === 'FINISHED' && (match.winner === 'HOME' || match.winner === 'AWAY');
 
   const row = (side: 'HOME' | 'AWAY') => {
@@ -26,7 +27,7 @@ export function BracketMatch({ match }: { match: MatchView }) {
   };
 
   return (
-    <div className="br-match" data-testid={`br-match-${match.id}`}>
+    <div className={`br-match${className ? ` ${className}` : ''}`} style={style} data-testid={`br-match-${match.id}`}>
       {row('HOME')}
       {row('AWAY')}
     </div>

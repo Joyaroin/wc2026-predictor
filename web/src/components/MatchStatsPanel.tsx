@@ -13,30 +13,42 @@ function evIcon(kind: MatchEvent['kind']): string {
   return kind === 'goal' ? '⚽' : kind === 'pen' ? '🥅' : kind === 'yellow' ? '🟨' : kind === 'red' ? '🟥' : '🔄';
 }
 
-function LineupCol({ code, name, lineup }: { code: string | null; name: string; lineup: TeamLineup }) {
+function displayName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ');
+}
+
+function pitchName(name: string): string {
+  const parts = displayName(name).split(/\s+/);
+  if (parts.length <= 1) return parts[0] ?? name;
+  return `${parts[0]![0]}. ${parts[parts.length - 1]!}`;
+}
+
+function LineupCol({ code, name, lineup, showBench = true }: { code: string | null; name: string; lineup: TeamLineup; showBench?: boolean }) {
   return (
     <div className="lu-col">
       <div className="lu-head">
-        <Flag code={code} name={name} /> <b>{code ?? name}</b>
+        <Flag code={code} name={name} />
+        <span className="lu-team">{code ?? name}</span>
+        <span className="lu-kind">Starting XI</span>
         {lineup.formation && <span className="lu-form">{lineup.formation}</span>}
       </div>
-      <ol className="lu-list">
+      <ol className="lu-list starters">
         {lineup.starters.map((p, i) => (
           <li key={i}>
             <span className="lu-num">{p.number ?? '–'}</span>
-            <span className="lu-name">{p.name}</span>
+            <span className="lu-name" title={displayName(p.name)}>{displayName(p.name)}</span>
             {p.position && <span className="lu-pos">{p.position}</span>}
           </li>
         ))}
       </ol>
-      {lineup.bench.length > 0 && (
+      {showBench && lineup.bench.length > 0 && (
         <>
           <div className="lu-sub">Bench</div>
           <ul className="lu-list bench">
             {lineup.bench.map((p, i) => (
               <li key={i}>
                 <span className="lu-num">{p.number ?? '–'}</span>
-                <span className="lu-name">{p.name}</span>
+                <span className="lu-name" title={displayName(p.name)}>{displayName(p.name)}</span>
               </li>
             ))}
           </ul>
@@ -44,11 +56,6 @@ function LineupCol({ code, name, lineup }: { code: string | null; name: string; 
       )}
     </div>
   );
-}
-
-function lastName(n: string): string {
-  const parts = n.trim().split(/\s+/);
-  return parts.length > 1 ? parts[parts.length - 1]! : n;
 }
 
 /** Rows of players (GK first) for `total` starters, from the formation string when it fits, else a sensible default. */
@@ -94,7 +101,7 @@ function Pitch({ home, away, homeCode, awayCode }: { home: TeamLineup; away: Tea
       {players.map((x, i) => (
         <div className={`pitch-player ${x.side}`} key={i} style={{ top: `${x.top}%`, left: `${x.left}%` }}>
           <span className="pitch-jersey" style={{ background: x.bg, color: readableText(x.bg) }}>{x.p.number ?? '–'}</span>
-          <span className="pitch-name">{lastName(x.p.name)}</span>
+          <span className="pitch-name" title={displayName(x.p.name)}>{pitchName(x.p.name)}</span>
         </div>
       ))}
     </div>
@@ -108,7 +115,7 @@ function Bench({ code, lineup }: { code: string | null; lineup: TeamLineup }) {
       <div className="lu-sub">{code ?? ''} bench</div>
       <ul className="lu-list bench">
         {lineup.bench.map((p, i) => (
-          <li key={i}><span className="lu-num">{p.number ?? '–'}</span><span className="lu-name">{p.name}</span></li>
+          <li key={i}><span className="lu-num">{p.number ?? '–'}</span><span className="lu-name" title={displayName(p.name)}>{displayName(p.name)}</span></li>
         ))}
       </ul>
     </div>
@@ -138,10 +145,9 @@ export function MatchStatsPanel({ match }: { match: MatchView }) {
   return (
     <div className="ms-panel" data-testid={`stats-panel-${match.id}`}>
       {(s.venue || s.status) && (
-        <div className="ms-meta muted fine">
-          {s.status && <span>{s.status}</span>}
-          {s.status && s.venue && <span> · </span>}
-          {s.venue && <span>📍 {s.venue}</span>}
+        <div className="ms-meta fine">
+          {s.status && <span className="ms-meta-chip">{s.status}</span>}
+          {s.venue && <span className="ms-meta-chip">{s.venue}</span>}
         </div>
       )}
 
@@ -156,45 +162,62 @@ export function MatchStatsPanel({ match }: { match: MatchView }) {
         ) : (
           <>
             {s.timeline.length > 0 && (
-              <div className="ms-timeline">
-                {s.timeline.slice().reverse().map((e, i) => (
-                  <div className="ms-ev" key={i}>
-                    <span className="ms-ev-home">
-                      {e.side === 'HOME' && <><span className="ms-ev-text">{e.text}</span><span className="ms-ev-icon">{evIcon(e.kind)}</span><Flag code={match.homeCode} name={match.homeTeam} /></>}
-                    </span>
-                    <span className="ms-ev-clock">{e.clock}</span>
-                    <span className="ms-ev-away">
-                      {e.side !== 'HOME' && <><Flag code={match.awayCode} name={match.awayTeam} /><span className="ms-ev-icon">{evIcon(e.kind)}</span><span className="ms-ev-text">{e.text}</span></>}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <section className="ms-section">
+                <div className="ms-section-head">
+                  <span>Timeline</span>
+                  <span>{s.timeline.length} events</span>
+                </div>
+                <div className="ms-timeline">
+                  {s.timeline.slice().reverse().map((e, i) => (
+                    <div className="ms-ev" key={i}>
+                      <span className="ms-ev-home">
+                        {e.side === 'HOME' && <><span className="ms-ev-text">{e.text}</span><span className="ms-ev-icon">{evIcon(e.kind)}</span><Flag code={match.homeCode} name={match.homeTeam} /></>}
+                      </span>
+                      <span className="ms-ev-clock">{e.clock}</span>
+                      <span className="ms-ev-away">
+                        {e.side !== 'HOME' && <><Flag code={match.awayCode} name={match.awayTeam} /><span className="ms-ev-icon">{evIcon(e.kind)}</span><span className="ms-ev-text">{e.text}</span></>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
             {s.stats.length > 0 && (
-              <div className="ms-stats">
-                {s.stats.map((row) => {
-                  const h = num(row.home);
-                  const a = num(row.away);
-                  const total = h + a;
-                  const hPct = Number.isFinite(total) && total > 0 ? (h / total) * 100 : 50;
-                  const homeMore = Number.isFinite(h) && Number.isFinite(a) && h >= a;
-                  return (
-                    <div className="ms-stat-row" key={row.label}>
-                      <div className="ms-stat-vals">
-                        <span className={homeMore ? 'strong' : ''}>{row.home}</span>
-                        <span className="ms-stat-label">{row.label}</span>
-                        <span className={!homeMore ? 'strong' : ''}>{row.away}</span>
+              <section className="ms-section">
+                <div className="ms-section-head">
+                  <span>Match stats</span>
+                  <span>{match.homeCode ?? 'Home'} vs {match.awayCode ?? 'Away'}</span>
+                </div>
+                <div className="ms-stats">
+                  {s.stats.map((row) => {
+                    const h = num(row.home);
+                    const a = num(row.away);
+                    const total = h + a;
+                    const hPct = Number.isFinite(total) && total > 0 ? (h / total) * 100 : 50;
+                    const homeMore = Number.isFinite(h) && Number.isFinite(a) && h >= a;
+                    return (
+                      <div className="ms-stat-row" key={row.label}>
+                        <div className="ms-stat-vals">
+                          <span className={homeMore ? 'strong' : ''}>{row.home}</span>
+                          <span className="ms-stat-label">{row.label}</span>
+                          <span className={!homeMore ? 'strong' : ''}>{row.away}</span>
+                        </div>
+                        <div className="ms-bar">
+                          <span className="ms-bar-home" style={{ width: `${hPct}%` }} />
+                          <span className="ms-bar-away" style={{ width: `${100 - hPct}%` }} />
+                        </div>
                       </div>
-                      <div className="ms-bar">
-                        <span className="ms-bar-home" style={{ width: `${hPct}%` }} />
-                        <span className="ms-bar-away" style={{ width: `${100 - hPct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+            {s.broadcasts.length > 0 && (
+              <div className="ms-watch fine">
+                <span>Watch</span>
+                <strong>{s.broadcasts.join(' · ')}</strong>
               </div>
             )}
-            {s.broadcasts.length > 0 && <div className="ms-watch muted fine">📺 {s.broadcasts.join(' · ')}</div>}
           </>
         )
       )}
@@ -208,11 +231,15 @@ export function MatchStatsPanel({ match }: { match: MatchView }) {
           return (
             <>
               <div className="pitch-head fine">
-                <span><Flag code={match.awayCode} name={match.awayTeam} /> {match.awayCode} <b>{a!.formation}</b></span>
+                <span><Flag code={match.awayCode} name={match.awayTeam} /> <strong>{match.awayCode ?? match.awayTeam}</strong>{a!.formation && <b>{a!.formation}</b>}</span>
                 <span className="pitch-vs">vs</span>
-                <span><b>{h!.formation}</b> {match.homeCode} <Flag code={match.homeCode} name={match.homeTeam} /></span>
+                <span>{h!.formation && <b>{h!.formation}</b>}<strong>{match.homeCode ?? match.homeTeam}</strong> <Flag code={match.homeCode} name={match.homeTeam} /></span>
               </div>
               <Pitch home={h!} away={a!} homeCode={match.homeCode} awayCode={match.awayCode} />
+              <div className="ms-lineups starters">
+                <LineupCol code={match.homeCode} name={match.homeTeam} lineup={h!} showBench={false} />
+                <LineupCol code={match.awayCode} name={match.awayTeam} lineup={a!} showBench={false} />
+              </div>
               <div className="ms-lineups bench-only">
                 <Bench code={match.homeCode} lineup={h!} />
                 <Bench code={match.awayCode} lineup={a!} />
