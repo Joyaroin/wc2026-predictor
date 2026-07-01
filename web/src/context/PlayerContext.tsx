@@ -24,14 +24,28 @@ function loadSession(): PlayerSession | null {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as PlayerSession;
+    const parsed = JSON.parse(raw) as Partial<PlayerSession>;
+    if (
+      typeof parsed.playerId !== 'string' ||
+      typeof parsed.name !== 'string' ||
+      typeof parsed.token !== 'string'
+    ) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return { playerId: parsed.playerId, name: parsed.name, token: parsed.token, tourSeen: parsed.tourSeen };
   } catch {
+    localStorage.removeItem(STORAGE_KEY);
     return null;
   }
 }
 
 export function PlayerProvider({ children }: { children: ReactNode }): ReactNode {
-  const [player, setPlayer] = useState<PlayerSession | null>(loadSession);
+  const [player, setPlayer] = useState<PlayerSession | null>(() => {
+    const session = loadSession();
+    setAuthToken(session?.token ?? null);
+    return session;
+  });
 
   useEffect(() => {
     setAuthToken(player?.token ?? null);
