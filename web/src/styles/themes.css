@@ -1741,6 +1741,59 @@ a.mc-stats-toggle { text-decoration: none; }
     padding: 9px;
   }
 
+  .match-modal .ms-timeline {
+    gap: 10px;
+    max-height: min(360px, 52dvh);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .ms-ev {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 8px 10px;
+    min-height: 0;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .ms-ev-home:empty,
+  .ms-ev-away:empty {
+    display: none;
+  }
+
+  .ms-ev-home,
+  .ms-ev-away {
+    grid-column: 2;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  .ms-ev-home {
+    flex-direction: row-reverse;
+  }
+
+  .ms-ev-clock {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 42px;
+    margin-top: 0;
+  }
+
+  .ms-ev-text {
+    min-width: 0;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .ms-ev-icon,
+  .ms-ev .flag {
+    margin-top: 2px;
+  }
+
   .ms-watch {
     align-items: flex-start;
     flex-direction: column;
