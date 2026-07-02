@@ -40,8 +40,13 @@ export function createLiveBroadcaster(
   }
 
   function subscribe(fn: (e: LiveEvent) => void): () => void {
+    const wasEmpty = subs.size === 0;
     subs.add(fn);
-    return () => subs.delete(fn);
+    if (wasEmpty) startInterval(); // reference-counted: first subscriber wakes the poller
+    return () => {
+      subs.delete(fn);
+      if (subs.size === 0) stopInterval(); // last subscriber gone: stop polling Dynamo for nobody
+    };
   }
 
   async function tickOnce(): Promise<LiveEvent[]> {
@@ -51,7 +56,10 @@ export function createLiveBroadcaster(
     } catch {
       return []; // skip this tick; keep last snapshot
     }
-    const next = new Map<string, Snap>();
+    // Merge into the prior snapshot rather than replacing it wholesale: matches absent this
+    // tick keep their last-known values, so if one reappears later it diffs against that
+    // instead of silently re-seeding (and swallowing whatever changed while it was gone).
+    const next = new Map<string, Snap>(snap ?? []);
     const events: LiveEvent[] = [];
     for (const m of matches) {
       const prev = snap?.get(m.id);
@@ -63,16 +71,27 @@ export function createLiveBroadcaster(
     return events;
   }
 
-  function start(): void {
+  function startInterval(): void {
     if (timer) return;
     void tickOnce(); // seed immediately
     timer = setInterval(() => void tickOnce(), intervalMs);
     timer.unref?.();
   }
 
-  function stop(): void {
+  function stopInterval(): void {
     if (timer) clearInterval(timer);
     timer = null;
+  }
+
+  // Public start()/stop() remain for explicit/test control and are idempotent, but in normal
+  // operation nothing calls start() unconditionally any more — subscribe()/unsubscribe() alone
+  // drive the interval so it never polls DynamoDB with zero connected SSE clients.
+  function start(): void {
+    startInterval();
+  }
+
+  function stop(): void {
+    stopInterval();
   }
 
   return { subscribe, tickOnce, start, stop };

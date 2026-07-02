@@ -19,8 +19,10 @@ export function buildApp(services: Services, config: Config, logger: Logger): Ex
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
+  // Lifecycle is subscriber-gated: the SSE route's broadcaster.subscribe() call starts the
+  // Dynamo poll on the first connected client and stops it when the last one disconnects, so
+  // we never poll with zero subscribers. Do not call broadcaster.start() here.
   const broadcaster: LiveBroadcaster = createLiveBroadcaster(() => services.matches.list());
-  broadcaster.start();
 
   app.use(helmet()); // SECURITY-04
   app.use(cors({ origin: config.allowedOrigin })); // SECURITY-08 (strict allowlist)

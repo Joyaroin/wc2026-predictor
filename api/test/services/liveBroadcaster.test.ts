@@ -112,4 +112,69 @@ describe('liveBroadcaster', () => {
       b.stop();
     });
   });
+
+  describe('subscriber-gated polling', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('does not poll while there are zero subscribers, starts on first subscribe, stops on last unsubscribe', async () => {
+      vi.useFakeTimers();
+      let calls = 0;
+      const b = createLiveBroadcaster(
+        async () => {
+          calls++;
+          return [m({})];
+        },
+        { intervalMs: 1000 },
+      );
+
+      // No subscribers: advancing time must not trigger any ticks.
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(calls).toBe(0);
+
+      // First subscriber: seeds immediately, then ticks on the interval.
+      const off1 = b.subscribe(() => {});
+      await vi.advanceTimersByTimeAsync(0); // immediate seed tick
+      expect(calls).toBe(1);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(calls).toBe(2);
+
+      // A second subscriber joining must not start a second interval.
+      const off2 = b.subscribe(() => {});
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(calls).toBe(3);
+
+      // Removing one of two subscribers must not stop polling yet.
+      off1();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(calls).toBe(4);
+
+      // Removing the last subscriber stops the interval.
+      off2();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(calls).toBe(4);
+    });
+
+    it('retains the snapshot for a match absent one tick and diffs correctly when it reappears', async () => {
+      let match = m({ homeScore: 0, awayScore: 0 });
+      let matches: MatchView[] = [match];
+      const b = createLiveBroadcaster(async () => matches);
+
+      expect(await b.tickOnce()).toEqual([]); // seed
+
+      // Match briefly absent (e.g. a flaky list() page) — snapshot must be retained, not dropped.
+      matches = [];
+      expect(await b.tickOnce()).toEqual([]);
+
+      // Match reappears with a changed score: should diff against the retained snapshot and
+      // emit a score event, not silently re-seed.
+      match = m({ homeScore: 2, awayScore: 0 });
+      matches = [match];
+      const events = await b.tickOnce();
+      expect(events).toContainEqual(
+        expect.objectContaining({ type: 'score', matchId: 'm1', home: 2, away: 0 }),
+      );
+    });
+  });
 });

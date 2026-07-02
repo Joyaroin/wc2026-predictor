@@ -33,6 +33,7 @@ async function runForever(): Promise<void> {
     } catch (err) {
       logger.error('live poll failed', { error: err instanceof Error ? err.message : 'unknown' });
     }
+    if (stopping) break; // signal arrived during sync/refresh work: exit now, don't arm another sleep
     const matches = await services.matches.list().catch(() => []);
     const delay = nextPollDelayMs(matches);
     await new Promise<void>((resolve) => {
