@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { requireSessionQuery } from '../../src/middleware/index';
 import { signSession } from '../../src/lib/token';
+import { AuthError } from '../../src/lib/errors';
 import { testConfig } from '../support/testApp';
 
 function run(query: Record<string, unknown>) {
@@ -22,5 +23,10 @@ describe('requireSessionQuery', () => {
   it('errors for a missing token', () => {
     const { next } = run({});
     expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it('errors for an array token (rejects non-string query values)', () => {
+    const { next } = run({ token: ['a', 'b'] });
+    expect(next).toHaveBeenCalledWith(expect.any(AuthError));
   });
 });

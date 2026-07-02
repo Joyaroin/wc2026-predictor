@@ -19,4 +19,14 @@ describe('GET /api/live/matches', () => {
       startedAt: res.body[0].startedAt,
     });
   });
+
+  it('includes PAUSED matches alongside IN_PLAY ones', async () => {
+    const t = makeTestApp({ now: new Date('2026-06-12T12:00:00.000Z') });
+    await t.repos.matches.upsert(sampleMatch({ id: 'live1', status: 'IN_PLAY', homeScore: 1, awayScore: 0, minute: 23 }));
+    await t.repos.matches.upsert(sampleMatch({ id: 'paused1', status: 'PAUSED', homeScore: 0, awayScore: 0 }));
+    const login = (await request(t.app).post('/api/auth/login').send({ name: 'Live2', pin: '1234' })).body;
+    const res = await request(t.app).get('/api/live/matches').set(auth(login.token));
+    expect(res.status).toBe(200);
+    expect(res.body.map((m: { id: string }) => m.id).sort()).toEqual(['live1', 'paused1']);
+  });
 });

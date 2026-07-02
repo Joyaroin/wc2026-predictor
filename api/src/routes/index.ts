@@ -11,6 +11,7 @@ import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
 import { ForbiddenError, ValidationError } from '../lib/errors';
 import { createMatchesCache } from '../lib/matchesCache';
+import { signSession } from '../lib/token';
 import {
   requireSession,
   requireSessionQuery,
@@ -63,6 +64,11 @@ const assistantSchema = z.object({
   research: z.boolean().optional(),
 }).strict();
 const messageSchema = z.object({ text: z.string().min(1).max(500) }).strict();
+
+// Stream tokens ride in the SSE URL (?token=), which proxies/browsers log — keep
+// their lifetime short (~2min) so a leaked log line expires fast, unlike the
+// 30-day session token they replace for this one purpose.
+const STREAM_TOKEN_TTL_DAYS = 120 / 86400; // ~2 minutes
 
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
@@ -138,6 +144,10 @@ export function buildRouter(services: Services, config: Config, broadcaster: Liv
         startedAt: m.startedAt ?? null,
       }));
   }));
+  // Short-lived token for the /live SSE stream: exchange a Bearer session for a
+  // token that expires in ~2 minutes, so it's safe to pass as ?token= (which
+  // proxies/browsers log) instead of the 30-day session token.
+  r.get('/live-token', auth, wrap(async (req) => ({ token: signSession(caller(req), config.sessionSigningSecret, STREAM_TOKEN_TTL_DAYS) })));
   // Server-Sent Events stream of live match deltas. Token via ?token= (EventSource
   // can't set headers). Falls back to polling on the client if this drops.
   r.get('/live', authSse, (req, res) => {
