@@ -10,6 +10,7 @@ import {
 import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
 import { ForbiddenError, ValidationError } from '../lib/errors';
+import { createMatchesCache } from '../lib/matchesCache';
 import {
   requireSession,
   validateBody,
@@ -83,6 +84,7 @@ const param = (req: Request, key: string): string => {
 export function buildRouter(services: Services, config: Config): Router {
   const r = Router();
   const auth = requireSession(config);
+  const matchesCache = createMatchesCache(5_000, { now: () => new Date() });
 
   // --- Auth (public, rate-limited) ---
   r.post('/auth/login', loginLimiter, validateBody(loginSchema), wrap((req) => services.auth.login(req.body.name, req.body.pin)));
@@ -108,7 +110,17 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/matches/:id/predictions', auth, wrap((req) => services.predictions.getGlobalMatchPredictions(caller(req), param(req, 'id'))));
 
   // --- Matches & predictions ---
-  r.get('/matches', auth, wrap(() => services.matches.list()));
+  r.get('/matches', auth, (req, res, next) => {
+    matchesCache
+      .get(() => services.matches.list())
+      .then(({ body, etag }) => {
+        res.setHeader('ETag', etag);
+        res.setHeader('Cache-Control', 'no-cache'); // must revalidate, but 304 is cheap
+        if (req.headers['if-none-match'] === etag) return res.status(304).end();
+        res.json(body);
+      })
+      .catch(next);
+  });
   r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   // Statistical scoreline suggestions (opt-in) from bookmaker odds. ?ids=a,b,c
   r.get('/matches/suggestions', auth, wrap((req) => {
