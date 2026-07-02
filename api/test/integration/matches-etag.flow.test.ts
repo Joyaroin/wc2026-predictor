@@ -11,7 +11,7 @@ describe('GET /api/matches ETag', () => {
 
     const first = await request(t.app).get('/api/matches').set(auth(login.token));
     expect(first.status).toBe(200);
-    const etag = first.headers.etag;
+    const etag = first.headers.etag as string;
     expect(etag).toBeTruthy();
 
     const second = await request(t.app)
