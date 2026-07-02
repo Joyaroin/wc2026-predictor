@@ -12,25 +12,35 @@ async function runForever(): Promise<void> {
   const { services, logger } = composeFromEnv();
   logger.info('live poller starting');
   let stopping = false;
-  process.on('SIGTERM', () => { stopping = true; });
-  process.on('SIGINT', () => { stopping = true; });
+  let wake: (() => void) | null = null;
+  const requestStop = () => {
+    stopping = true;
+    if (wake) wake();
+  };
+  process.on('SIGTERM', requestStop);
+  process.on('SIGINT', requestStop);
 
   while (!stopping) {
     try {
       const report = await services.sync.sync();
       // Same downstream refreshes the CronJob ran (best-effort, non-fatal).
-      await services.espnFacts.ingest().catch((err) => logger.warn('espn facts ingest failed', { error: String(err) }));
-      await services.goldenBoot.refresh().catch((err) => logger.warn('golden boot refresh failed', { error: String(err) }));
-      await services.darkHorse.refresh().catch((err) => logger.warn('dark horse refresh failed', { error: String(err) }));
-      await services.tournamentWinner.refresh().catch((err) => logger.warn('tournament winner refresh failed', { error: String(err) }));
-      await services.notifications.sendKickoffReminders().catch((err) => logger.warn('kickoff reminders failed', { error: String(err) }));
+      await services.espnFacts.ingest().catch((err) => logger.warn('espn facts ingest failed', { error: err instanceof Error ? err.message : 'unknown' }));
+      await services.goldenBoot.refresh().catch((err) => logger.warn('golden boot refresh failed', { error: err instanceof Error ? err.message : 'unknown' }));
+      await services.darkHorse.refresh().catch((err) => logger.warn('dark horse refresh failed', { error: err instanceof Error ? err.message : 'unknown' }));
+      await services.tournamentWinner.refresh().catch((err) => logger.warn('tournament winner refresh failed', { error: err instanceof Error ? err.message : 'unknown' }));
+      await services.notifications.sendKickoffReminders().catch((err) => logger.warn('kickoff reminders failed', { error: err instanceof Error ? err.message : 'unknown' }));
       logger.info('live poll', { ok: report.ok, fetched: report.fetched, scored: report.scored });
     } catch (err) {
       logger.error('live poll failed', { error: err instanceof Error ? err.message : 'unknown' });
     }
     const matches = await services.matches.list().catch(() => []);
     const delay = nextPollDelayMs(matches);
-    await new Promise((r) => setTimeout(r, delay));
+    await new Promise<void>((resolve) => {
+      wake = resolve;
+      const t = setTimeout(resolve, delay);
+      if (typeof t === 'object' && t) t.unref?.();
+    });
+    wake = null;
   }
   logger.info('live poller stopped');
   process.exit(0);
