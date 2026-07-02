@@ -6,7 +6,7 @@
 
 **Architecture:** A single long-running poller (`replicas:1`) writes DynamoDB every 12s while live. Each API pod runs an internal 5s Dynamo diff loop and pushes deltas over SSE (`GET /api/live`) to its own connected clients. The web client subscribes via `EventSource`, patches the React Query `['matches']` cache, and falls back to existing adaptive polling on disconnect. `GET /api/matches` gains ETag + a 5s TTL cache.
 
-**Tech Stack:** TypeScript, Express 5, esbuild bundling, DynamoDB, React 18 + @tanstack/react-query 5, Vite, Vitest + supertest, Helm/ArgoCD on k3s.
+**Tech Stack:** TypeScript, Express 5, esbuild bundling, DynamoDB, React 19 + @tanstack/react-query 5, Vite, Vitest + supertest, Helm/ArgoCD on k3s.
 
 ## Global Constraints
 
@@ -51,9 +51,11 @@
 
 **Files:**
 - Create: `api/src/lib/matchesCache.ts`
-- Test: `api/test/unit/matchesCache.test.ts`
+- Test: `api/test/lib/matchesCache.test.ts`
 - Modify: `api/src/routes/index.ts` (the `/matches` route)
 - Test: `api/test/integration/matches-etag.flow.test.ts`
+
+> Test convention (whole plan): both api and web use vitest with `environment: 'node'` and `include: ['test/**/*.test.ts']`. All tests live under `<pkg>/test/**` with a `.test.ts` extension (never `.tsx`, never under `src/`). There is no DOM test stack — do NOT add `@testing-library/react`/jsdom. Frontend logic is tested as pure functions; thin React hook/component wrappers are verified by `tsc`/`vite build`, not unit tests.
 
 **Interfaces:**
 - Produces: `createMatchesCache(ttlMs: number, clock: Clock)` → `{ get(loader: () => Promise<MatchView[]>): Promise<{ body: MatchView[]; etag: string }> }`. `etag` is a quoted content hash. `get` returns a cached result while within `ttlMs`, else reloads.
@@ -61,7 +63,7 @@
 - [ ] **Step 1: Write the failing unit test**
 
 ```ts
-// api/test/unit/matchesCache.test.ts
+// api/test/lib/matchesCache.test.ts
 import { describe, it, expect, vi } from 'vitest';
 import { createMatchesCache } from '../../src/lib/matchesCache';
 import { fixedClock } from '../../src/lib/clock';
@@ -97,7 +99,7 @@ describe('matchesCache', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd api && npx vitest run test/unit/matchesCache.test.ts`
+Run: `cd api && npx vitest run test/lib/matchesCache.test.ts`
 Expected: FAIL — cannot find module `matchesCache`.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -141,7 +143,7 @@ export function createMatchesCache(ttlMs: number, clock: Clock): MatchesCache {
 
 - [ ] **Step 4: Run unit test to verify it passes**
 
-Run: `cd api && npx vitest run test/unit/matchesCache.test.ts`
+Run: `cd api && npx vitest run test/lib/matchesCache.test.ts`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Write the failing integration test**
@@ -222,13 +224,13 @@ with an explicit handler that sets the ETag and honours `If-None-Match`:
 
 - [ ] **Step 8: Run both tests + full api suite**
 
-Run: `cd api && npx vitest run test/integration/matches-etag.flow.test.ts test/unit/matchesCache.test.ts && npx vitest run`
+Run: `cd api && npx vitest run test/integration/matches-etag.flow.test.ts test/lib/matchesCache.test.ts && npx vitest run`
 Expected: PASS, and no regressions in the existing suite.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add api/src/lib/matchesCache.ts api/test/unit/matchesCache.test.ts api/src/routes/index.ts api/test/integration/matches-etag.flow.test.ts
+git add api/src/lib/matchesCache.ts api/test/lib/matchesCache.test.ts api/src/routes/index.ts api/test/integration/matches-etag.flow.test.ts
 git commit -m "feat(api): ETag + 5s TTL cache on GET /matches"
 ```
 
@@ -319,7 +321,7 @@ git commit -m "feat(api): lean GET /live/matches endpoint"
 
 **Files:**
 - Modify: `api/src/middleware/index.ts`
-- Test: `api/test/unit/requireSessionQuery.test.ts`
+- Test: `api/test/middleware/requireSessionQuery.test.ts`
 
 **Interfaces:**
 - Produces: `requireSessionQuery(config: Config): RequestHandler` — reads `req.query.token`, verifies it with `verifySession`, sets `req.callerId`, or calls `next(new AuthError())`.
@@ -327,7 +329,7 @@ git commit -m "feat(api): lean GET /live/matches endpoint"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// api/test/unit/requireSessionQuery.test.ts
+// api/test/middleware/requireSessionQuery.test.ts
 import { describe, it, expect, vi } from 'vitest';
 import { requireSessionQuery } from '../../src/middleware/index';
 import { signSession } from '../../src/lib/token';
@@ -360,7 +362,7 @@ describe('requireSessionQuery', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd api && npx vitest run test/unit/requireSessionQuery.test.ts`
+Run: `cd api && npx vitest run test/middleware/requireSessionQuery.test.ts`
 Expected: FAIL — `requireSessionQuery` not exported.
 
 - [ ] **Step 3: Implement the middleware**
@@ -386,13 +388,13 @@ export function requireSessionQuery(config: Config): RequestHandler {
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd api && npx vitest run test/unit/requireSessionQuery.test.ts`
+Run: `cd api && npx vitest run test/middleware/requireSessionQuery.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add api/src/middleware/index.ts api/test/unit/requireSessionQuery.test.ts
+git add api/src/middleware/index.ts api/test/middleware/requireSessionQuery.test.ts
 git commit -m "feat(api): query-token session auth for SSE"
 ```
 
@@ -402,7 +404,7 @@ git commit -m "feat(api): query-token session auth for SSE"
 
 **Files:**
 - Create: `api/src/services/liveBroadcaster.ts`
-- Test: `api/test/unit/liveBroadcaster.test.ts`
+- Test: `api/test/services/liveBroadcaster.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -414,7 +416,7 @@ git commit -m "feat(api): query-token session auth for SSE"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// api/test/unit/liveBroadcaster.test.ts
+// api/test/services/liveBroadcaster.test.ts
 import { describe, it, expect } from 'vitest';
 import { createLiveBroadcaster } from '../../src/services/liveBroadcaster';
 import type { MatchView } from '../../src/services/dtos';
@@ -456,7 +458,7 @@ describe('liveBroadcaster', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd api && npx vitest run test/unit/liveBroadcaster.test.ts`
+Run: `cd api && npx vitest run test/services/liveBroadcaster.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement the broadcaster**
@@ -543,13 +545,13 @@ export function createLiveBroadcaster(
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd api && npx vitest run test/unit/liveBroadcaster.test.ts`
+Run: `cd api && npx vitest run test/services/liveBroadcaster.test.ts`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add api/src/services/liveBroadcaster.ts api/test/unit/liveBroadcaster.test.ts
+git add api/src/services/liveBroadcaster.ts api/test/services/liveBroadcaster.test.ts
 git commit -m "feat(api): live broadcaster diff loop + subscriber registry"
 ```
 
@@ -719,7 +721,7 @@ git commit -m "feat(api): GET /live SSE stream wired to broadcaster"
 **Files:**
 - Create: `api/src/sync.live.ts`
 - Modify: `api/scripts/bundle.mjs`
-- Test: `api/test/unit/livePollInterval.test.ts`
+- Test: `api/test/services/livePollInterval.test.ts`
 
 **Interfaces:**
 - Produces: `nextPollDelayMs(matches: { status: string }[]): number` — `12_000` if any match is `IN_PLAY`/`PAUSED`, else `60_000`. (Extracted so it is unit-testable without the process loop.)
@@ -727,7 +729,7 @@ git commit -m "feat(api): GET /live SSE stream wired to broadcaster"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// api/test/unit/livePollInterval.test.ts
+// api/test/services/livePollInterval.test.ts
 import { describe, it, expect } from 'vitest';
 import { nextPollDelayMs } from '../../src/sync.live';
 
@@ -745,7 +747,7 @@ describe('nextPollDelayMs', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd api && npx vitest run test/unit/livePollInterval.test.ts`
+Run: `cd api && npx vitest run test/services/livePollInterval.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement the poller**
@@ -798,7 +800,7 @@ if (process.env.VITEST !== 'true') {
 
 - [ ] **Step 4: Run it to verify it passes**
 
-Run: `cd api && npx vitest run test/unit/livePollInterval.test.ts`
+Run: `cd api && npx vitest run test/services/livePollInterval.test.ts`
 Expected: PASS.
 
 > Vitest sets `process.env.VITEST = 'true'`, so importing the module in the test does not start the loop.
@@ -825,7 +827,7 @@ Expected: esbuild reports three outputs including `dist/sync-live.cjs`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add api/src/sync.live.ts api/scripts/bundle.mjs api/test/unit/livePollInterval.test.ts
+git add api/src/sync.live.ts api/scripts/bundle.mjs api/test/services/livePollInterval.test.ts
 git commit -m "feat(api): long-running adaptive ESPN poller (sync.live)"
 ```
 
@@ -1003,7 +1005,7 @@ git commit -m "feat(infra): disable ingress buffering for SSE (/api/live)"
 - Create: `web/src/lib/liveStream.ts`
 - Create: `web/src/hooks/useLiveScores.ts`
 - Modify: `web/src/App.tsx`
-- Test: `web/src/hooks/useLiveScores.test.ts`
+- Test: `web/test/liveScores.test.ts`
 
 **Interfaces:**
 - Consumes: the SSE event shape from Task 5 (`{ type, matchId, home, away, status, minute }`), `BASE` + `authToken` from `web/src/api/client.ts`.
@@ -1014,10 +1016,10 @@ git commit -m "feat(infra): disable ingress buffering for SSE (/api/live)"
 - [ ] **Step 1: Write the failing hook test**
 
 ```ts
-// web/src/hooks/useLiveScores.test.ts
-import { describe, it, expect, vi } from 'vitest';
-import { applyLiveEvent } from './useLiveScores';
-import type { MatchView } from '../api/client';
+// web/test/liveScores.test.ts
+import { describe, it, expect } from 'vitest';
+import { applyLiveEvent } from '../src/hooks/useLiveScores';
+import type { MatchView } from '../src/api/client';
 
 const base: MatchView = {
   id: 'm1', stage: 'GROUP_STAGE', groupName: 'A', matchday: 1,
@@ -1045,7 +1047,7 @@ describe('applyLiveEvent', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd web && npx vitest run src/hooks/useLiveScores.test.ts`
+Run: `cd web && npx vitest run test/liveScores.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement the stream helper**
@@ -1142,13 +1144,13 @@ useLiveScores();
 
 - [ ] **Step 7: Run the hook test + web suite**
 
-Run: `cd web && npx vitest run src/hooks/useLiveScores.test.ts && npx vitest run`
+Run: `cd web && npx vitest run test/liveScores.test.ts && npx vitest run`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add web/src/lib/liveStream.ts web/src/hooks/useLiveScores.ts web/src/api/client.ts web/src/App.tsx web/src/hooks/useLiveScores.test.ts
+git add web/src/lib/liveStream.ts web/src/hooks/useLiveScores.ts web/src/api/client.ts web/src/App.tsx web/test/liveScores.test.ts
 git commit -m "feat(web): SSE live-score subscription patches matches cache"
 ```
 
@@ -1158,66 +1160,69 @@ git commit -m "feat(web): SSE live-score subscription patches matches cache"
 
 **Files:**
 - Create: `web/src/hooks/useScoreFlash.ts`
-- Test: `web/src/hooks/useScoreFlash.test.ts`
+- Test: `web/test/scoreFlash.test.ts`
 - Modify: `web/src/components/MatchCard.tsx`
 - Modify: `web/src/styles.css`
 
 **Interfaces:**
-- Produces: `useScoreFlash(homeScore: number|null, awayScore: number|null): boolean` — returns `true` for ~900ms after either score changes (not on first render), else `false`. Consumers add a CSS class when true.
+- Produces:
+  - `scoreChanged(prev: { h: number|null; a: number|null } | null, cur: { h: number|null; a: number|null }): boolean` — pure; `false` when `prev` is null (first render / seed), else true iff either score differs. **This is the unit-tested surface.**
+  - `useScoreFlash(homeScore: number|null, awayScore: number|null): boolean` — thin React wrapper that returns `true` for ~900ms after `scoreChanged` fires. Verified by `tsc`/build, not unit-tested (no DOM stack).
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing pure test**
 
 ```ts
-// web/src/hooks/useScoreFlash.test.ts
+// web/test/scoreFlash.test.ts
 import { describe, it, expect } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useScoreFlash } from './useScoreFlash';
+import { scoreChanged } from '../src/hooks/useScoreFlash';
 
-describe('useScoreFlash', () => {
-  it('does not flash on first render', () => {
-    const { result } = renderHook(({ h, a }) => useScoreFlash(h, a), { initialProps: { h: 0, a: 0 } });
-    expect(result.current).toBe(false);
+describe('scoreChanged', () => {
+  it('is false on the seed (prev null)', () => {
+    expect(scoreChanged(null, { h: 0, a: 0 })).toBe(false);
   });
-  it('flashes when a score changes then clears', async () => {
-    vi.useFakeTimers();
-    const { result, rerender } = renderHook(({ h, a }) => useScoreFlash(h, a), { initialProps: { h: 0, a: 0 } });
-    rerender({ h: 1, a: 0 });
-    expect(result.current).toBe(true);
-    act(() => { vi.advanceTimersByTime(1000); });
-    expect(result.current).toBe(false);
-    vi.useRealTimers();
+  it('is true when the home or away score differs', () => {
+    expect(scoreChanged({ h: 0, a: 0 }, { h: 1, a: 0 })).toBe(true);
+    expect(scoreChanged({ h: 1, a: 0 }, { h: 1, a: 1 })).toBe(true);
+  });
+  it('is false when the score is unchanged', () => {
+    expect(scoreChanged({ h: 2, a: 1 }, { h: 2, a: 1 })).toBe(false);
   });
 });
 ```
 
-> If `@testing-library/react` is not already a web devDependency, check `web/package.json`. It is used by existing component tests; if absent, add it (`npm i -D @testing-library/react` in `web/`) as part of this step and commit the lockfile change with the task.
-
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd web && npx vitest run src/hooks/useScoreFlash.test.ts`
+Run: `cd web && npx vitest run test/scoreFlash.test.ts`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement the hook**
+- [ ] **Step 3: Implement the pure helper + the hook that uses it**
 
 ```ts
 // web/src/hooks/useScoreFlash.ts
 import { useEffect, useRef, useState } from 'react';
 
+type Pair = { h: number | null; a: number | null };
+
+// Pure: has the scoreline changed since the previous render? False on the seed (prev null).
+export function scoreChanged(prev: Pair | null, cur: Pair): boolean {
+  if (prev === null) return false;
+  return prev.h !== cur.h || prev.a !== cur.a;
+}
+
 // Returns true briefly when the scoreline changes (never on first render), so the card
 // can play a goal-flash. Mirrors the ref-diff pattern used in LiveTicker for finished matches.
 export function useScoreFlash(homeScore: number | null, awayScore: number | null): boolean {
-  const prev = useRef<{ h: number | null; a: number | null } | null>(null);
+  const prev = useRef<Pair | null>(null);
   const [flash, setFlash] = useState(false);
   useEffect(() => {
-    const cur = { h: homeScore, a: awayScore };
-    if (prev.current === null) { prev.current = cur; return; } // seed
-    if (prev.current.h !== cur.h || prev.current.a !== cur.a) {
-      prev.current = cur;
+    const cur: Pair = { h: homeScore, a: awayScore };
+    const changed = scoreChanged(prev.current, cur);
+    prev.current = cur;
+    if (changed) {
       setFlash(true);
       const t = setTimeout(() => setFlash(false), 900);
       return () => clearTimeout(t);
     }
-    prev.current = cur;
   }, [homeScore, awayScore]);
   return flash;
 }
@@ -1256,13 +1261,13 @@ Inside the existing `@media (prefers-reduced-motion: no-preference) { ... }` blo
 
 - [ ] **Step 6: Run the test + web suite**
 
-Run: `cd web && npx vitest run src/hooks/useScoreFlash.test.ts && npx vitest run`
+Run: `cd web && npx vitest run test/scoreFlash.test.ts && npx vitest run`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add web/src/hooks/useScoreFlash.ts web/src/hooks/useScoreFlash.test.ts web/src/components/MatchCard.tsx web/src/styles.css
+git add web/src/hooks/useScoreFlash.ts web/test/scoreFlash.test.ts web/src/components/MatchCard.tsx web/src/styles.css
 git commit -m "feat(web): goal-flash animation on live score change"
 ```
 
@@ -1272,7 +1277,7 @@ git commit -m "feat(web): goal-flash animation on live score change"
 
 **Files:**
 - Create: `web/src/hooks/useLiveMinute.ts`
-- Test: `web/src/hooks/useLiveMinute.test.ts`
+- Test: `web/test/liveMinute.test.ts`
 - Modify: `web/src/components/MatchCard.tsx`
 
 **Interfaces:**
@@ -1281,9 +1286,9 @@ git commit -m "feat(web): goal-flash animation on live score change"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// web/src/hooks/useLiveMinute.test.ts
+// web/test/liveMinute.test.ts
 import { describe, it, expect } from 'vitest';
-import { computeLiveMinute } from './useLiveMinute';
+import { computeLiveMinute } from '../src/hooks/useLiveMinute';
 
 describe('computeLiveMinute', () => {
   const startedAt = '2026-06-12T12:00:00.000Z';
@@ -1302,7 +1307,7 @@ describe('computeLiveMinute', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd web && npx vitest run src/hooks/useLiveMinute.test.ts`
+Run: `cd web && npx vitest run test/liveMinute.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement**
@@ -1355,13 +1360,13 @@ const minuteLabel = state === 'Live' && interpolatedMinute != null ? `${interpol
 
 - [ ] **Step 5: Run the test + web suite**
 
-Run: `cd web && npx vitest run src/hooks/useLiveMinute.test.ts && npx vitest run`
+Run: `cd web && npx vitest run test/liveMinute.test.ts && npx vitest run`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add web/src/hooks/useLiveMinute.ts web/src/hooks/useLiveMinute.test.ts web/src/components/MatchCard.tsx
+git add web/src/hooks/useLiveMinute.ts web/test/liveMinute.test.ts web/src/components/MatchCard.tsx
 git commit -m "feat(web): interpolate live match minute so the clock ticks"
 ```
 
@@ -1371,41 +1376,68 @@ git commit -m "feat(web): interpolate live match minute so the clock ticks"
 
 **Files:**
 - Create: `web/src/components/GoalBanner.tsx`
-- Test: `web/src/components/GoalBanner.test.tsx`
-- Modify: `web/src/hooks/useLiveScores.ts` (emit a goal signal)
+- Test: `web/test/goalBus.test.ts`
+- Modify: `web/src/lib/liveStream.ts` (event bus)
+- Modify: `web/src/hooks/useLiveScores.ts` (pure `goalMessage` + emit)
 - Modify: `web/src/App.tsx` (render the banner)
 - Modify: `web/src/styles.css` (banner styles)
 
 **Interfaces:**
 - Consumes: score events from Task 9. A goal = a `score` event whose new total is higher than the cached total for that match.
-- Produces: a module-level event bus `onGoal(fn: (msg: string) => void): () => void` and `emitGoal(msg: string)` in `web/src/lib/liveStream.ts`; `<GoalBanner/>` subscribes and shows the latest goal for 4s.
+- Produces (unit-tested, pure/node):
+  - `onGoal(fn: (msg: string) => void): () => void` and `emitGoal(msg: string): void` in `web/src/lib/liveStream.ts` — a module-level string event bus.
+  - `goalMessage(prev: MatchView | undefined, e: LiveScoreEvent): string | null` in `web/src/hooks/useLiveScores.ts` — returns a banner label when the event is a goal (new total > prev total), else `null`.
+- Produces (build-verified, not unit-tested): `<GoalBanner/>` subscribes to `onGoal` and shows the latest goal for 4s.
 
-- [ ] **Step 1: Write the failing component test**
+- [ ] **Step 1: Write the failing pure test**
 
-```tsx
-// web/src/components/GoalBanner.test.tsx
+```ts
+// web/test/goalBus.test.ts
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
-import { GoalBanner } from './GoalBanner';
-import { emitGoal } from '../lib/liveStream';
+import { onGoal, emitGoal } from '../src/lib/liveStream';
+import { goalMessage } from '../src/hooks/useLiveScores';
+import type { MatchView } from '../src/api/client';
 
-describe('GoalBanner', () => {
-  it('shows a goal message then hides it after 4s', () => {
-    vi.useFakeTimers();
-    render(<GoalBanner />);
-    act(() => { emitGoal('⚽ GOAL — ARG 2–1'); });
-    expect(screen.getByText('⚽ GOAL — ARG 2–1')).toBeTruthy();
-    act(() => { vi.advanceTimersByTime(4100); });
-    expect(screen.queryByText('⚽ GOAL — ARG 2–1')).toBeNull();
-    vi.useRealTimers();
+const match = (over: Partial<MatchView> = {}): MatchView => ({
+  id: 'm1', stage: 'GROUP_STAGE', groupName: 'A', matchday: 1,
+  homeTeam: 'Argentina', homeCode: 'ARG', awayTeam: 'Brazil', awayCode: 'BRA',
+  kickoff: '2026-06-12T00:00:00.000Z', status: 'IN_PLAY', startedAt: null, minute: 10,
+  homeScore: 1, awayScore: 1, winner: null, locked: true, ...over,
+}) as MatchView;
+
+describe('goal event bus', () => {
+  it('delivers to subscribers until unsubscribed', () => {
+    const seen: string[] = [];
+    const off = onGoal((m) => seen.push(m));
+    emitGoal('a');
+    off();
+    emitGoal('b');
+    expect(seen).toEqual(['a']);
+  });
+});
+
+describe('goalMessage', () => {
+  it('returns a label when the total rises', () => {
+    const prev = match({ homeScore: 1, awayScore: 1 });
+    const msg = goalMessage(prev, { type: 'score', matchId: 'm1', home: 2, away: 1, status: 'IN_PLAY', minute: 55 });
+    expect(msg).toContain('GOAL');
+    expect(msg).toContain('ARG');
+  });
+  it('returns null when the total does not rise (correction/no goal)', () => {
+    const prev = match({ homeScore: 2, awayScore: 1 });
+    expect(goalMessage(prev, { type: 'score', matchId: 'm1', home: 1, away: 1, status: 'IN_PLAY', minute: 55 })).toBeNull();
+  });
+  it('returns null for non-score events and unknown matches', () => {
+    expect(goalMessage(match(), { type: 'minute', matchId: 'm1', home: 1, away: 1, status: 'IN_PLAY', minute: 12 })).toBeNull();
+    expect(goalMessage(undefined, { type: 'score', matchId: 'zzz', home: 9, away: 0, status: 'IN_PLAY', minute: 1 })).toBeNull();
   });
 });
 ```
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `cd web && npx vitest run src/components/GoalBanner.test.tsx`
-Expected: FAIL — module not found.
+Run: `cd web && npx vitest run test/goalBus.test.ts`
+Expected: FAIL — `onGoal`/`goalMessage` not exported.
 
 - [ ] **Step 3: Add the goal event bus to `liveStream.ts`**
 
@@ -1445,32 +1477,39 @@ export function GoalBanner() {
 }
 ```
 
-- [ ] **Step 5: Emit a goal from `useLiveScores`**
+- [ ] **Step 5: Add pure `goalMessage` + emit from `useLiveScores`**
 
-In `web/src/hooks/useLiveScores.ts`, update the event handler to detect a real goal (new total strictly greater than the cached total) and emit a message. Replace the `openLiveStream` call's `onEvent` callback with:
+In `web/src/hooks/useLiveScores.ts`, add the exported pure helper (near `applyLiveEvent`):
+
+```ts
+// Pure: returns a banner label when this score event represents a new goal (total rose),
+// else null. Extracted so it is unit-testable without React.
+export function goalMessage(prev: MatchView | undefined, e: LiveScoreEvent): string | null {
+  if (e.type !== 'score' || !prev) return null;
+  const prevTotal = (prev.homeScore ?? 0) + (prev.awayScore ?? 0);
+  const nextTotal = (e.home ?? 0) + (e.away ?? 0);
+  if (nextTotal <= prevTotal) return null;
+  return `⚽ GOAL — ${prev.homeCode ?? prev.homeTeam} ${e.home ?? 0}–${e.away ?? 0} ${prev.awayCode ?? prev.awayTeam}`;
+}
+```
+
+Update the import from `../lib/liveStream` to include `emitGoal`:
+
+```ts
+import { openLiveStream, emitGoal, type LiveScoreEvent } from '../lib/liveStream';
+```
+
+Replace the `openLiveStream` call's `onEvent` callback (from Task 9) with one that fires the banner via the pure helper before patching the cache:
 
 ```ts
       (e) => {
         qc.setQueryData<MatchView[]>(['matches'], (old) => {
           if (!old) return old;
-          if (e.type === 'score') {
-            const prevMatch = old.find((m) => m.id === e.matchId);
-            const prevTotal = (prevMatch?.homeScore ?? 0) + (prevMatch?.awayScore ?? 0);
-            const nextTotal = (e.home ?? 0) + (e.away ?? 0);
-            if (prevMatch && nextTotal > prevTotal) {
-              const label = `⚽ GOAL — ${prevMatch.homeCode ?? prevMatch.homeTeam} ${e.home ?? 0}–${e.away ?? 0} ${prevMatch.awayCode ?? prevMatch.awayTeam}`;
-              emitGoal(label);
-            }
-          }
+          const msg = goalMessage(old.find((m) => m.id === e.matchId), e);
+          if (msg) emitGoal(msg);
           return applyLiveEvent(old, e);
         });
       },
-```
-
-and add `emitGoal` to the import from `../lib/liveStream`:
-
-```ts
-import { openLiveStream, emitGoal, type LiveScoreEvent } from '../lib/liveStream';
 ```
 
 - [ ] **Step 6: Render `<GoalBanner/>` in `App.tsx`**
@@ -1505,13 +1544,13 @@ Inside the `@media (prefers-reduced-motion: no-preference)` block:
 
 - [ ] **Step 8: Run the test + web suite**
 
-Run: `cd web && npx vitest run src/components/GoalBanner.test.tsx && npx vitest run`
+Run: `cd web && npx vitest run test/goalBus.test.ts && npx vitest run`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add web/src/components/GoalBanner.tsx web/src/components/GoalBanner.test.tsx web/src/lib/liveStream.ts web/src/hooks/useLiveScores.ts web/src/App.tsx web/src/styles.css
+git add web/src/components/GoalBanner.tsx web/test/goalBus.test.ts web/src/lib/liveStream.ts web/src/hooks/useLiveScores.ts web/src/App.tsx web/src/styles.css
 git commit -m "feat(web): transient GOAL banner on live goals"
 ```
 
@@ -1594,7 +1633,7 @@ ArgoCD then auto-syncs. If the cluster is reachable locally: `kubectl rollout st
 - Testing (unit + integration + frontend) → each task is TDD. ✅
 - Deploy plan + user gate → Task 13. ✅
 
-**Placeholder scan:** No TBD/TODO. Steps that require confirming an existing signature (repo method name, `signSession`, `liveMinute` format, `@testing-library/react` presence) name the exact file to grep and the fallback — these are verification steps, not placeholders.
+**Placeholder scan:** No TBD/TODO. Steps that require confirming an existing signature (repo method name, `signSession`, `liveMinute` format) name the exact file to grep and the fallback — these are verification steps, not placeholders.
 
 **Type consistency:** `LiveEvent` (api) and `LiveScoreEvent` (web) share the same shape `{ type, matchId, home, away, status, minute }`. `createMatchesCache(ttlMs, clock)` used consistently. `buildRouter(services, config, broadcaster)` updated in Task 5 and consumed only via `buildApp`. `applyLiveEvent`, `computeLiveMinute`, `useScoreFlash`, `nextPollDelayMs` signatures match their tests. `getAuthToken`/`setAuthToken` co-located in client.
 
