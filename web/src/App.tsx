@@ -5,6 +5,7 @@ import { Nav } from './components/Nav';
 import { BottomNav } from './components/BottomNav';
 import { LandingPage } from './pages/LandingPage';
 import { LiveTicker } from './components/LiveTicker';
+import { GoalBanner } from './components/GoalBanner';
 import { OnboardingTour } from './components/OnboardingTour';
 import { AdPopup } from './components/AdPopup';
 import { AssistantWidget } from './components/AssistantWidget';
@@ -39,6 +40,7 @@ export default function App() {
   useLiveScores();
   return (
     <div className="app">
+      <GoalBanner />
       {player && <Nav />}
       {player && <BottomNav />}
       {player && <LiveTicker />}

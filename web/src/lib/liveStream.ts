@@ -25,3 +25,16 @@ export function openLiveStream(
   es.onerror = () => onError();
   return () => es.close();
 }
+
+// Transient goal broadcast bus: fired by useLiveScores when a score event represents a new
+// goal, consumed by <GoalBanner/> to show a brief on-screen callout. Module-level so any
+// number of banners/subscribers can attach without prop drilling through the app tree.
+type GoalListener = (msg: string) => void;
+const goalListeners = new Set<GoalListener>();
+export function onGoal(fn: GoalListener): () => void {
+  goalListeners.add(fn);
+  return () => goalListeners.delete(fn);
+}
+export function emitGoal(msg: string): void {
+  for (const fn of goalListeners) fn(msg);
+}

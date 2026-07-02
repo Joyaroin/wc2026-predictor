@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { MatchView } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
-import { openLiveStream, type LiveScoreEvent } from '../lib/liveStream';
+import { openLiveStream, emitGoal, type LiveScoreEvent } from '../lib/liveStream';
 
 // Pure reducer: apply one SSE event to the cached matches list, immutably. Returns the
 // same reference when nothing changes so React Query can skip re-renders.
@@ -14,6 +14,16 @@ export function applyLiveEvent(list: MatchView[], e: LiveScoreEvent): MatchView[
     return { ...m, homeScore: e.home, awayScore: e.away, status: e.status as MatchView['status'], minute: e.minute };
   });
   return changed ? next : list;
+}
+
+// Pure: returns a banner label when this score event represents a new goal (total rose),
+// else null. Extracted so it is unit-testable without React.
+export function goalMessage(prev: MatchView | undefined, e: LiveScoreEvent): string | null {
+  if (e.type !== 'score' || !prev) return null;
+  const prevTotal = (prev.homeScore ?? 0) + (prev.awayScore ?? 0);
+  const nextTotal = (e.home ?? 0) + (e.away ?? 0);
+  if (nextTotal <= prevTotal) return null;
+  return `⚽ GOAL — ${prev.homeCode ?? prev.homeTeam} ${e.home ?? 0}–${e.away ?? 0} ${prev.awayCode ?? prev.awayTeam}`;
 }
 
 // Subscribes to the live SSE stream while a session token is present, and patches the
@@ -31,7 +41,14 @@ export function useLiveScores(): void {
     if (!token) return;
     const close = openLiveStream(
       token,
-      (e) => qc.setQueryData<MatchView[]>(['matches'], (old) => (old ? applyLiveEvent(old, e) : old)),
+      (e) => {
+        qc.setQueryData<MatchView[]>(['matches'], (old) => {
+          if (!old) return old;
+          const msg = goalMessage(old.find((m) => m.id === e.matchId), e);
+          if (msg) emitGoal(msg);
+          return applyLiveEvent(old, e);
+        });
+      },
       () => { /* rely on polling; EventSource retries on its own */ },
     );
     return close;
