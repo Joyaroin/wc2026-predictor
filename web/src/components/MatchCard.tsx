@@ -15,7 +15,7 @@ import {
 } from '@wc2026/shared';
 import { api, type MatchView } from '../api/client';
 import { StatusBadge } from './StatusBadge';
-import { matchState, formatKickoff, stageLabel, liveMinute, pensLabel } from '../lib/format';
+import { matchState, formatKickoff, stageLabel, pensLabel } from '../lib/format';
 import { usePrefs } from '../context/PrefsContext';
 import { Flag } from './Flag';
 import { fold } from '../lib/search';
@@ -25,6 +25,7 @@ import { MatchStatsPanel } from './MatchStatsPanel';
 import { useCountUp } from '../lib/useCountUp';
 import { usePredictionAutosave } from '../lib/usePredictionAutosave';
 import { useScoreFlash } from '../hooks/useScoreFlash';
+import { useLiveMinute } from '../hooks/useLiveMinute';
 
 interface Props {
   match: MatchView;
@@ -106,7 +107,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
   // Briefly highlights the scoreline when a live score changes (goal-flash).
   const scoreFlash = useScoreFlash(match.homeScore, match.awayScore);
   const finished = state === 'Played' && match.homeScore != null && match.awayScore != null;
-  const minuteLabel = state === 'Live' ? liveMinute(match) : null;
+  const tickingMinute = useLiveMinute(match);
+  const minuteLabel = state === 'Live' ? tickingMinute : null;
   const bd = (finished || live) && prediction
     ? scoreBreakdown({ home: prediction.home, away: prediction.away }, { home: match.homeScore!, away: match.awayScore! })
     : null;
