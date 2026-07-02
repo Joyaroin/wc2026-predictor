@@ -12,5 +12,6 @@ const common = {
 
 await build({ ...common, entryPoints: ['src/app.ts'], outfile: 'dist/server.cjs' });
 await build({ ...common, entryPoints: ['src/sync.run.ts'], outfile: 'dist/sync.cjs' });
+await build({ ...common, entryPoints: ['src/sync.live.ts'], outfile: 'dist/sync-live.cjs' });
 
-console.log('Bundled dist/server.cjs and dist/sync.cjs');
+console.log('Bundled dist/server.cjs, dist/sync.cjs and dist/sync-live.cjs');

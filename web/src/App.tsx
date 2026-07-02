@@ -5,9 +5,11 @@ import { Nav } from './components/Nav';
 import { BottomNav } from './components/BottomNav';
 import { LandingPage } from './pages/LandingPage';
 import { LiveTicker } from './components/LiveTicker';
+import { GoalBanner } from './components/GoalBanner';
 import { OnboardingTour } from './components/OnboardingTour';
 import { AdPopup } from './components/AdPopup';
 import { AssistantWidget } from './components/AssistantWidget';
+import { useLiveScores } from './hooks/useLiveScores';
 
 // Route pages are code-split: the logged-out landing page ships in the initial bundle,
 // everything behind auth loads on demand so first paint stays small.
@@ -35,8 +37,10 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
 export default function App() {
   const { player } = usePlayer();
+  useLiveScores();
   return (
     <div className="app">
+      <GoalBanner />
       {player && <Nav />}
       {player && <BottomNav />}
       {player && <LiveTicker />}

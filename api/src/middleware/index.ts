@@ -42,6 +42,21 @@ export function requireSession(config: Config): RequestHandler {
   };
 }
 
+// SSE variant: EventSource cannot set an Authorization header, so the session token
+// is passed as ?token=. Same verification as requireSession.
+export function requireSessionQuery(config: Config): RequestHandler {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const callerId = token ? verifySession(token, config.sessionSigningSecret) : null;
+    if (!callerId) {
+      next(new AuthError());
+      return;
+    }
+    req.callerId = callerId;
+    next();
+  };
+}
+
 /** Validates and replaces req.body using a zod schema (SECURITY-05). */
 export function validateBody<T>(schema: ZodSchema<T>): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {

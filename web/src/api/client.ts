@@ -197,6 +197,7 @@ export const api = {
   globalMatchPredictions: (matchId: string) =>
     req<MatchPredictionsView>(`/matches/${matchId}/predictions`),
   matches: () => req<MatchView[]>('/matches'),
+  liveToken: () => req<{ token: string }>('/live-token'),
   matchStats: (matchId: string) => req<MatchStats | null>(`/matches/${matchId}/stats`),
   matchSuggestions: (ids: string[]) =>
     req<Record<string, ScoreSuggestion | null>>(`/matches/suggestions?ids=${ids.join(',')}`),

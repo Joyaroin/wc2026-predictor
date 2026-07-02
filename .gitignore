@@ -16,3 +16,8 @@ cdk.out/
 *.tfstate.*
 *.auto.tfvars
 crash.log
+
+# GSD/graphify local scratch (not part of the app)
+.planning/
+graphify-out/
+.superpowers/

@@ -10,14 +10,18 @@ import {
 import type { Config } from '../lib/config';
 import type { Services } from '../services/container';
 import { ForbiddenError, ValidationError } from '../lib/errors';
+import { createMatchesCache } from '../lib/matchesCache';
+import { signSession } from '../lib/token';
 import {
   requireSession,
+  requireSessionQuery,
   validateBody,
   loginLimiter,
   joinLimiter,
   assistantLimiter,
   messagesLimiter,
 } from '../middleware/index';
+import type { LiveBroadcaster, LiveEvent } from '../services/liveBroadcaster';
 
 const wrapVoid =
   (fn: (req: Request) => Promise<void>): RequestHandler =>
@@ -61,6 +65,11 @@ const assistantSchema = z.object({
 }).strict();
 const messageSchema = z.object({ text: z.string().min(1).max(500) }).strict();
 
+// Stream tokens ride in the SSE URL (?token=), which proxies/browsers log — keep
+// their lifetime short (~2min) so a leaked log line expires fast, unlike the
+// 30-day session token they replace for this one purpose.
+const STREAM_TOKEN_TTL_DAYS = 120 / 86400; // ~2 minutes
+
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
   (req, res, next) => {
@@ -80,9 +89,11 @@ const param = (req: Request, key: string): string => {
   return v;
 };
 
-export function buildRouter(services: Services, config: Config): Router {
+export function buildRouter(services: Services, config: Config, broadcaster: LiveBroadcaster): Router {
   const r = Router();
   const auth = requireSession(config);
+  const authSse = requireSessionQuery(config);
+  const matchesCache = createMatchesCache(5_000, { now: () => new Date() });
 
   // --- Auth (public, rate-limited) ---
   r.post('/auth/login', loginLimiter, validateBody(loginSchema), wrap((req) => services.auth.login(req.body.name, req.body.pin)));
@@ -108,7 +119,67 @@ export function buildRouter(services: Services, config: Config): Router {
   r.get('/matches/:id/predictions', auth, wrap((req) => services.predictions.getGlobalMatchPredictions(caller(req), param(req, 'id'))));
 
   // --- Matches & predictions ---
-  r.get('/matches', auth, wrap(() => services.matches.list()));
+  r.get('/matches', auth, (req, res, next) => {
+    matchesCache
+      .get(() => services.matches.list())
+      .then(({ body, etag }) => {
+        res.setHeader('ETag', etag);
+        res.setHeader('Cache-Control', 'no-cache'); // must revalidate, but 304 is cheap
+        if (req.headers['if-none-match'] === etag) return res.status(304).end();
+        res.json(body);
+      })
+      .catch(next);
+  });
+  // Lean hot-path payload for the live ticker/stream: in-play matches only, minimal fields.
+  r.get('/live/matches', auth, wrap(async () => {
+    const all = await services.matches.list();
+    return all
+      .filter((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED')
+      .map((m) => ({
+        id: m.id,
+        homeScore: m.homeScore,
+        awayScore: m.awayScore,
+        status: m.status,
+        minute: m.minute ?? null,
+        startedAt: m.startedAt ?? null,
+      }));
+  }));
+  // Short-lived token for the /live SSE stream: exchange a Bearer session for a
+  // token that expires in ~2 minutes, so it's safe to pass as ?token= (which
+  // proxies/browsers log) instead of the 30-day session token.
+  r.get('/live-token', auth, wrap(async (req) => ({ token: signSession(caller(req), config.sessionSigningSecret, STREAM_TOKEN_TTL_DAYS) })));
+  // Server-Sent Events stream of live match deltas. Token via ?token= (EventSource
+  // can't set headers). Falls back to polling on the client if this drops.
+  r.get('/live', authSse, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // belt-and-braces for proxies that honour it
+    });
+    res.write(':ok\n\n'); // open the stream immediately
+
+    const send = (e: LiveEvent) => res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
+    const off = broadcaster.subscribe(send);
+    const hb = setInterval(() => res.write(':hb\n\n'), 15_000);
+    hb.unref?.();
+
+    // Ungraceful disconnects (mobile network drop, app killed) surface as an
+    // 'error' event on the request/response stream rather than a clean 'close'.
+    // With no listener, Node throws it as an uncaught exception and can crash
+    // the whole API process, dropping every other connected SSE client — so we
+    // must handle close/error uniformly through one idempotent cleanup path.
+    let closed = false;
+    const cleanup = () => {
+      if (closed) return;
+      closed = true;
+      clearInterval(hb);
+      off();
+    };
+    req.on('close', cleanup);
+    res.on('error', cleanup);
+    req.on('error', cleanup);
+  });
   r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   // Statistical scoreline suggestions (opt-in) from bookmaker odds. ?ids=a,b,c
   r.get('/matches/suggestions', auth, wrap((req) => {

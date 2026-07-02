@@ -629,8 +629,17 @@ button.danger { background: var(--danger); color: #2a0a0a; }
 .tick.no { color: var(--muted); opacity: 0.6; }
 .mc-yourpicks { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
 
+.goal-banner {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%);
+  z-index: 1000; padding: 10px 18px; border-radius: 999px;
+  background: var(--gold, #f5b301); color: #1a1a1a; font-weight: 700;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35); max-width: 92vw; text-align: center;
+}
+
 /* ============ Animations (flair) ============ */
 @media (prefers-reduced-motion: no-preference) {
+  .goal-banner { animation: goalDrop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1); }
+  @keyframes goalDrop { from { transform: translate(-50%, -24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
   body, .card, .match-card, .nav, .week, .mc-header, .mc-footer { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
   .match-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.28); }
   .match-card { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.3s ease; }
@@ -681,6 +690,12 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .podium-spot.rank-1 { animation-delay: 140ms; }
   .podium-spot.rank-3 { animation-delay: 220ms; }
   .group-card { animation: fadeUp 0.34s ease backwards; }
+  .goal-flash { animation: goalFlash 0.9s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  @keyframes goalFlash {
+    0%   { transform: scale(1);    color: inherit; }
+    18%  { transform: scale(1.35); color: var(--gold, #f5b301); text-shadow: 0 0 12px var(--gold, #f5b301); }
+    100% { transform: scale(1);    color: inherit; }
+  }
 }
 @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 65% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
