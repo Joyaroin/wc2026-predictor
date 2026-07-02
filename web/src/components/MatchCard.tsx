@@ -24,6 +24,7 @@ import { Confetti } from './Confetti';
 import { MatchStatsPanel } from './MatchStatsPanel';
 import { useCountUp } from '../lib/useCountUp';
 import { usePredictionAutosave } from '../lib/usePredictionAutosave';
+import { useScoreFlash } from '../hooks/useScoreFlash';
 
 interface Props {
   match: MatchView;
@@ -102,6 +103,8 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
 
   // Score receipt: per-rule breakdown against the final score — or the live score while in play.
   const live = state === 'Live' && match.homeScore != null && match.awayScore != null;
+  // Briefly highlights the scoreline when a live score changes (goal-flash).
+  const scoreFlash = useScoreFlash(match.homeScore, match.awayScore);
   const finished = state === 'Played' && match.homeScore != null && match.awayScore != null;
   const minuteLabel = state === 'Live' ? liveMinute(match) : null;
   const bd = (finished || live) && prediction
@@ -242,12 +245,12 @@ export function MatchCard({ match, prediction, onSave, onClear, onJoker, onFirst
           <div className="mc-result live" data-testid={`live-${match.id}`}>
             <span className="live-dot">●</span> LIVE
             {minuteLabel && <span className="mc-min" data-testid={`minute-${match.id}`}> {minuteLabel}</span>}
-            {' '}<strong>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
+            {' '}<strong className={scoreFlash ? 'goal-flash' : undefined}>{match.homeScore ?? 0}–{match.awayScore ?? 0}</strong>
           </div>
         )}
         {state === 'Played' && (
           <div className="mc-result" data-testid={`ft-${match.id}`}>
-            FT <strong>{match.homeScore}–{match.awayScore}</strong>
+            FT <strong className={scoreFlash ? 'goal-flash' : undefined}>{match.homeScore}–{match.awayScore}</strong>
             {pensLabel(match) && <span className="mc-pens"> · {pensLabel(match)}</span>}
           </div>
         )}

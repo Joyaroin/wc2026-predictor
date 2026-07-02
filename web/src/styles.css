@@ -681,6 +681,12 @@ button.danger { background: var(--danger); color: #2a0a0a; }
   .podium-spot.rank-1 { animation-delay: 140ms; }
   .podium-spot.rank-3 { animation-delay: 220ms; }
   .group-card { animation: fadeUp 0.34s ease backwards; }
+  .goal-flash { animation: goalFlash 0.9s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  @keyframes goalFlash {
+    0%   { transform: scale(1);    color: inherit; }
+    18%  { transform: scale(1.35); color: var(--gold, #f5b301); text-shadow: 0 0 12px var(--gold, #f5b301); }
+    100% { transform: scale(1);    color: inherit; }
+  }
 }
 @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 65% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
