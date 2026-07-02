@@ -121,6 +121,20 @@ export function buildRouter(services: Services, config: Config): Router {
       })
       .catch(next);
   });
+  // Lean hot-path payload for the live ticker/stream: in-play matches only, minimal fields.
+  r.get('/live/matches', auth, wrap(async () => {
+    const all = await services.matches.list();
+    return all
+      .filter((m) => m.status === 'IN_PLAY' || m.status === 'PAUSED')
+      .map((m) => ({
+        id: m.id,
+        homeScore: m.homeScore,
+        awayScore: m.awayScore,
+        status: m.status,
+        minute: m.minute ?? null,
+        startedAt: m.startedAt ?? null,
+      }));
+  }));
   r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   // Statistical scoreline suggestions (opt-in) from bookmaker odds. ?ids=a,b,c
   r.get('/matches/suggestions', auth, wrap((req) => {
