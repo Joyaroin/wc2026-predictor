@@ -25,7 +25,7 @@ describe('liveMinute (ticking behavior)', () => {
 
   it('advances the estimated minute as now advances, proving the ticking source is live', () => {
     const m = { status: 'IN_PLAY' as const, minute: null, kickoff, startedAt };
-    const at3_5 = liveMinute(m, startedAt ? Date.parse(startedAt) + 3.5 * 60_000 : at(3.5));
+    const at3_5 = liveMinute(m, Date.parse(startedAt) + 3.5 * 60_000);
     const at10 = liveMinute(m, at(10));
     const at20 = liveMinute(m, at(20));
     expect(at3_5).toBe('3′');

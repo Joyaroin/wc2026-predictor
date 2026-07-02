@@ -23,4 +23,11 @@ describe('applyLiveEvent', () => {
     const next = applyLiveEvent(list, { type: 'score', matchId: 'zzz', home: 9, away: 9, status: 'IN_PLAY', minute: 1 });
     expect(next).toBe(list);
   });
+  it('ignores an unrecognized status, keeping the existing status while still patching score/minute', () => {
+    const list = [base];
+    const next = applyLiveEvent(list, { type: 'status', matchId: 'm1', home: 2, away: 0, status: 'BOGUS', minute: 15 });
+    expect(next[0]!.status).toBe('IN_PLAY'); // unchanged, not corrupted with 'BOGUS'
+    expect(next[0]!.homeScore).toBe(2); // score still patched
+    expect(next[0]!.minute).toBe(15); // minute still patched
+  });
 });

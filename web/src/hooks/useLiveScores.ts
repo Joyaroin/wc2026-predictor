@@ -1,8 +1,14 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
 import type { MatchView } from '../api/client';
 import { usePlayer } from '../context/PlayerContext';
 import { openLiveStream, emitGoal, type LiveScoreEvent } from '../lib/liveStream';
+
+// The set of statuses the UI knows how to render. The SSE `status` field arrives as an
+// untyped string from the wire — only patch it in when it's one of these, otherwise keep
+// the existing (known-good) status rather than corrupting it with an unrecognized value.
+const MATCH_STATUSES = new Set<string>(['SCHEDULED', 'TIMED', 'IN_PLAY', 'PAUSED', 'FINISHED']);
 
 // Pure reducer: apply one SSE event to the cached matches list, immutably. Returns the
 // same reference when nothing changes so React Query can skip re-renders.
@@ -11,7 +17,8 @@ export function applyLiveEvent(list: MatchView[], e: LiveScoreEvent): MatchView[
   const next = list.map((m) => {
     if (m.id !== e.matchId) return m;
     changed = true;
-    return { ...m, homeScore: e.home, awayScore: e.away, status: e.status as MatchView['status'], minute: e.minute };
+    const status = MATCH_STATUSES.has(e.status) ? (e.status as MatchView['status']) : m.status;
+    return { ...m, homeScore: e.home, awayScore: e.away, status, minute: e.minute };
   });
   return changed ? next : list;
 }
@@ -40,16 +47,17 @@ export function useLiveScores(): void {
   useEffect(() => {
     if (!token) return;
     const close = openLiveStream(
-      token,
+      () => api.liveToken().then((r) => r.token),
       (e) => {
-        qc.setQueryData<MatchView[]>(['matches'], (old) => {
-          if (!old) return old;
-          const msg = goalMessage(old.find((m) => m.id === e.matchId), e);
-          if (msg) emitGoal(msg);
-          return applyLiveEvent(old, e);
-        });
+        // Compute the goal message from a plain cache read, outside the setQueryData
+        // updater — updaters must be pure (React may invoke them more than once), and
+        // emitGoal is a side effect.
+        const cur = qc.getQueryData<MatchView[]>(['matches']);
+        const msg = cur ? goalMessage(cur.find((m) => m.id === e.matchId), e) : null;
+        if (msg) emitGoal(msg);
+        qc.setQueryData<MatchView[]>(['matches'], (old) => (old ? applyLiveEvent(old, e) : old));
       },
-      () => { /* rely on polling; EventSource retries on its own */ },
+      () => { /* rely on polling; the managed connector handles its own backoff/reconnect */ },
     );
     return close;
   }, [qc, token]);
