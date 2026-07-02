@@ -5,6 +5,7 @@ import type { Config } from './lib/config';
 import type { Logger } from './lib/logger';
 import type { Services } from './services/container';
 import { buildRouter } from './routes/index';
+import { createLiveBroadcaster, type LiveBroadcaster } from './services/liveBroadcaster';
 import {
   requestContext,
   globalLimiter,
@@ -18,6 +19,9 @@ export function buildApp(services: Services, config: Config, logger: Logger): Ex
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
+  const broadcaster: LiveBroadcaster = createLiveBroadcaster(() => services.matches.list());
+  broadcaster.start();
+
   app.use(helmet()); // SECURITY-04
   app.use(cors({ origin: config.allowedOrigin })); // SECURITY-08 (strict allowlist)
   app.use(requestContext(logger)); // SECURITY-03
@@ -25,7 +29,7 @@ export function buildApp(services: Services, config: Config, logger: Logger): Ex
   app.use(globalLimiter); // SECURITY-11
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
-  app.use('/api', buildRouter(services, config));
+  app.use('/api', buildRouter(services, config, broadcaster));
 
   app.use(notFoundHandler());
   app.use(errorHandler()); // SECURITY-09/15

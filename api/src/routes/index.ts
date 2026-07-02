@@ -13,12 +13,14 @@ import { ForbiddenError, ValidationError } from '../lib/errors';
 import { createMatchesCache } from '../lib/matchesCache';
 import {
   requireSession,
+  requireSessionQuery,
   validateBody,
   loginLimiter,
   joinLimiter,
   assistantLimiter,
   messagesLimiter,
 } from '../middleware/index';
+import type { LiveBroadcaster, LiveEvent } from '../services/liveBroadcaster';
 
 const wrapVoid =
   (fn: (req: Request) => Promise<void>): RequestHandler =>
@@ -81,9 +83,10 @@ const param = (req: Request, key: string): string => {
   return v;
 };
 
-export function buildRouter(services: Services, config: Config): Router {
+export function buildRouter(services: Services, config: Config, broadcaster: LiveBroadcaster): Router {
   const r = Router();
   const auth = requireSession(config);
+  const authSse = requireSessionQuery(config);
   const matchesCache = createMatchesCache(5_000, { now: () => new Date() });
 
   // --- Auth (public, rate-limited) ---
@@ -135,6 +138,26 @@ export function buildRouter(services: Services, config: Config): Router {
         startedAt: m.startedAt ?? null,
       }));
   }));
+  // Server-Sent Events stream of live match deltas. Token via ?token= (EventSource
+  // can't set headers). Falls back to polling on the client if this drops.
+  r.get('/live', authSse, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // belt-and-braces for proxies that honour it
+    });
+    res.write(':ok\n\n'); // open the stream immediately
+
+    const send = (e: LiveEvent) => res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
+    const off = broadcaster.subscribe(send);
+    const hb = setInterval(() => res.write(':hb\n\n'), 15_000);
+
+    req.on('close', () => {
+      clearInterval(hb);
+      off();
+    });
+  });
   r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   // Statistical scoreline suggestions (opt-in) from bookmaker odds. ?ids=a,b,c
   r.get('/matches/suggestions', auth, wrap((req) => {
