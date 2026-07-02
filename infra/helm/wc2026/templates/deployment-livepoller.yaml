@@ -28,6 +28,9 @@ spec:
           image: {{ include "wc2026.apiImage" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "dist/sync-live.cjs"]
+          ports:
+            - containerPort: 8080
+              name: health
           envFrom:
             - configMapRef:
                 name: wc2026-api-config
@@ -60,6 +63,14 @@ spec:
                   name: {{ include "wc2026.secretName" . }}
                   key: VAPID_SUBJECT
                   optional: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.livePoller.resources | nindent 12 }}
           securityContext:
