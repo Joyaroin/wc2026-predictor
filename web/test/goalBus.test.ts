@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { onGoal, emitGoal } from '../src/lib/liveStream';
 import { goalMessage } from '../src/hooks/useLiveScores';
 import type { MatchView } from '../src/api/client';
