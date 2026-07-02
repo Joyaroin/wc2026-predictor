@@ -152,11 +152,23 @@ export function buildRouter(services: Services, config: Config, broadcaster: Liv
     const send = (e: LiveEvent) => res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
     const off = broadcaster.subscribe(send);
     const hb = setInterval(() => res.write(':hb\n\n'), 15_000);
+    hb.unref?.();
 
-    req.on('close', () => {
+    // Ungraceful disconnects (mobile network drop, app killed) surface as an
+    // 'error' event on the request/response stream rather than a clean 'close'.
+    // With no listener, Node throws it as an uncaught exception and can crash
+    // the whole API process, dropping every other connected SSE client — so we
+    // must handle close/error uniformly through one idempotent cleanup path.
+    let closed = false;
+    const cleanup = () => {
+      if (closed) return;
+      closed = true;
       clearInterval(hb);
       off();
-    });
+    };
+    req.on('close', cleanup);
+    res.on('error', cleanup);
+    req.on('error', cleanup);
   });
   r.get('/matches/:id/stats', auth, wrap((req) => services.matchStats.get(param(req, 'id'))));
   // Statistical scoreline suggestions (opt-in) from bookmaker odds. ?ids=a,b,c
