@@ -39,38 +39,41 @@ export function createLiveBroadcaster(
     return out;
   }
 
-  return {
-    subscribe(fn) {
-      subs.add(fn);
-      return () => subs.delete(fn);
-    },
-    async tickOnce() {
-      let matches: MatchView[];
-      try {
-        matches = await list();
-      } catch {
-        return []; // skip this tick; keep last snapshot
-      }
-      const next = new Map<string, Snap>();
-      const events: LiveEvent[] = [];
-      for (const m of matches) {
-        const prev = snap?.get(m.id);
-        next.set(m.id, { home: m.homeScore, away: m.awayScore, status: m.status, minute: m.minute ?? null });
-        if (snap) events.push(...diff(m, prev));
-      }
-      snap = next;
-      for (const e of events) for (const fn of subs) fn(e);
-      return events;
-    },
-    start() {
-      if (timer) return;
-      void this.tickOnce(); // seed immediately
-      timer = setInterval(() => void this.tickOnce(), intervalMs);
-      if (typeof timer === 'object' && 'unref' in timer) (timer as { unref: () => void }).unref();
-    },
-    stop() {
-      if (timer) clearInterval(timer);
-      timer = null;
-    },
-  };
+  function subscribe(fn: (e: LiveEvent) => void): () => void {
+    subs.add(fn);
+    return () => subs.delete(fn);
+  }
+
+  async function tickOnce(): Promise<LiveEvent[]> {
+    let matches: MatchView[];
+    try {
+      matches = await list();
+    } catch {
+      return []; // skip this tick; keep last snapshot
+    }
+    const next = new Map<string, Snap>();
+    const events: LiveEvent[] = [];
+    for (const m of matches) {
+      const prev = snap?.get(m.id);
+      next.set(m.id, { home: m.homeScore, away: m.awayScore, status: m.status, minute: m.minute ?? null });
+      if (snap) events.push(...diff(m, prev));
+    }
+    snap = next;
+    for (const e of events) for (const fn of subs) fn(e);
+    return events;
+  }
+
+  function start(): void {
+    if (timer) return;
+    void tickOnce(); // seed immediately
+    timer = setInterval(() => void tickOnce(), intervalMs);
+    timer.unref?.();
+  }
+
+  function stop(): void {
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+
+  return { subscribe, tickOnce, start, stop };
 }
