@@ -159,9 +159,25 @@ const STAT_LABELS: [key: string, label: string][] = [
   ['totalPasses', 'Total passes'],
 ];
 
+// A hung ESPN request must not hang our own /matches/:id/stats response with it.
+const FETCH_TIMEOUT_MS = 8_000;
+// After ESPN refuses us (429/403), stop calling it for a while — hammering a
+// rate-limiter digs the hole deeper and can get the server IP blocked outright.
+const REFUSAL_COOLDOWN_MS = 60_000;
+
 export function createEspnClient(logger: Logger, fetchImpl: typeof fetch = fetch): EspnClient {
+  let cooldownUntil = 0;
   async function json(url: string): Promise<Json> {
-    const res = await fetchImpl(url);
+    if (Date.now() < cooldownUntil) {
+      throw new Error(`ESPN cooling down after rate limit (${Math.ceil((cooldownUntil - Date.now()) / 1000)}s left)`);
+    }
+    const res = await fetchImpl(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    if (res.status === 429 || res.status === 403) {
+      const retryAfter = Number(res.headers?.get?.('retry-after'));
+      cooldownUntil = Date.now() + (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : REFUSAL_COOLDOWN_MS);
+      logger.warn('espn refused — cooling down', { status: res.status, until: new Date(cooldownUntil).toISOString() });
+      throw new Error(`ESPN ${res.status} for ${url}`);
+    }
     if (!res.ok) throw new Error(`ESPN ${res.status} for ${url}`);
     return (await res.json()) as Json;
   }
