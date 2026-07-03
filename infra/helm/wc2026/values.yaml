@@ -35,16 +35,9 @@ web:
     limits: { cpu: 200m, memory: 128Mi }
 
 sync:
-  # Superseded by the long-running livePoller (Deployment). Kept as a disabled fallback.
-  enabled: false
+  enabled: true
   # Every minute so live scores & points settle ASAP (1 request/run; within free-tier limits).
   schedule: "* * * * *"
-  resources:
-    requests: { cpu: 25m, memory: 128Mi }
-    limits: { cpu: 250m, memory: 256Mi }
-
-livePoller:
-  enabled: true
   resources:
     requests: { cpu: 25m, memory: 128Mi }
     limits: { cpu: 250m, memory: 256Mi }
