@@ -4,6 +4,10 @@ import type { PlayerRecord } from './types';
 
 export type Item = Record<string, unknown>;
 
+// The single-table key vocabulary. PK/SK locate an item; the `*ToItem` mappers below also stamp
+// GSI attributes on some items to enable reverse lookups without duplicating data:
+//   GSI1PK/GSI1SK — invite-code→group, and match→predictions/brackets/memberships-by-player.
+//   GSI2PK/GSI2SK — every match under one "SCHEDULE" partition, sorted by kickoff.
 export const keys = {
   playerPk: (id: string) => `PLAYER#${id}`,
   groupPk: (id: string) => `GROUP#${id}`,
@@ -71,6 +75,8 @@ export function groupFromItem(item: Item): Group {
 }
 
 // --- Match ---
+// GSI2 puts every match in one "SCHEDULE" partition keyed by "<kickoff>#<id>", so listAll() reads
+// the whole fixture list in kickoff order. `...m` spreads the domain fields straight onto the item.
 export function matchToItem(m: Match): Item {
   return {
     PK: keys.matchPk(m.id),
@@ -135,6 +141,8 @@ export function bracketFromItem(item: Item): BracketPick {
 }
 
 // --- Prediction ---
+// GSI1 mirrors each pick under its match (GSI1PK = MATCH#<id>) so "everyone's predictions for a
+// match" is one indexed Query, while the base PK keeps it under the owning player.
 export function predictionToItem(p: Prediction): Item {
   return {
     PK: keys.playerPk(p.playerId),

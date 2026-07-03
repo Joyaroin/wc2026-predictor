@@ -70,6 +70,8 @@ const messageSchema = z.object({ text: z.string().min(1).max(500) }).strict();
 // 30-day session token they replace for this one purpose.
 const STREAM_TOKEN_TTL_DAYS = 120 / 86400; // ~2 minutes
 
+// Route glue: `wrap` turns an async service call into an Express handler (JSON on success, errors
+// forwarded to the error middleware); `wrapVoid` (above) is the same but replies { ok: true }.
 const wrap =
   (fn: (req: Request) => Promise<unknown>): RequestHandler =>
   (req, res, next) => {
@@ -78,6 +80,7 @@ const wrap =
       .catch(next);
   };
 
+// `caller` reads the authenticated player id that requireSession stamped on the request.
 const caller = (req: Request): string => req.callerId as string;
 // Path identifiers flow into single-table DynamoDB keys (e.g. GROUP#<id>), where
 // '#' is the delimiter. Restrict to a safe charset so a param can't smuggle the

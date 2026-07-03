@@ -66,10 +66,17 @@ function isConditionFailed(err: unknown): boolean {
   return name === 'ConditionalCheckFailedException' || name === 'TransactionCanceledException';
 }
 
+// Single-table design: every entity lives in one table, distinguished by its PK/SK prefix
+// (see mappers.ts `keys`). Two global secondary indexes give the reverse/scan access patterns:
+//   GSI1 — reverse lookups: group invite-code → group, match → its predictions/brackets, player → groups.
+//   GSI2 — the "SCHEDULE" partition: all matches under one PK, sorted by kickoff, for listAll().
+// Prefer Query (targeted, cheap) over Scan; Scan is only used for the "everyone" reads (leaderboards).
 export function createDynamoRepositories(config: Config): Repositories {
   const doc = createDynamoDocClient(config);
   const Table = config.tableName;
 
+  // Paginated full-table Scan with a filter — used only where we genuinely need every item of a
+  // kind (global leaderboard, award tallies, push subscribers). Walks LastEvaluatedKey to completion.
   async function scanItems(filter: string, values: Record<string, unknown>): Promise<Item[]> {
     const items: Item[] = [];
     let ExclusiveStartKey: Record<string, unknown> | undefined;
@@ -83,6 +90,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     return items;
   }
 
+  // Players: profile lives at PLAYER#<id>/PROFILE. Name uniqueness is enforced by a separate
+  // NAME#<nameKey>/LOCK item written in the same transaction (see create/rename below).
   const players: PlayerRepo = {
     async getById(id) {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: keys.playerPk(id), SK: 'PROFILE' } }));
@@ -96,6 +105,8 @@ export function createDynamoRepositories(config: Config): Repositories {
       return this.getById(lock.Item.playerId as string);
     },
     async create(rec) {
+      // Atomic register: claim the NAME# lock (fails if the name is taken) and write the PROFILE
+      // together, so two people picking the same name at once can't both succeed.
       try {
         await doc.send(
           new TransactWriteCommand({
@@ -118,6 +129,8 @@ export function createDynamoRepositories(config: Config): Repositories {
       }
     },
     async rename(id, name, nameKey) {
+      // Claim the new name lock + update the profile atomically; only after that succeeds do we
+      // release the old lock. Order matters: never free the old name before the new one is secured.
       const current = await this.getById(id);
       if (!current) return false;
       if (current.nameKey === nameKey) return true;
@@ -189,6 +202,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Groups: META item at GROUP#<id>/META, projected onto GSI1 by invite code so join-by-code is a
+  // single indexed Query. Deleting META also removes the group from GSI1 (same item).
   const groups: GroupRepo = {
     async create(group: Group) {
       await doc.send(new PutCommand({ TableName: Table, Item: groupToItem(group) }));
@@ -216,6 +231,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Memberships: one item per (group, player) under the group's PK — so "who's in this group" is a
+  // Query on PK, and "which groups is this player in" is the same item read back via GSI1 (player PK).
   const memberships: MembershipRepo = {
     async add(groupId, playerId, joinedAt) {
       await doc.send(
@@ -279,6 +296,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Matches: each at MATCH#<id>/META, all sharing GSI2 partition "SCHEDULE" keyed by "<kickoff>#<id>"
+  // so listAll() returns the whole fixture list already ordered by kickoff via one paginated Query.
   const matches: MatchRepo = {
     async upsert(match: Match) {
       await doc.send(new PutCommand({ TableName: Table, Item: matchToItem(match) }));
@@ -307,6 +326,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Predictions: stored under the owner (PLAYER#<id>/PRED#<matchId>) so a player's picks are one
+  // Query; mirrored onto GSI1 by match so "everyone's picks for this match" is also one Query.
   const predictions: PredictionRepo = {
     async put(prediction: Prediction) {
       await doc.send(new PutCommand({ TableName: Table, Item: predictionToItem(prediction) }));
@@ -350,6 +371,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Bracket (knockout advancement) picks: same dual-access shape as predictions — owner PK for
+  // "my picks", GSI1 by match for "everyone's picks on this tie".
   const bracket: BracketRepo = {
     async put(pick) {
       await doc.send(new PutCommand({ TableName: Table, Item: bracketToItem(pick) }));
@@ -388,6 +411,9 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Season-long award picks (Golden Boot / Dark Horse / Tournament Winner / Player of the Tournament):
+  // each is a single fixed-SK item per player (one pick each), so get() is a point read and scanAll()
+  // gathers everyone's for live award scoring. Below, one <award>FromItem mapper + repo per award.
   const gbFromItem = (i: Item): GoldenBootPick => ({
     playerId: i.playerId as string,
     scorerId: i.scorerId as string,
@@ -496,6 +522,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Feedback: all bug reports share PK 'FEEDBACK', SK '<createdAt>#<id>' so a single Query returns
+  // them time-ordered (ScanIndexForward:false = newest first) for the admin inbox.
   const feedback: FeedbackRepo = {
     async add(item) {
       await doc.send(
@@ -522,6 +550,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Chat: one partition per feed (CHAT#GLOBAL or CHAT#GROUP#<id>), SK 'MSG#<ts>_<rand>' so messages
+  // sort by time. Reads take the newest N (ScanIndexForward:false + Limit) then reverse to oldest→newest.
   const msgFromItem = (i: Item): ChatMessage => ({
     id: i.id as string,
     scope: i.scope as 'global' | 'group',
@@ -559,6 +589,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Stats: a small set of singleton records under PK 'STATS' — the live top scorer (LEADER), last
+  // ESPN sync time (META), the admin-set POTT winner (POTT), and runtime feature flags (FLAGS).
   const stats: StatsRepo = {
     async getLeader() {
       const r = await doc.send(new GetCommand({ TableName: Table, Key: { PK: 'STATS', SK: 'LEADER' } }));
@@ -598,6 +630,8 @@ export function createDynamoRepositories(config: Config): Repositories {
     },
   };
 
+  // Web Push subscriptions: PLAYER#<id>/PUSH#<endpoint> (a player may have several devices).
+  // Reminders below use PLAYER#<id>/REMIND#<matchId> as a once-only "already nudged" marker.
   const push: PushRepo = {
     async save(sub) {
       await doc.send(new PutCommand({

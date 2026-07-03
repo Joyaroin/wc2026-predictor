@@ -60,6 +60,10 @@ export interface ServiceDeps {
   footballApi: FootballApiClient;
 }
 
+// The dependency-injection graph. Services depend only on repo interfaces + other services (never on
+// concrete DynamoDB/HTTP), which is what lets the whole app run on in-memory repos in tests.
+// A few services are built first as locals because several others reuse them (matches, scoring, espn,
+// notifications, predictions/leaderboard, groups, feedback), then the full Services object is assembled.
 export function createServices({ repos, config, clock, logger, footballApi }: ServiceDeps): Services {
   const matches = createMatchService(repos.matches, clock);
   const scoring = createScoringService(repos.predictions, repos.matches, repos.bracket);
