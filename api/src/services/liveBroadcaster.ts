@@ -49,6 +49,19 @@ export function createLiveBroadcaster(
     };
   }
 
+  function broadcast(e: LiveEvent): void {
+    for (const fn of [...subs]) {
+      try {
+        fn(e);
+      } catch {
+        // A stale SSE response can throw during res.write(). Drop only that
+        // subscriber so one dead client cannot reject the tick or crash the API.
+        subs.delete(fn);
+      }
+    }
+    if (subs.size === 0) stopInterval();
+  }
+
   async function tickOnce(): Promise<LiveEvent[]> {
     let matches: MatchView[];
     try {
@@ -67,7 +80,7 @@ export function createLiveBroadcaster(
       if (snap) events.push(...diff(m, prev));
     }
     snap = next;
-    for (const e of events) for (const fn of subs) fn(e);
+    for (const e of events) broadcast(e);
     return events;
   }
 

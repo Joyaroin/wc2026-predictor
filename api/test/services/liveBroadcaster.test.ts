@@ -35,6 +35,31 @@ describe('liveBroadcaster', () => {
     expect(seen).toHaveLength(1); // only the minute 10->11 change
   });
 
+  it('drops a throwing subscriber without failing the tick or other subscribers', async () => {
+    let data: MatchView[] = [m({ homeScore: 0, awayScore: 0 })];
+    const b = createLiveBroadcaster(async () => data);
+    const bad = vi.fn(() => {
+      throw new Error('socket closed');
+    });
+    const seen: unknown[] = [];
+
+    b.subscribe(bad);
+    b.subscribe((e) => seen.push(e));
+    await b.tickOnce(); // seed
+
+    data = [m({ homeScore: 1, awayScore: 0 })];
+    await expect(b.tickOnce()).resolves.toContainEqual(
+      expect.objectContaining({ type: 'score', matchId: 'm1', home: 1, away: 0 }),
+    );
+    expect(seen).toHaveLength(1);
+    expect(bad).toHaveBeenCalledTimes(1);
+
+    data = [m({ homeScore: 2, awayScore: 0 })];
+    await b.tickOnce();
+    expect(seen).toHaveLength(2);
+    expect(bad).toHaveBeenCalledTimes(1); // removed after the first write failure
+  });
+
   describe('start/stop', () => {
     afterEach(() => {
       vi.useRealTimers();

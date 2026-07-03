@@ -157,12 +157,6 @@ export function buildRouter(services: Services, config: Config, broadcaster: Liv
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no', // belt-and-braces for proxies that honour it
     });
-    res.write(':ok\n\n'); // open the stream immediately
-
-    const send = (e: LiveEvent) => res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
-    const off = broadcaster.subscribe(send);
-    const hb = setInterval(() => res.write(':hb\n\n'), 15_000);
-    hb.unref?.();
 
     // Ungraceful disconnects (mobile network drop, app killed) surface as an
     // 'error' event on the request/response stream rather than a clean 'close'.
@@ -170,12 +164,30 @@ export function buildRouter(services: Services, config: Config, broadcaster: Liv
     // the whole API process, dropping every other connected SSE client — so we
     // must handle close/error uniformly through one idempotent cleanup path.
     let closed = false;
+    let off = () => {};
+    let hb: ReturnType<typeof setInterval> | null = null;
     const cleanup = () => {
       if (closed) return;
       closed = true;
-      clearInterval(hb);
+      if (hb) clearInterval(hb);
       off();
     };
+    const write = (chunk: string) => {
+      if (closed) return;
+      try {
+        res.write(chunk);
+      } catch {
+        cleanup();
+      }
+    };
+
+    write(':ok\n\n'); // open the stream immediately
+
+    const send = (e: LiveEvent) => write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
+    off = broadcaster.subscribe(send);
+    hb = setInterval(() => write(':hb\n\n'), 15_000);
+    hb.unref?.();
+
     req.on('close', cleanup);
     res.on('error', cleanup);
     req.on('error', cleanup);
