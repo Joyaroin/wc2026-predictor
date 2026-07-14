@@ -21,3 +21,5 @@ crash.log
 .planning/
 graphify-out/
 .superpowers/
+
+.claude/settings.local.json
