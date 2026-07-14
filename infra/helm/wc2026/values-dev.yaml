@@ -2,26 +2,16 @@ environment: dev
 # Public GHCR images (no registry auth needed on the cluster).
 image:
   registry: ghcr.io/joyaroin
-<<<<<<< Updated upstream
-  pullPolicy: Always
-  api: {repository: wc2026-api, tag: 29e828a2a7d8f6e6eb34c98b34121a2b0766ab74}
-  web: {repository: wc2026-web, tag: 29e828a2a7d8f6e6eb34c98b34121a2b0766ab74}
-||||||| Stash base
-  pullPolicy: Always
-  api: {repository: wc2026-api, tag: b2d042e65d16de32d594b188810ac03cb63f8708}
-  web: {repository: wc2026-web, tag: b2d042e65d16de32d594b188810ac03cb63f8708}
-=======
   # Tags are immutable commit SHAs, so IfNotPresent is safe and avoids re-downloading
   # images on every pod start (dev and prod share one 2 GB node; a promotion reuses the
   # layers the dev rollout already pulled instead of pulling them a second time).
   pullPolicy: IfNotPresent
-  api: {repository: wc2026-api, tag: b2d042e65d16de32d594b188810ac03cb63f8708}
-  web: {repository: wc2026-web, tag: b2d042e65d16de32d594b188810ac03cb63f8708}
+  api: {repository: wc2026-api, tag: 29e828a2a7d8f6e6eb34c98b34121a2b0766ab74}
+  web: {repository: wc2026-web, tag: 29e828a2a7d8f6e6eb34c98b34121a2b0766ab74}
 sync:
   # Dev doesn't need minute-level score settlement; every 5 min cuts the constant
   # per-minute job/pod churn on the shared 2 GB node. Prod stays on the 1-min default.
   schedule: "*/5 * * * *"
->>>>>>> Stashed changes
 api:
   replicas: 1
   env:
