@@ -6,8 +6,8 @@ image:
   # images on every pod start (dev and prod share one 2 GB node; a promotion reuses the
   # layers the dev rollout already pulled instead of pulling them a second time).
   pullPolicy: IfNotPresent
-  api: {repository: wc2026-api, tag: 520695b84fc79378c807b08829cc9a6916be4939}
-  web: {repository: wc2026-web, tag: 520695b84fc79378c807b08829cc9a6916be4939}
+  api: {repository: wc2026-api, tag: 3f909a9b80e9277509ea4162551629cd2e9e3021}
+  web: {repository: wc2026-web, tag: 3f909a9b80e9277509ea4162551629cd2e9e3021}
 sync:
   # Dev doesn't need minute-level score settlement; every 5 min cuts the constant
   # per-minute job/pod churn on the shared 2 GB node. Prod stays on the 1-min default.
