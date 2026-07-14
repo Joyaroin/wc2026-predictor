@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { computeSections, SECTION_ORDER, sectionLabel, type Prediction } from '@wc2026/shared';
-import { api, type MatchView } from '../api/client';
+import { api, ApiError, type MatchView } from '../api/client';
 import { MatchCard } from '../components/MatchCard';
 import { MatchGridSkeleton } from '../components/Skeleton';
 import { canonTeam } from '../lib/teams';
@@ -247,7 +247,17 @@ export function FixturesPage() {
       </div>
     );
   }
-  if (matches.isError) return <p className="error">Could not load fixtures. Is the API running?</p>;
+  // Only take over the page when there is nothing cached to show; a failed background
+  // refetch keeps rendering the (stale) fixtures and the next poll heals it.
+  if (matches.isError && !matches.data) {
+    return (
+      <p className="error">
+        {matches.error instanceof ApiError && matches.error.status === 429
+          ? 'Too many requests right now. Give it a minute; this page retries on its own.'
+          : 'Could not load fixtures. Check your connection; this page retries on its own.'}
+      </p>
+    );
+  }
 
   const busy = save.isPending || joker.isPending || firstTeam.isPending || firstScorer.isPending || clear.isPending;
 

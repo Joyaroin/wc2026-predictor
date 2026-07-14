@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ApiError } from './api/client';
 import { PlayerProvider } from './context/PlayerContext';
 import { PrefsProvider } from './context/PrefsContext';
 import App from './App';
@@ -18,6 +19,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
+      // Don't burn retries on deterministic client errors: 401 (expired session, handled
+      // by the global logout) and 429 (rate limit, where retrying makes it worse). Network
+      // failures and 5xx still get the default three attempts.
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status >= 400 && error.status < 500) && failureCount < 3,
       // Re-sync on return-to-app and on network recovery so the UI is never stuck on
       // stale data (e.g. you switch away to watch the match, come back → scores are fresh).
       refetchOnWindowFocus: true,

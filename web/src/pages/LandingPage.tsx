@@ -3,7 +3,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { ApiError } from '../api/client';
 
 export function LandingPage() {
-  const { login } = usePlayer();
+  const { login, sessionExpired } = usePlayer();
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +29,7 @@ export function LandingPage() {
       <img src="/logo.svg" alt="" className="landing-logo" />
       <h1>WC Predictions <span className="accent">2026</span></h1>
       <p className="muted">Pick scorelines, beat your friends. Enter a name and a 4-digit PIN to start or resume.</p>
+      {sessionExpired && <p className="error" data-testid="session-expired">Your session expired. Log in again to continue.</p>}
       <form onSubmit={submit} className="card login-form">
         <label>
           Display name

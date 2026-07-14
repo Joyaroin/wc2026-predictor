@@ -149,7 +149,19 @@ export function setAuthToken(token: string | null): void {
   authToken = token;
 }
 
+// Called when a token-bearing request comes back 401: the session token is expired or
+// invalid. Wired by PlayerContext to clear the stored session, which routes back to login.
+let onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
+}
+
+// Paths that return 401 for reasons other than a bad session token (a mistyped current
+// PIN), so they must not trigger the session-expired logout.
+const NON_SESSION_401 = new Set(['/players/me/pin']);
+
 async function req<T>(path: string, opts: { method?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
+  const hadToken = authToken !== null;
   const res = await fetch(`${BASE}/api${path}`, {
     method: opts.method ?? 'GET',
     headers: {
@@ -167,6 +179,7 @@ async function req<T>(path: string, opts: { method?: string; body?: unknown; hea
     } catch {
       /* ignore */
     }
+    if (res.status === 401 && hadToken && !NON_SESSION_401.has(path)) onUnauthorized?.();
     throw new ApiError(res.status, message);
   }
   return (await res.json()) as T;

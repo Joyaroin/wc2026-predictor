@@ -32,7 +32,7 @@ export function BracketPage() {
   }, [left.length, right.length, total]);
 
   if (matches.isLoading) return <div className="bracket"><h2>Knockout bracket</h2><p className="muted">Loading…</p></div>;
-  if (matches.isError) return <div className="bracket"><h2>Knockout bracket</h2><p className="error">Couldn't load the bracket. Please try again.</p></div>;
+  if (matches.isError && !matches.data) return <div className="bracket"><h2>Knockout bracket</h2><p className="error">Couldn't load the bracket. Please try again.</p></div>;
   if (total === 0) return <div className="bracket"><h2>Knockout bracket</h2><p className="muted">The bracket appears once the knockouts are drawn.</p></div>;
 
   const short = (s: Stage) => KO_ROUNDS.find((r) => r.stage === s)?.short ?? s;
