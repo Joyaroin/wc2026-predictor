@@ -13,6 +13,10 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # Self-clean finished Job records (success and failure) after 6h. Without this a
+      # single transient failure leaves a Degraded marker in ArgoCD until three newer
+      # failures push it out of failedJobsHistoryLimit, which can take weeks.
+      ttlSecondsAfterFinished: 21600
       template:
         metadata:
           labels:
