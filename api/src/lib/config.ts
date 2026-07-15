@@ -9,6 +9,13 @@ export interface Config {
   allowedOrigin: string;
   sessionTtlDays: number;
   persistence: 'dynamo' | 'memory';
+  /**
+   * When true, list-all reads Query the GSI3 type index instead of scanning the whole table.
+   * Defaults false so a deploy is behavior-neutral: only flip to true after the table has the
+   * GSI3 index (terraform apply) AND existing items have been backfilled (scripts/backfill-gsi3.ts),
+   * otherwise those queries return only items written since the change. See infra/README / docs.
+   */
+  useGsiLists: boolean;
   /** Token gating admin actions (e.g. setting Player of the Tournament). Empty = admin disabled. */
   adminToken: string;
   /** Player name (lower-cased) treated as the owner/admin — sees the feedback inbox when logged in. */
@@ -49,6 +56,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     allowedOrigin: required('ALLOWED_ORIGIN'),
     sessionTtlDays: Number(env.SESSION_TTL_DAYS ?? '30'),
     persistence,
+    useGsiLists: env.USE_GSI_LISTS === 'true',
     adminToken: (env.ADMIN_TOKEN ?? '').trim(),
     adminPlayer: (env.ADMIN_PLAYER ?? 'adham').trim().toLowerCase(),
     adminPlayerId: (env.ADMIN_PLAYER_ID ?? '').trim(),

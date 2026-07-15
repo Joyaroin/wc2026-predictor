@@ -29,6 +29,14 @@ resource "aws_dynamodb_table" "this" {
     name = "GSI2SK"
     type = "S"
   }
+  attribute {
+    name = "GSI3PK"
+    type = "S"
+  }
+  attribute {
+    name = "GSI3SK"
+    type = "S"
+  }
 
   global_secondary_index {
     name            = "GSI1"
@@ -40,6 +48,14 @@ resource "aws_dynamodb_table" "this" {
     name            = "GSI2"
     hash_key        = "GSI2PK"
     range_key       = "GSI2SK"
+    projection_type = "ALL"
+  }
+  # GSI3: one partition per "list-all" collection (players, predictions, picks, push), so those
+  # reads become a Query instead of a full-table Scan. Backend gates use behind USE_GSI_LISTS.
+  global_secondary_index {
+    name            = "GSI3"
+    hash_key        = "GSI3PK"
+    range_key       = "GSI3SK"
     projection_type = "ALL"
   }
 

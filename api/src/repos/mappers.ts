@@ -18,11 +18,27 @@ export const keys = {
   msgSk: (id: string) => `MSG#${id}`,
 };
 
+// GSI3 partitions one entry per "list-all-of-a-type" collection so those reads become a
+// single Query instead of a full-table Scan (see repos/dynamo.ts). GSI3PK groups the type;
+// GSI3SK is a per-item suffix that keeps entries unique and ordered within the partition.
+export const gsi3 = {
+  player: 'TYPE#PLAYER',
+  pred: 'TYPE#PRED',
+  brk: 'TYPE#BRK',
+  gbPick: 'TYPE#GBPICK',
+  dhPick: 'TYPE#DHPICK',
+  twPick: 'TYPE#TWPICK',
+  pottPick: 'TYPE#POTTPICK',
+  push: 'TYPE#PUSH',
+} as const;
+
 // --- Player ---
 export function playerToItem(p: PlayerRecord): Item {
   return {
     PK: keys.playerPk(p.id),
     SK: 'PROFILE',
+    GSI3PK: gsi3.player,
+    GSI3SK: p.id,
     id: p.id,
     name: p.name,
     nameKey: p.nameKey,
@@ -113,6 +129,8 @@ export function bracketToItem(b: BracketPick): Item {
     SK: keys.brkSk(b.matchId),
     GSI1PK: keys.matchPk(b.matchId),
     GSI1SK: keys.playerPk(b.playerId),
+    GSI3PK: gsi3.brk,
+    GSI3SK: `${b.playerId}#${b.matchId}`,
     playerId: b.playerId,
     matchId: b.matchId,
     side: b.side,
@@ -141,6 +159,8 @@ export function predictionToItem(p: Prediction): Item {
     SK: keys.predSk(p.matchId),
     GSI1PK: keys.matchPk(p.matchId),
     GSI1SK: keys.playerPk(p.playerId),
+    GSI3PK: gsi3.pred,
+    GSI3SK: `${p.playerId}#${p.matchId}`,
     playerId: p.playerId,
     matchId: p.matchId,
     home: p.home,

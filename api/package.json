@@ -10,13 +10,13 @@
     "build:server": "node scripts/bundle.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "create-table": "tsx scripts/create-table.ts"
+    "create-table": "tsx scripts/create-table.ts",
+    "backfill-gsi3": "tsx scripts/backfill-gsi3.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
     "@aws-sdk/client-dynamodb": "3.1063.0",
     "@aws-sdk/lib-dynamodb": "3.1063.0",
-    "@codegenie/serverless-express": "4.16.0",
     "@wc2026/shared": "*",
     "cors": "2.8.6",
     "express": "5.2.1",

@@ -1,0 +1,20 @@
+# Let's Encrypt production ClusterIssuer, referenced by the app Ingress via the
+# annotation cert-manager.io/cluster-issuer: letsencrypt-prod (see infra/helm/wc2026/templates/ingress.yaml).
+# Requires cert-manager to be installed first (its CRDs define this kind). The node
+# bootstrap (infra/terraform/modules/k3s/user-data.sh.tftpl) installs cert-manager and
+# then applies this file. HTTP-01 challenges are solved through the nginx ingress.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Expiry/renewal notices go here. Change to a mailbox you monitor.
+    email: admin@wc-predictions-2026.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

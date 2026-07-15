@@ -26,6 +26,7 @@ export const testConfig: Config = {
   allowedOrigin: '*',
   sessionTtlDays: 30,
   persistence: 'memory',
+  useGsiLists: false,
   adminToken: 'test-admin-token',
   adminPlayer: 'adham',
   adminPlayerId: '',

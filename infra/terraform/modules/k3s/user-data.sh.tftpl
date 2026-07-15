@@ -27,6 +27,17 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.service.type=LoadBalancer \
   --wait --timeout 5m || true
 
+# --- cert-manager (issues Let's Encrypt TLS for the ingress) ---
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager \
+  -n cert-manager --create-namespace \
+  --set crds.enabled=true \
+  --wait --timeout 5m || true
+# The letsencrypt-prod ClusterIssuer the app ingress references. Applied after cert-manager
+# is up so its CRDs exist; retried because the webhook can lag readiness by a few seconds.
+until kubectl apply -f "${repo_raw_base}/infra/k8s/cluster-issuer.yaml"; do sleep 5; done
+
 # --- ArgoCD ---
 kubectl create namespace argocd || true
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

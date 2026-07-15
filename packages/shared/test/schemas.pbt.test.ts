@@ -13,7 +13,7 @@ const arbPrediction = fc.record({
   matchId: fc.string({ minLength: 1, maxLength: 24 }),
   home: arbGoal,
   away: arbGoal,
-  points: fc.integer({ min: 0, max: 20 }),
+  points: fc.integer({ min: 0, max: 25 }),
   joker: fc.boolean(),
   createdAt: arbIso,
   updatedAt: arbIso,

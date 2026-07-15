@@ -38,6 +38,7 @@ import type {
 import { DEFAULT_FLAGS } from './types';
 import {
   keys,
+  gsi3,
   playerToItem,
   playerFromItem,
   groupToItem,
@@ -81,6 +82,37 @@ export function createDynamoRepositories(config: Config): Repositories {
       ExclusiveStartKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
     } while (ExclusiveStartKey);
     return items;
+  }
+
+  // Query one GSI3 type partition (all items of a collection) instead of scanning the whole
+  // table. Paginates like scanItems. Only correct once GSI3 exists and items are backfilled.
+  async function queryByType(gsi3pk: string): Promise<Item[]> {
+    const items: Item[] = [];
+    let ExclusiveStartKey: Record<string, unknown> | undefined;
+    do {
+      const r = await doc.send(
+        new QueryCommand({
+          TableName: Table,
+          IndexName: 'GSI3',
+          KeyConditionExpression: 'GSI3PK = :pk',
+          ExpressionAttributeValues: { ':pk': gsi3pk },
+          ExclusiveStartKey,
+        }),
+      );
+      items.push(...((r.Items ?? []) as Item[]));
+      ExclusiveStartKey = r.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (ExclusiveStartKey);
+    return items;
+  }
+
+  // List every item of a collection: the GSI3 Query when enabled, else the legacy full-table
+  // Scan. `type` selects the GSI3 partition; `scanFilter`/`scanValues` are the equivalent scan.
+  async function listAllOfType(
+    type: string,
+    scanFilter: string,
+    scanValues: Record<string, unknown>,
+  ): Promise<Item[]> {
+    return config.useGsiLists ? queryByType(type) : scanItems(scanFilter, scanValues);
   }
 
   const players: PlayerRepo = {
@@ -184,7 +216,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       );
     },
     async listAll() {
-      const items = await scanItems('SK = :sk', { ':sk': 'PROFILE' });
+      const items = await listAllOfType(gsi3.player, 'SK = :sk', { ':sk': 'PROFILE' });
       return items.map((i) => playerFromItem(i));
     },
   };
@@ -345,7 +377,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return (r.Items ?? []).map((i) => predictionFromItem(i as Item));
     },
     async scanAll() {
-      const items = await scanItems('begins_with(SK, :p)', { ':p': 'PRED#' });
+      const items = await listAllOfType(gsi3.pred, 'begins_with(SK, :p)', { ':p': 'PRED#' });
       return items.map((i) => predictionFromItem(i));
     },
   };
@@ -383,7 +415,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return (r.Items ?? []).map((i) => bracketFromItem(i as Item));
     },
     async scanAll() {
-      const items = await scanItems('begins_with(SK, :b)', { ':b': 'BRK#' });
+      const items = await listAllOfType(gsi3.brk, 'begins_with(SK, :b)', { ':b': 'BRK#' });
       return items.map((i) => bracketFromItem(i));
     },
   };
@@ -400,7 +432,7 @@ export function createDynamoRepositories(config: Config): Repositories {
   const goldenBoot: GoldenBootRepo = {
     async put(pick) {
       await doc.send(
-        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'GBPICK', ...pick } }),
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'GBPICK', GSI3PK: gsi3.gbPick, GSI3SK: pick.playerId, ...pick } }),
       );
     },
     async get(playerId) {
@@ -410,7 +442,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return r.Item ? gbFromItem(r.Item as Item) : null;
     },
     async scanAll() {
-      const items = await scanItems('SK = :sk', { ':sk': 'GBPICK' });
+      const items = await listAllOfType(gsi3.gbPick, 'SK = :sk', { ':sk': 'GBPICK' });
       return items.map((i) => gbFromItem(i));
     },
   };
@@ -427,7 +459,7 @@ export function createDynamoRepositories(config: Config): Repositories {
   const darkHorse: DarkHorseRepo = {
     async put(pick) {
       await doc.send(
-        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'DHPICK', ...pick } }),
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'DHPICK', GSI3PK: gsi3.dhPick, GSI3SK: pick.playerId, ...pick } }),
       );
     },
     async get(playerId) {
@@ -437,7 +469,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return r.Item ? dhFromItem(r.Item as Item) : null;
     },
     async scanAll() {
-      const items = await scanItems('SK = :sk', { ':sk': 'DHPICK' });
+      const items = await listAllOfType(gsi3.dhPick, 'SK = :sk', { ':sk': 'DHPICK' });
       return items.map((i) => dhFromItem(i));
     },
   };
@@ -454,7 +486,7 @@ export function createDynamoRepositories(config: Config): Repositories {
   const tournamentWinner: TournamentWinnerRepo = {
     async put(pick) {
       await doc.send(
-        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'TWPICK', ...pick } }),
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'TWPICK', GSI3PK: gsi3.twPick, GSI3SK: pick.playerId, ...pick } }),
       );
     },
     async get(playerId) {
@@ -464,7 +496,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return r.Item ? twFromItem(r.Item as Item) : null;
     },
     async scanAll() {
-      const items = await scanItems('SK = :sk', { ':sk': 'TWPICK' });
+      const items = await listAllOfType(gsi3.twPick, 'SK = :sk', { ':sk': 'TWPICK' });
       return items.map((i) => twFromItem(i));
     },
   };
@@ -481,7 +513,7 @@ export function createDynamoRepositories(config: Config): Repositories {
   const pott: PottRepo = {
     async put(pick) {
       await doc.send(
-        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'POTTPICK', ...pick } }),
+        new PutCommand({ TableName: Table, Item: { PK: keys.playerPk(pick.playerId), SK: 'POTTPICK', GSI3PK: gsi3.pottPick, GSI3SK: pick.playerId, ...pick } }),
       );
     },
     async get(playerId) {
@@ -491,7 +523,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       return r.Item ? pottFromItem(r.Item as Item) : null;
     },
     async scanAll() {
-      const items = await scanItems('SK = :sk', { ':sk': 'POTTPICK' });
+      const items = await listAllOfType(gsi3.pottPick, 'SK = :sk', { ':sk': 'POTTPICK' });
       return items.map((i) => pottFromItem(i));
     },
   };
@@ -604,6 +636,7 @@ export function createDynamoRepositories(config: Config): Repositories {
         TableName: Table,
         Item: {
           PK: keys.playerPk(sub.playerId), SK: `PUSH#${sub.endpoint}`,
+          GSI3PK: gsi3.push, GSI3SK: `${sub.playerId}#${sub.endpoint}`,
           playerId: sub.playerId, endpoint: sub.endpoint,
           p256dh: sub.keys.p256dh, auth: sub.keys.auth, createdAt: sub.createdAt,
         },
@@ -625,7 +658,7 @@ export function createDynamoRepositories(config: Config): Repositories {
       await doc.send(new DeleteCommand({ TableName: Table, Key: { PK: keys.playerPk(playerId), SK: `PUSH#${endpoint}` } }));
     },
     async listSubscribers() {
-      const items = await scanItems('begins_with(SK, :s)', { ':s': 'PUSH#' });
+      const items = await listAllOfType(gsi3.push, 'begins_with(SK, :s)', { ':s': 'PUSH#' });
       return [...new Set(items.map((i) => i.playerId as string))];
     },
   };

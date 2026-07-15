@@ -44,8 +44,9 @@ export const outcomeSchema = z.enum(['HOME', 'DRAW', 'AWAY']);
 export const bracketSideSchema = z.enum(['HOME', 'AWAY']);
 export const bracketInputSchema = z.object({ side: bracketSideSchema }).strict();
 
-// Per-prediction points: scoreline (max 12) + first team to score (+2) + first player to score (+6) = max 20.
-export const pointsSchema = z.number().int().min(0).max(20);
+// Per-prediction points (pre-Joker): scoreline (max 12) + first team to score (+2)
+// + first player to score (+6) + penalty-shootout winner (+5, knockout draws only) = max 25.
+export const pointsSchema = z.number().int().min(0).max(25);
 
 /** Request body when a player submits/updates a prediction. */
 export const predictionInputSchema = z
