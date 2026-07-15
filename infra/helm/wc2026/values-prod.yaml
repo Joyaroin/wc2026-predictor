@@ -3,8 +3,8 @@ image:
   registry: ghcr.io/joyaroin
   # Immutable SHA tags: IfNotPresent avoids re-pulls (see values-dev.yaml note).
   pullPolicy: IfNotPresent
-  api: {repository: wc2026-api, tag: 3f909a9b80e9277509ea4162551629cd2e9e3021} # optionally pin a built SHA at promotion time
-  web: {repository: wc2026-web, tag: 3f909a9b80e9277509ea4162551629cd2e9e3021}
+  api: {repository: wc2026-api, tag: a84268dec96cc8d552fbcf627afc52db889178bf} # optionally pin a built SHA at promotion time
+  web: {repository: wc2026-web, tag: a84268dec96cc8d552fbcf627afc52db889178bf}
 api:
   replicas: 1 # single small node — keep modest; bump with a larger instance
   env:

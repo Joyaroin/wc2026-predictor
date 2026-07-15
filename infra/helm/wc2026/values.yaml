@@ -26,6 +26,9 @@ api:
     FOOTBALL_COMPETITION: WC
     PERSISTENCE: dynamo
     SESSION_TTL_DAYS: "30"
+    # Flip to "true" only after `terraform apply` adds GSI3 and `npm run backfill-gsi3`
+    # has stamped existing rows; then list-all reads Query GSI3 instead of scanning.
+    USE_GSI_LISTS: "false"
 
 web:
   replicas: 1
